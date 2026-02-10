@@ -1,1 +1,4 @@
-um site para a associaão de gralhas
+Este website é um pequeno diretório da Associação de Gralhas, procurando promover esta mesma aldeia.
+Neste mesmo conseguimos encontrar todo o tipo de informação sobre a respetiva associação, assim como atividades em que estes estão inseridos, entre outros.
+A pedido da minha mãe (membro desta mesma), tentei desenvolver, o melhor que sabia, este website.
+Espero que gostem! 
