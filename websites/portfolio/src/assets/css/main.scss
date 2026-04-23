@@ -1,0 +1,228 @@
+@use 'vuetify';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.auth-btn {
+    @apply tw-mx-auto tw-my-8 tw-h-auto tw-w-3/4 tw-py-2 tw-text-base tw-font-semibold sm:tw-mb-20 sm:tw-mt-12 md:tw-w-full md:tw-max-w-xs md:tw-py-5 lg:tw-text-2xl #{!important};
+}
+
+.auth-form {
+    @apply tw-flex tw-w-11/12 tw-flex-col tw-gap-4 md:tw-w-4/5 md:tw-gap-6 xl:tw-w-3/5 #{!important};
+}
+
+.auth-title {
+    @apply tw-text-center tw-text-xl tw-font-bold md:tw-text-3xl #{!important};
+}
+
+.auth-input {
+    @apply tw-text-2xl #{!important};
+
+    input {
+        padding-block: 0.75rem !important;
+    }
+}
+
+/* make the table rows striped */
+// .v-data-table tbody tr:nth-child(odd) {
+//     background-color: rgba(0, 0, 0, 0.04);
+// }
+
+//tabs
+.tabs-btn .v-tab.v-tab.v-btn {
+    @apply tw-mr-4 tw-h-9 tw-gap-x-4 tw-rounded-[4px] tw-bg-gray-300 tw-text-gray-600;
+    @apply tw-shadow-none #{!important};
+}
+
+//navigation drawer - scrollbar
+.custom-scrollbar {
+    @apply tw-overflow-auto #{!important};
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    @apply tw-w-2 #{!important};
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    @apply tw-bg-primary #{!important};
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply tw-rounded-md tw-bg-primary-300 #{!important};
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply tw-bg-primary-300 #{!important};
+}
+
+//apply no padding to profile image
+.no-padding {
+    .v-img__img {
+        @apply tw-p-0 #{!important};
+    }
+}
+
+//apply border-radius to v-data-table
+// .v-table {
+//     @apply tw-rounded-xl #{!important};
+// }
+
+//apply the same color to input labels
+// .v-label.v-field-label {
+//     @apply tw-text-gray #{!important};
+// }
+
+//remove breadcrumbs padding
+.v-breadcrumbs-item {
+    @apply tw-p-0 #{!important};
+}
+
+//blueprint css (canvas)
+// .canvas {
+//     height: calc(100svh - 20rem);
+// }
+
+// apply padding to io-img
+.img-padding {
+    .v-img__img {
+        @apply tw-p-3;
+    }
+}
+
+// remove opacity from v-card-subtitle
+.subtitle-no-opacity .v-card-subtitle {
+    @apply tw-opacity-100 #{!important};
+}
+
+// custom padding in v-expansion-panel-text__wrapper
+.v-expansion-panel-text__wrapper {
+    flex: 1 1 auto;
+    max-width: 100%;
+    padding: 8px 11px 16px;
+}
+
+.bg-white-transparent {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+// Pulse animation (for the asset status chip)
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.15);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+// Blurred effect
+// .blur {
+//     background-color: rgba(var(--v-theme-primary), 0.5) !important;
+//     backdrop-filter: blur(10px);
+//     -webkit-backdrop-filter: blur(10px);
+//     color: white;
+// }
+
+// VSwitch
+.custom-switch .v-switch__track {
+    @apply tw-h-5 tw-min-w-[37px] tw-opacity-100 #{!important};
+}
+
+.custom-switch .v-switch__thumb {
+    width: 11.5px !important;
+    height: 11.5px !important;
+    transform: none !important;
+}
+
+.custom-switch .v-selection-control__input:hover:before {
+    @apply tw-bg-transparent #{!important};
+}
+
+// Text field
+.text-field-sm .v-field__input,
+.text-field-sm .v-field,
+.text-field-sm .v-field,
+.v-list-item-title {
+    @apply tw-text-sm #{!important};
+}
+
+// VSkeleton Loader Button
+.v-skeleton-loader__button {
+    @apply tw-max-w-none #{!important};
+}
+
+// VSkeleton Loader Image
+.skeleton-image-full-height .v-skeleton-loader__image {
+    height: 100% !important;
+}
+
+// VExpansionPanel
+.v-expansion-panel::after {
+    @apply tw-hidden #{!important};
+}
+
+// Custom V-Select - ensure menu appears above dialogs
+.custom-select-menu {
+    z-index: 100000 !important;
+}
+
+.custom-select-menu .v-menu__content {
+    z-index: 100000 !important;
+}
+
+// Bottom sheet
+.custom-overlay .v-overlay__content {
+    @apply tw-rounded-t-xl #{!important};
+}
+
+/* Remove Vuetify Button Overlay */
+.btn-no-overlay .v-btn__overlay {
+    background-color: transparent !important;
+}
+
+// Table footer
+.v-data-table-footer__items-per-page .v-select__selection-text {
+    @apply tw-text-sm #{!important};
+}
+
+// Filters Drawer + Overlay
+.filters-overlay .v-overlay__content {
+    justify-content: flex-end;
+    align-items: stretch;
+    inset: 0;
+}
+
+.filters-drawer.v-navigation-drawer,
+.filters-drawer {
+    position: fixed !important;
+    top: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    z-index: 9990 !important;
+}
+
+// Preview Drawer + Overlay
+.preview-overlay .v-overlay__content {
+    justify-content: flex-end;
+    align-items: stretch;
+    inset: 0;
+}
+
+.preview-drawer.v-navigation-drawer,
+.preview-drawer {
+    position: fixed !important;
+    top: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    z-index: 9990 !important;
+}
