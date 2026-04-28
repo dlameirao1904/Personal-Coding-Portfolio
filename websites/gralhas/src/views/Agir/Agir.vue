@@ -35,7 +35,7 @@
                                 </div>
                                 <div>
                                     <h3 class="tw-text-3xl tw-font-bold tw-text-gray-900">Tornar-me Sócio</h3>
-                                    <p class="tw-text-primary tw-font-bold">Quota Anual: 20€ <span class="tw-text-gray-500 tw-font-normal tw-text-sm">(Apenas 1,70€ por mês)</span></p>
+                                    <p class="tw-text-primary tw-font-bold">Quota Anual: 20€ <span class="tw-text-gray-500 tw-font-normal tw-text-sm">(Apenas 1.70€ por mês)</span></p>
                                 </div>
                             </div>
 
@@ -204,7 +204,7 @@
             v-model="snackbar.visivel"
             :color="snackbar.cor"
             timeout="3000"
-            location="bottom right">
+            location="top right">
             <div class="tw-flex tw-items-center tw-gap-2 tw-font-bold">
                 <v-icon>mdi-check-circle</v-icon>
                 {{ snackbar.mensagem }}
@@ -217,8 +217,8 @@
 <script setup lang="ts">
     import { ref, reactive } from 'vue';
     import Footer from '../Layout/Footer.vue';
+    import { enviarEmail } from '@/services/emailService';
 
-    // --- ESTADO DO FORMULÁRIO DE SÓCIO ---
     const enviando = ref(false);
     const sucessoSocio = ref(false);
     const formSocio = reactive({
@@ -229,44 +229,51 @@
         morada: '',
     });
 
-    const submeterSocio = () => {
+    const TEMPLATE_ID_SOCIO = 'template_3ov2q6n';
+
+    const submeterSocio = async () => {
         enviando.value = true;
         sucessoSocio.value = false;
 
-        // Simula o envio do pedido para o servidor (para a apresentação)
-        setTimeout(() => {
-            enviando.value = false;
+        try {
+            const params = {
+                nome: formSocio.nome,
+                nif: formSocio.nif,
+                email: formSocio.email,
+                telefone: formSocio.telefone,
+                morada: formSocio.morada,
+            };
+
+            await enviarEmail(TEMPLATE_ID_SOCIO, params);
+
             sucessoSocio.value = true;
 
-            // Limpar o formulário
-            formSocio.nome = '';
-            formSocio.nif = '';
-            formSocio.email = '';
-            formSocio.telefone = '';
-            formSocio.morada = '';
+            Object.assign(formSocio, { nome: '', nif: '', email: '', telefone: '', morada: '' });
 
-            // Ocultar a mensagem após 5 segundos
             setTimeout(() => {
                 sucessoSocio.value = false;
             }, 5000);
-        }, 1500);
+            snackbar.mensagem = 'Pedido enviado com sucesso! Aguarde uma resposta para pagamento da quota.';
+            snackbar.cor = 'success';
+            snackbar.visivel = true;
+        } catch (error) {
+            snackbar.mensagem = 'Erro ao enviar o pedido. Tente novamente.';
+            snackbar.cor = 'error';
+            snackbar.visivel = true;
+        } finally {
+            enviando.value = false;
+        }
     };
 
-    // --- LÓGICA DE COPIAR PARA A ÁREA DE TRANSFERÊNCIA ---
-    const snackbar = reactive({
-        visivel: false,
-        mensagem: '',
-        cor: 'success',
-    });
-
+    const snackbar = reactive({ visivel: false, mensagem: '', cor: 'success' });
     const copiarTexto = async (texto: string, tipo: string) => {
         try {
             await navigator.clipboard.writeText(texto);
-            snackbar.mensagem = `${tipo} copiado para a área de transferência!`;
+            snackbar.mensagem = `${tipo} copiado!`;
             snackbar.cor = 'success';
             snackbar.visivel = true;
         } catch (err) {
-            snackbar.mensagem = 'Erro ao copiar o texto. Tente manualmente.';
+            snackbar.mensagem = 'Erro ao copiar.';
             snackbar.cor = 'error';
             snackbar.visivel = true;
         }
