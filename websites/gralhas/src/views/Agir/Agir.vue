@@ -35,7 +35,7 @@
                                 </div>
                                 <div>
                                     <h3 class="tw-text-3xl tw-font-bold tw-text-gray-900">Tornar-me Sócio</h3>
-                                    <p class="tw-text-primary tw-font-bold">Quota Anual: 12€ <span class="tw-text-gray-500 tw-font-normal tw-text-sm">(Apenas 1€ por mês)</span></p>
+                                    <p class="tw-text-primary tw-font-bold">Quota Anual: 20€ <span class="tw-text-gray-500 tw-font-normal tw-text-sm">(Apenas 1,70€ por mês)</span></p>
                                 </div>
                             </div>
 
