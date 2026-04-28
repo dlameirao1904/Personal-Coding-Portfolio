@@ -155,13 +155,13 @@
                             cols="12"
                             md="7"
                             class="tw-p-10 md:tw-p-16 tw-bg-white">
-                            <v-form @submit.prevent="submitForm">
+                            <v-form @submit.prevent="submeterContacto">
                                 <v-row>
                                     <v-col
                                         cols="12"
                                         md="6">
                                         <v-text-field
-                                            v-model="form.nome"
+                                            v-model="formMensagem.nome"
                                             label="O seu Nome"
                                             variant="outlined"
                                             color="primary"
@@ -172,7 +172,7 @@
                                         cols="12"
                                         md="6">
                                         <v-text-field
-                                            v-model="form.email"
+                                            v-model="formMensagem.email"
                                             label="O seu E-mail"
                                             type="email"
                                             variant="outlined"
@@ -182,7 +182,7 @@
                                     </v-col>
                                     <v-col cols="12">
                                         <v-text-field
-                                            v-model="form.assunto"
+                                            v-model="formMensagem.assunto"
                                             label="Assunto"
                                             variant="outlined"
                                             color="primary"
@@ -191,7 +191,7 @@
                                     </v-col>
                                     <v-col cols="12">
                                         <v-textarea
-                                            v-model="form.mensagem"
+                                            v-model="formMensagem.mensagem"
                                             label="A sua Mensagem"
                                             variant="outlined"
                                             color="primary"
@@ -218,26 +218,69 @@
                 </v-card>
             </v-container>
         </section>
+
+        <v-snackbar
+            v-model="snackbar.visivel"
+            :color="snackbar.cor"
+            timeout="3000"
+            location="top right">
+            <div class="tw-flex tw-items-center tw-gap-2 tw-font-bold">
+                <v-icon>mdi-check-circle</v-icon>
+                {{ snackbar.mensagem }}
+            </div>
+        </v-snackbar>
     </div>
+    <Footer />
 </template>
 
-<script setup>
-    import { reactive } from 'vue';
+<script setup lang="ts">
+    import { reactive, ref } from 'vue';
+    import { enviarEmail } from '@/services/emailService';
+    import Footer from '../Layout/Footer.vue';
 
-    const form = reactive({
+    const enviando = ref(false);
+    const sucessoSocio = ref(false);
+    const formMensagem = reactive({
         nome: '',
         email: '',
         assunto: '',
         mensagem: '',
     });
 
-    const submitForm = () => {
-        console.log('Formulário submetido:', form);
-        alert('Mensagem enviada com sucesso! (Ação de demonstração)');
+    const TEMPLATE_ID_CONTACTO = 'template_zcy6ar8';
 
-        form.nome = '';
-        form.email = '';
-        form.assunto = '';
-        form.mensagem = '';
+    const submeterContacto = async () => {
+        enviando.value = true;
+        sucessoSocio.value = false;
+
+        try {
+            const params = {
+                nome: formMensagem.nome,
+                email: formMensagem.email,
+                assunto: formMensagem.assunto,
+                mensagem: formMensagem.mensagem,
+            };
+
+            await enviarEmail(TEMPLATE_ID_CONTACTO, params);
+
+            sucessoSocio.value = true;
+
+            Object.assign(formMensagem, { nome: '', email: '', assunto: '', mensagem: '' });
+
+            setTimeout(() => {
+                sucessoSocio.value = false;
+            }, 5000);
+            snackbar.mensagem = 'Mensagem enviada com sucesso! Aguarde uma resposta.';
+            snackbar.cor = 'success';
+            snackbar.visivel = true;
+        } catch (error) {
+            snackbar.mensagem = 'Erro ao enviar a mensagem. Tente novamente.';
+            snackbar.cor = 'error';
+            snackbar.visivel = true;
+        } finally {
+            enviando.value = false;
+        }
     };
+
+    const snackbar = reactive({ visivel: false, mensagem: '', cor: 'success' });
 </script>
