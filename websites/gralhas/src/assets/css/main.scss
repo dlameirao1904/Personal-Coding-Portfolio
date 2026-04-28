@@ -1,0 +1,193 @@
+@use 'vuetify';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+    --padding-left: 1.5rem;
+    --padding-right: 1.5rem;
+    --padding-top: 1.5rem;
+    --padding-bottom: 1.5rem;
+    --padding-inline: var(--padding-left) var(--padding-right);
+    --padding-block: var(--padding-top) var(--padding-bottom);
+    --padding: var(--padding-top) var(--padding-right) var(--padding-bottom) var(--padding-left);
+}
+
+// SM
+@media (min-width: 640px) {
+    html {
+        --padding-left: 1.5rem;
+        --padding-right: 1.5rem;
+        --padding-top: 1.5rem;
+        --padding-bottom: 1.5rem;
+    }
+}
+
+// MD
+@media (min-width: 768px) {
+    html {
+        --padding-left: 3rem;
+        --padding-right: 3rem;
+        --padding-top: 3rem;
+        --padding-bottom: 3rem;
+    }
+}
+
+// LG
+@media (min-width: 1024px) {
+    html {
+        --padding-left: 4rem;
+        --padding-right: 4rem;
+        --padding-top: 4rem;
+        --padding-bottom: 4rem;
+    }
+}
+
+// XL
+@media (min-width: 1280px) {
+    html {
+        --padding-left: 7rem;
+        --padding-right: 7rem;
+        --padding-top: 7rem;
+        --padding-bottom: 7rem;
+    }
+}
+
+// XXL
+@media (min-width: 1536px) {
+    html {
+        --padding-left: 7rem;
+        --padding-right: 7rem;
+        --padding-top: 7rem;
+        --padding-bottom: 7rem;
+    }
+}
+
+.auth-btn {
+    @apply tw-mx-auto tw-mt-3 tw-h-auto tw-px-16 tw-py-5 tw-font-medium sm:tw-mt-5 sm:tw-text-xl #{!important};
+}
+
+.auth-form {
+    @apply tw-flex tw-w-11/12 tw-flex-col tw-gap-4 md:tw-w-4/5 md:tw-gap-6 xl:tw-w-3/5 #{!important};
+}
+
+.auth-title {
+    @apply tw-text-center tw-text-xl tw-font-bold md:tw-text-3xl #{!important};
+}
+
+.auth-input {
+    @apply tw-text-2xl #{!important};
+
+    input {
+        @apply tw-py-2 sm:tw-py-3;
+    }
+}
+
+// Border radius
+.v-btn:not(.v-btn--icon),
+.v-btn.not-rounded,
+.v-field {
+    @apply tw-rounded-xl #{!important};
+}
+
+.container-padding {
+    @apply tw-p-6 md:tw-p-12 lg:tw-p-16 xl:tw-p-28 #{!important};
+}
+
+.page-title {
+    @apply tw-text-center tw-text-2xl sm:tw-text-left sm:tw-text-4xl lg:tw-text-6xl #{!important};
+}
+
+.grid {
+    @apply tw-relative tw-mt-8 tw-grid tw-grid-cols-2 tw-gap-5 md:tw-grid-cols-4 2xl:tw-gap-x-10 2xl:tw-gap-y-20 #{!important};
+}
+
+.no-opacity .v-card-subtitle {
+    @apply tw-opacity-100 #{!important};
+}
+
+.cart-stepper .v-stepper-header {
+    @apply tw-shadow-none #{!important};
+}
+
+.cart-stepper .v-stepper-header .v-stepper-item {
+    @apply tw-px-0 #{!important};
+}
+
+// .cart-stepper .v-stepper-item {
+//     @apply tw-flex-1 #{!important};
+// }
+
+.cart-stepper .v-stepper-item__avatar.v-avatar {
+    @apply tw-bg-white tw-text-primary tw-border tw-border-primary tw-size-8 #{!important};
+}
+
+.cart-stepper .v-stepper-item--complete .v-stepper-item__avatar.v-avatar,
+.v-stepper-item--selected .v-stepper-item__avatar.v-avatar {
+    @apply tw-bg-primary tw-text-white tw-size-8 #{!important};
+}
+
+.cart-stepper .v-stepper-item__title {
+    @apply tw-text-primary tw-font-semibold #{!important};
+}
+
+.cart-stepper .v-divider {
+    margin: 40px 0 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    overflow: hidden !important;
+}
+
+@media (min-width: 1024px) {
+    .cart-stepper .v-divider {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+}
+
+.cart-stepper .v-stepper-actions .v-btn {
+    @apply tw-bg-primary #{!important};
+}
+
+.cart-stepper .v-stepper-window {
+    @apply tw-mx-0 #{!important};
+}
+
+.cart-stepper .v-stepper-actions .v-btn__content {
+    @apply tw-text-white #{!important};
+}
+
+.cart-stepper .v-stepper-item {
+    flex-basis: 0px !important;
+}
+
+// change v-chip__content
+.v-chip__content {
+    @apply tw-mx-auto #{!important};
+}
+
+// seasonality input
+.seasonality-input .v-input__control .v-field {
+    @apply tw-rounded-r-none #{!important};
+}
+
+.seasonality-input .v-input__append {
+    margin-inline-start: 0px !important;
+}
+
+.seasonality-input .v-input__append .v-field {
+    @apply tw-rounded-l-none tw-border-l-0 tw-rounded-r-xl #{!important};
+}
+
+// Google Maps
+.gm-style-iw-chr {
+    display: none;
+}
+button.gm-ui-hover-effect {
+    visibility: hidden;
+}

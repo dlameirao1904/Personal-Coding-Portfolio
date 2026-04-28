@@ -1,0 +1,42 @@
+$font-family:
+    'Aeonik',
+    sans-serif,
+    -apple-system,
+    blinkmacsystemfont,
+    'Segoe UI',
+    roboto,
+    'Helvetica Neue',
+    arial,
+    sans-serif,
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Segoe UI Symbol';
+
+@forward 'vuetify/settings' with (
+    $utilities: false,
+    $color-pack: false,
+    $grid-breakpoints: (
+        'xs': 0,
+        'sm': 640px,
+        'md': 768px,
+        'lg': 1024px,
+        'xl': 1280px,
+        'xxl': 1536px,
+    ),
+    $border-radius-root: 1rem,
+    // FONT
+    $body-font-family: $font-family,
+    $heading-font-family: $font-family,
+
+    // VBtn
+    $button-text-transform: none,
+    $button-text-letter-spacing: normal,
+    $button-white-space: unset,
+
+    // VBottomNavigation
+    $bottom-navigation-border-radius: 999rem,
+
+    // VTooltip
+    $tooltip-border-radius: 0.75rem,
+
+);
