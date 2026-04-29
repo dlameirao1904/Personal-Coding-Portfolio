@@ -56,7 +56,7 @@
           to="/agir"
           class="tw-ml-4 tw-rounded-full tw-px-6 tw-font-bold tw-tracking-wide hover:tw--translate-y-0.5 hover:tw-shadow-lg tw-transform tw-transition-all tw-duration-300"
         >
-          Agir
+          Tornar Membro
         </v-btn>
       </div>
 
