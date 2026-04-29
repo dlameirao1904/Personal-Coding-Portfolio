@@ -104,7 +104,8 @@
                                         :src="foto"
                                         class="tw-rounded-2xl tw-shadow-md hover:tw-shadow-xl hover:tw-scale-[1.02] tw-transition-all tw-duration-300"
                                         height="200"
-                                        cover>
+                                        cover
+                                        @click="abrirFoto(foto)">
                                         <template v-slot:placeholder>
                                             <div class="tw-flex tw-items-center tw-justify-center tw-h-full tw-bg-gray-100">
                                                 <v-progress-circular
@@ -115,6 +116,28 @@
                                     </v-img>
                                 </v-col>
                             </v-row>
+                            <v-overlay
+                                v-model="fotoVisivel"
+                                class="align-center justify-center"
+                                scrim="black"
+                                opacity="0.95"
+                                z-index="3000"
+                                @click:outside="fotoVisivel = false">
+                                <div class="tw-relative tw-w-screen tw-h-screen tw-flex tw-items-center tw-justify-center">
+                                    <v-btn
+                                        icon="mdi-close"
+                                        variant="flat"
+                                        color="white"
+                                        size="large"
+                                        class="tw-absolute tw-top-4 tw-right-4 tw-z-50 tw-bg-black/30 hover:tw-bg-black/60 tw-backdrop-blur-sm"
+                                        @click="fotoVisivel = false"></v-btn>
+
+                                    <img
+                                        :src="fotoSelecionada"
+                                        class="tw-w-[95vw] tw-h-[85vh] tw-object-contain tw-transition-all tw-duration-300"
+                                        alt="Foto em tamanho gigante" />
+                                </div>
+                            </v-overlay>
                         </div>
                     </div>
                 </div>
@@ -143,6 +166,14 @@
     const capasFiles = import.meta.glob('@/assets/eventos/*/capa.jpg', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
     const descricoesFiles = import.meta.glob('@/assets/eventos/*/desc.txt', { eager: true, as: 'raw' }) as Record<string, string>;
     const todasFotosFiles = import.meta.glob('@/assets/eventos/*/*.{jpg,jpeg,png,webp}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+
+    const fotoVisivel = ref<boolean>(false);
+    const fotoSelecionada = ref<string>('');
+
+    const abrirFoto = (foto: string) => {
+        fotoSelecionada.value = foto;
+        fotoVisivel.value = true;
+    };
 
     const carregarEventos = () => {
         const eventosTemp: Evento[] = [];
