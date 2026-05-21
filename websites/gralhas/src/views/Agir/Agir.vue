@@ -163,13 +163,13 @@
                                         </div>
                                     </div>
                                     <div class="tw-flex tw-justify-between tw-items-center">
-                                        <span class="tw-text-2xl tw-font-mono tw-tracking-widest tw-text-primary">919 981 950</span>
+                                        <span class="tw-text-2xl tw-font-mono tw-tracking-widest tw-text-primary">920 667 099</span>
                                         <v-btn
                                             icon="mdi-content-copy"
                                             variant="text"
                                             size="small"
                                             color="gray-400"
-                                            @click="copiarTexto('919981950', 'MBWay')"
+                                            @click="copiarTexto('920667099', 'MBWay')"
                                             class="group-hover:tw-text-white"></v-btn>
                                     </div>
                                 </div>
