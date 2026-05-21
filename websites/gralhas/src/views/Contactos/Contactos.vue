@@ -31,9 +31,9 @@
                             <h3 class="tw-text-xl tw-font-bold tw-text-gray-900 tw-mb-2">Telefone</h3>
                             <p class="tw-text-gray-600 tw-mb-4">Ligue-nos para qualquer assunto urgente ou esclarecimento.</p>
                             <a
-                                href="tel:+351919981950"
+                                href="tel:+351920667099"
                                 class="tw-text-lg tw-font-bold tw-text-primary hover:tw-text-secondary tw-transition-colors">
-                                919 981 950
+                                920 667 099
                             </a>
                         </v-card>
                     </v-col>
