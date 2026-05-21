@@ -72,7 +72,7 @@
                   <div class="tw-flex tw-flex-col tw-gap-4 tw-text-sm tw-text-gray-400">
                       <div class="tw-flex tw-items-center tw-gap-3">
                           <v-icon size="small" color="primary">mdi-phone</v-icon>
-                          <span>919 981 950</span>
+                          <span>920 667 099</span>
                       </div>
                       <div class="tw-flex tw-items-center tw-gap-3">
                           <v-icon size="small" color="primary">mdi-email</v-icon>
