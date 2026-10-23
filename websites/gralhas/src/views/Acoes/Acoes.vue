@@ -5,7 +5,7 @@
       <div class="tw-absolute tw-bottom-0 tw-left-0 tw--mb-16 tw--ml-16 tw-w-72 tw-h-72 tw-bg-secondary/10 tw-rounded-full tw-blur-3xl"></div>
 
       <v-container class="tw-relative tw-z-10">
-        <div class="tw-max-w-3xl tw-mx-auto tw-text-center">
+        <div class="rise-in tw-max-w-3xl tw-mx-auto tw-text-center">
           <h2 class="tw-text-primary tw-font-bold tw-text-sm tw-tracking-[0.2em] tw-uppercase tw-mb-4">O Que Fazemos</h2>
           <h1 class="tw-text-5xl md:tw-text-6xl tw-font-extrabold tw-text-gray-900 tw-leading-tight">
             Mais do que palavras, <span class="tw-text-transparent tw-bg-clip-text tw-bg-gradient-to-r tw-from-primary tw-to-secondary">ações que transformam</span>.
@@ -21,16 +21,16 @@
       <v-container>
         <v-row class="tw-gap-y-10">
           
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="6" class="reveal">
             <v-card 
               elevation="0" 
-              class="tw-group tw-h-full tw-rounded-[30px] tw-border tw-border-gray-100 tw-overflow-hidden hover:tw-shadow-2xl tw-transition-all tw-duration-500"
+              class="lift tw-group tw-h-full tw-rounded-[30px] tw-border tw-border-gray-100 tw-overflow-hidden hover:tw-shadow-2xl"
             >
-              <div class="tw-h-64 tw-overflow-hidden tw-relative">
+              <div class="media-zoom tw-h-64 tw-relative">
                 <v-img 
                   src="@/assets/images/acoes/cultura.jpg" 
                   cover 
-                  class="tw-w-full tw-h-full tw-transform group-hover:tw-scale-110 tw-transition-transform tw-duration-700"
+                  class="tw-w-full tw-h-full"
                 ></v-img>
                 <div class="tw-absolute tw-top-4 tw-right-4 tw-bg-white/90 tw-backdrop-blur-sm tw-p-3 tw-rounded-2xl tw-shadow-md">
                   <v-icon color="primary">mdi-drama-masks</v-icon>
@@ -45,16 +45,16 @@
             </v-card>
           </v-col>
 
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="6" class="reveal" style="--reveal-delay: 80ms">
             <v-card 
               elevation="0" 
-              class="tw-group tw-h-full tw-rounded-[30px] tw-border tw-border-gray-100 tw-overflow-hidden hover:tw-shadow-2xl tw-transition-all tw-duration-500"
+              class="lift tw-group tw-h-full tw-rounded-[30px] tw-border tw-border-gray-100 tw-overflow-hidden hover:tw-shadow-2xl"
             >
-              <div class="tw-h-64 tw-overflow-hidden tw-relative">
+              <div class="media-zoom tw-h-64 tw-relative">
                 <v-img 
                   src="@/assets/images/acoes/desporto.jpg" 
                   cover 
-                  class="tw-w-full tw-h-full tw-transform group-hover:tw-scale-110 tw-transition-transform tw-duration-700"
+                  class="tw-w-full tw-h-full"
                 ></v-img>
                 <div class="tw-absolute tw-top-4 tw-right-4 tw-bg-white/90 tw-backdrop-blur-sm tw-p-3 tw-rounded-2xl tw-shadow-md">
                   <v-icon color="primary">mdi-soccer</v-icon>
@@ -69,16 +69,16 @@
             </v-card>
           </v-col>
 
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="6" class="reveal" style="--reveal-delay: 160ms">
             <v-card 
               elevation="0" 
-              class="tw-group tw-h-full tw-rounded-[30px] tw-border tw-border-gray-100 tw-overflow-hidden hover:tw-shadow-2xl tw-transition-all tw-duration-500"
+              class="lift tw-group tw-h-full tw-rounded-[30px] tw-border tw-border-gray-100 tw-overflow-hidden hover:tw-shadow-2xl"
             >
-              <div class="tw-h-64 tw-overflow-hidden tw-relative">
+              <div class="media-zoom tw-h-64 tw-relative">
                 <v-img 
                   src="@/assets/images/acoes/apoio.jpg" 
                   cover 
-                  class="tw-w-full tw-h-full tw-transform group-hover:tw-scale-110 tw-transition-transform tw-duration-700"
+                  class="tw-w-full tw-h-full"
                 ></v-img>
                 <div class="tw-absolute tw-top-4 tw-right-4 tw-bg-white/90 tw-backdrop-blur-sm tw-p-3 tw-rounded-2xl tw-shadow-md">
                   <v-icon color="primary">mdi-hand-heart</v-icon>
@@ -93,16 +93,16 @@
             </v-card>
           </v-col>
 
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="6" class="reveal" style="--reveal-delay: 240ms">
             <v-card 
               elevation="0" 
-              class="tw-group tw-h-full tw-rounded-[30px] tw-border tw-border-gray-100 tw-overflow-hidden hover:tw-shadow-2xl tw-transition-all tw-duration-500"
+              class="lift tw-group tw-h-full tw-rounded-[30px] tw-border tw-border-gray-100 tw-overflow-hidden hover:tw-shadow-2xl"
             >
-              <div class="tw-h-64 tw-overflow-hidden tw-relative">
+              <div class="media-zoom tw-h-64 tw-relative">
                 <v-img 
                   src="@/assets/images/acoes/sustentabilidade.jpg" 
                   cover 
-                  class="tw-w-full tw-h-full tw-transform group-hover:tw-scale-110 tw-transition-transform tw-duration-700"
+                  class="tw-w-full tw-h-full"
                 ></v-img>
                 <div class="tw-absolute tw-top-4 tw-right-4 tw-bg-white/90 tw-backdrop-blur-sm tw-p-3 tw-rounded-2xl tw-shadow-md">
                   <v-icon color="primary">mdi-pine-tree</v-icon>
@@ -121,7 +121,7 @@
       </v-container>
     </section>
 
-    <section class="tw-py-24 tw-px-6 md:tw-px-16 tw-bg-gray-900 tw-text-white tw-rounded-t-[60px]">
+    <section class="reveal tw-py-24 tw-px-6 md:tw-px-16 tw-bg-gray-900 tw-text-white tw-rounded-t-[60px]">
       <v-container>
         <v-row class="tw-items-center">
           <v-col cols="12" md="5">
@@ -145,12 +145,14 @@
           
           <v-col cols="12" md="6" class="tw-offset-md-1 tw-mt-12 md:tw-mt-0">
             <div class="tw-relative">
-              <v-img
-                src="@/assets/images/acoes/destaque.jpg"
-                class="tw-rounded-[30px] tw-shadow-2xl"
-                aspect-ratio="1"
-                cover
-              ></v-img>
+              <div class="media-zoom tw-rounded-[30px] tw-shadow-2xl">
+                <v-img
+                  src="@/assets/images/acoes/destaque.jpg"
+                  class="tw-rounded-[30px]"
+                  aspect-ratio="1"
+                  cover
+                ></v-img>
+              </div>
               <div class="tw-absolute tw--bottom-8 tw--left-8 tw-bg-white tw-text-gray-900 tw-p-6 tw-rounded-2xl tw-shadow-xl tw-max-w-xs tw-hidden md:tw-block">
                 <div class="tw-flex tw-items-center tw-gap-3 tw-mb-2">
                   <v-icon color="primary">mdi-lightbulb-on</v-icon>
@@ -170,6 +172,9 @@
 
 <script setup lang="ts">
 import Footer from '../Layout/Footer.vue';
+import { useReveal } from '@/composables/useReveal';
+
+useReveal();
 </script>
 
 <style scoped>

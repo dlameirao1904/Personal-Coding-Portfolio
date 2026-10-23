@@ -1,10 +1,10 @@
 <template>
-    <div class="tw-bg-gray-50 tw-min-h-screen tw-pb-24">
+    <div class="tw-min-h-screen tw-bg-gray-50">
         <section class="tw-bg-gray-900 tw-text-white tw-py-20 tw-rounded-b-[60px] tw-relative tw-overflow-hidden">
             <div
                 class="tw-absolute tw-top-0 tw-left-0 tw-w-full tw-h-full tw-bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] tw-from-primary/20 tw-via-gray-900 tw-to-gray-900 tw-opacity-60"></div>
 
-            <v-container class="tw-relative tw-z-10 tw-text-center">
+            <v-container class="rise-in tw-relative tw-z-10 tw-text-center">
                 <h1 class="tw-text-5xl md:tw-text-6xl tw-font-extrabold tw-tracking-tight tw-mb-4">Fale <span class="tw-text-primary">Connosco</span></h1>
                 <p class="tw-text-lg tw-text-gray-400 tw-max-w-2xl tw-mx-auto">
                     A Associação é feita de pessoas e para as pessoas. Estamos sempre de portas abertas para ouvir as suas ideias, dúvidas ou sugestões.
@@ -17,9 +17,10 @@
                 <v-row class="tw-justify-center">
                     <v-col
                         cols="12"
-                        md="4">
+                        md="4"
+                        class="reveal">
                         <v-card
-                            class="tw-h-full tw-p-8 tw-text-center tw-rounded-[30px] tw-shadow-xl hover:tw--translate-y-2 tw-transition-transform tw-duration-300 tw-border tw-border-gray-100"
+                            class="lift tw-h-full tw-rounded-[30px] tw-border tw-border-gray-100 tw-p-8 tw-text-center tw-shadow-xl"
                             elevation="0">
                             <div class="tw-w-16 tw-h-16 tw-mx-auto tw-bg-primary/10 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-mb-6">
                                 <v-icon
@@ -40,9 +41,10 @@
 
                     <v-col
                         cols="12"
-                        md="4">
+                        md="4"
+                        class="reveal">
                         <v-card
-                            class="tw-h-full tw-p-8 tw-text-center tw-rounded-[30px] tw-shadow-xl hover:tw--translate-y-2 tw-transition-transform tw-duration-300 tw-border tw-border-gray-100"
+                            class="lift tw-h-full tw-rounded-[30px] tw-border tw-border-gray-100 tw-p-8 tw-text-center tw-shadow-xl"
                             elevation="0">
                             <div class="tw-w-16 tw-h-16 tw-mx-auto tw-bg-primary/10 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-mb-6">
                                 <v-icon
@@ -63,9 +65,10 @@
 
                     <v-col
                         cols="12"
-                        md="4">
+                        md="4"
+                        class="reveal">
                         <v-card
-                            class="tw-h-full tw-p-8 tw-text-center tw-rounded-[30px] tw-shadow-xl hover:tw--translate-y-2 tw-transition-transform tw-duration-300 tw-border tw-border-gray-100"
+                            class="lift tw-h-full tw-rounded-[30px] tw-border tw-border-gray-100 tw-p-8 tw-text-center tw-shadow-xl"
                             elevation="0">
                             <div class="tw-w-16 tw-h-16 tw-mx-auto tw-bg-primary/10 tw-rounded-full tw-flex tw-items-center tw-justify-center tw-mb-6">
                                 <v-icon
@@ -86,7 +89,7 @@
             </v-container>
         </section>
 
-        <section class="tw-py-20 tw-px-6 md:tw-px-16">
+        <section class="reveal tw-px-6 tw-py-20 md:tw-px-16">
             <v-container>
                 <div class="tw-text-center tw-mb-12">
                     <h2 class="tw-text-primary tw-font-bold tw-text-sm tw-tracking-[0.2em] tw-uppercase tw-mb-4">A nossa Equipa</h2>
@@ -101,11 +104,13 @@
                         <v-card
                             elevation="0"
                             class="tw-text-center tw-p-2 md:tw-p-4 tw-bg-white tw-rounded-[40px] tw-border tw-border-gray-100 tw-shadow-xl hover:tw-shadow-2xl tw-transition-shadow tw-duration-300">
-                            <v-img
-                                src="@/assets/images/equipa.jpg"
-                                alt="A Nossa Equipa da Associação de Gralhas"
-                                class="tw-w-full tw-h-64 md:tw-h-96 tw-rounded-[32px] tw-object-cover"
-                                cover></v-img>
+                            <div class="media-zoom tw-rounded-[32px]">
+                                <v-img
+                                    src="@/assets/images/equipa.jpg"
+                                    alt="A Nossa Equipa da Associação de Gralhas"
+                                    class="tw-h-64 tw-w-full md:tw-h-96"
+                                    cover></v-img>
+                            </div>
 
                             <div class="tw-p-8 md:tw-p-10">
                                 <v-icon
@@ -126,7 +131,7 @@
             </v-container>
         </section>
 
-        <section class="tw-pb-10 tw-px-6 md:tw-px-16">
+        <section class="reveal tw-px-6 tw-pb-16 md:tw-px-16">
             <v-container>
                 <v-card
                     elevation="0"
@@ -207,6 +212,8 @@
                                             color="primary"
                                             size="x-large"
                                             variant="flat"
+                                            :loading="enviando"
+                                            :disabled="enviando"
                                             class="tw-rounded-full tw-px-10 tw-font-bold tw-tracking-wide">
                                             Enviar Mensagem
                                         </v-btn>
@@ -225,18 +232,22 @@
             timeout="3000"
             location="top right">
             <div class="tw-flex tw-items-center tw-gap-2 tw-font-bold">
-                <v-icon>mdi-check-circle</v-icon>
+                <v-icon>{{ snackbar.cor === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle' }}</v-icon>
                 {{ snackbar.mensagem }}
             </div>
         </v-snackbar>
+
+        <Footer />
     </div>
-    <Footer />
 </template>
 
 <script setup lang="ts">
     import { reactive, ref } from 'vue';
     import { enviarEmail } from '@/services/emailService';
     import Footer from '../Layout/Footer.vue';
+    import { useReveal } from '@/composables/useReveal';
+
+    useReveal();
 
     const enviando = ref(false);
     const sucessoSocio = ref(false);
@@ -250,6 +261,13 @@
     const TEMPLATE_ID_CONTACTO = 'template_zcy6ar8';
 
     const submeterContacto = async () => {
+        if (!formMensagem.nome.trim() || !formMensagem.email.includes('@') || !formMensagem.assunto.trim() || !formMensagem.mensagem.trim()) {
+            snackbar.mensagem = 'Preencha o nome, o e-mail, o assunto e a mensagem.';
+            snackbar.cor = 'error';
+            snackbar.visivel = true;
+            return;
+        }
+
         enviando.value = true;
         sucessoSocio.value = false;
 

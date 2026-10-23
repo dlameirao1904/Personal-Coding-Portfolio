@@ -101,10 +101,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
-// Controlo de estado do menu mobile
 const drawer = ref(false)
+const route = useRoute()
+
+watch(() => route.path, () => {
+  drawer.value = false
+})
 </script>
 
 <style scoped>

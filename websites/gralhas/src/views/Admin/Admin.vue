@@ -3,7 +3,7 @@
         <v-card
             v-if="!isLoggedIn"
             elevation="0"
-            class="tw-max-w-md tw-w-full tw-p-8 tw-rounded-[30px] tw-shadow-2xl tw-border tw-border-gray-100">
+            class="rise-in tw-w-full tw-max-w-md tw-rounded-[30px] tw-border tw-border-gray-100 tw-p-8 tw-shadow-2xl">
             <div class="tw-text-center tw-mb-8">
                 <v-icon
                     color="primary"
@@ -54,7 +54,7 @@
 
         <div
             v-else
-            class="tw-w-full tw-max-w-5xl">
+            class="rise-in tw-w-full tw-max-w-5xl">
             <div class="tw-flex tw-flex-col md:tw-flex-row tw-justify-between tw-items-start md:tw-items-center tw-mb-10 tw-gap-4">
                 <div>
                     <h1 class="tw-text-3xl tw-font-bold tw-text-gray-900">Gestão de Eventos</h1>
@@ -94,19 +94,19 @@
                             cols="12"
                             md="5">
                             <v-text-field
-                                :value="slugPasta"
-                                label="Nome da Pasta (Automático)"
+                                :model-value="slugPasta"
+                                label="Identificador"
                                 variant="filled"
                                 disabled
-                                prepend-inner-icon="mdi-folder-outline"
-                                hint="Nome da pasta que será criada no sistema"
+                                prepend-inner-icon="mdi-link-variant"
+                                hint="Gerado a partir do título e usado no endereço das fotografias"
                                 persistent-hint></v-text-field>
                         </v-col>
 
                         <v-col cols="12">
                             <v-textarea
                                 v-model="eventoForm.descricao"
-                                label="Descrição do Evento (Conteúdo do desc.txt)"
+                                label="Descrição do Evento"
                                 placeholder="Escreva aqui os detalhes do evento, história, etc..."
                                 variant="outlined"
                                 color="primary"
@@ -119,7 +119,7 @@
                             md="6">
                             <v-file-input
                                 v-model="eventoForm.capa"
-                                label="Fotografia de Capa (capa.jpg)"
+                                label="Fotografia de Capa"
                                 variant="outlined"
                                 color="primary"
                                 prepend-icon=""
@@ -172,20 +172,13 @@
                     <div>{{ feedback.mensagem }}</div>
                 </v-alert>
             </v-card>
-
-            <div class="tw-mt-8 tw-bg-blue-50 tw-p-6 tw-rounded-2xl tw-border tw-border-blue-100 tw-flex tw-gap-4 tw-items-start">
-                <v-icon color="blue">mdi-information-outline</v-icon>
-                <p class="tw-text-sm tw-text-blue-800 tw-leading-relaxed">
-                    <strong>Nota de Apresentação:</strong> Este formulário está preparado para ligar ao seu backend ou base de dados. Atualmente, ele simula o processo de validação de dados e upload
-                    de imagens.
-                </p>
-            </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
     import { ref, reactive, computed } from 'vue';
+    import { criarEvento, ficheirosDe, mensagemDeErro } from '@/services/eventosService';
 
     // --- ESTADO DE LOGIN ---
     const isLoggedIn = ref<boolean>(false);
@@ -208,8 +201,8 @@
     const eventoForm = reactive({
         titulo: '',
         descricao: '',
-        capa: null as File | null,
-        galeria: [] as File[],
+        capa: null as File | File[] | null,
+        galeria: null as File | File[] | null,
     });
 
     const feedback = reactive({
@@ -230,30 +223,46 @@
             .replace(/^-|-$/g, '');
     });
 
-    const submeterEvento = () => {
-        if (!eventoForm.titulo || !eventoForm.descricao || !eventoForm.capa) {
+    const submeterEvento = async () => {
+        const capa = ficheirosDe(eventoForm.capa)[0];
+        const galeria = ficheirosDe(eventoForm.galeria);
+
+        if (!eventoForm.titulo.trim() || !eventoForm.descricao.trim() || !capa || !slugPasta.value) {
             feedback.visivel = true;
             feedback.tipo = 'error';
             feedback.titulo = 'Erro de Validação';
-            feedback.mensagem = 'Por favor, preencha o título, a descrição e selecione uma foto de capa.';
+            feedback.mensagem = 'Preenche o título, a descrição e escolhe uma fotografia de capa.';
             return;
         }
 
         enviando.value = true;
         feedback.visivel = false;
 
-        setTimeout(() => {
-            enviando.value = false;
+        try {
+            await criarEvento({
+                titulo: eventoForm.titulo,
+                slug: slugPasta.value,
+                descricao: eventoForm.descricao,
+                capa,
+                galeria,
+            });
+
             feedback.visivel = true;
             feedback.tipo = 'success';
-            feedback.titulo = 'Evento Criado com Sucesso!';
-            feedback.mensagem = `A pasta /assets/eventos/${slugPasta.value} foi estruturada com os ficheiros capa.jpg e desc.txt.`;
-
+            feedback.titulo = 'Evento publicado';
+            feedback.mensagem = 'O evento já está visível na página de eventos.';
             eventoForm.titulo = '';
             eventoForm.descricao = '';
             eventoForm.capa = null;
-            eventoForm.galeria = [];
-        }, 2000);
+            eventoForm.galeria = null;
+        } catch (error) {
+            feedback.visivel = true;
+            feedback.tipo = 'error';
+            feedback.titulo = 'Não foi possível publicar';
+            feedback.mensagem = mensagemDeErro(error);
+        } finally {
+            enviando.value = false;
+        }
     };
 </script>
 

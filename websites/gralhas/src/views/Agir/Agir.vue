@@ -1,10 +1,10 @@
 <template>
-    <div class="tw-bg-gray-50 tw-min-h-screen tw-pb-24">
+    <div class="tw-min-h-screen tw-bg-gray-50">
         <section class="tw-bg-gray-900 tw-text-white tw-py-20 tw-rounded-b-[60px] tw-relative tw-overflow-hidden">
             <div
                 class="tw-absolute tw-top-0 tw-left-0 tw-w-full tw-h-full tw-bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] tw-from-primary/30 tw-via-gray-900 tw-to-gray-900 tw-opacity-80"></div>
 
-            <v-container class="tw-relative tw-z-10 tw-text-center">
+            <v-container class="rise-in tw-relative tw-z-10 tw-text-center">
                 <h2 class="tw-text-primary tw-font-bold tw-text-sm tw-tracking-[0.2em] tw-uppercase tw-mb-4">Faça a Diferença</h2>
                 <h1 class="tw-text-5xl md:tw-text-6xl tw-font-extrabold tw-tracking-tight tw-mb-6">
                     O Futuro de Gralhas <br class="tw-hidden md:tw-block" />
@@ -21,7 +21,8 @@
                 <v-row class="tw-gap-y-12">
                     <v-col
                         cols="12"
-                        md="7">
+                        md="7"
+                        class="reveal">
                         <v-card
                             elevation="0"
                             class="tw-h-full tw-p-8 md:tw-p-12 tw-rounded-[40px] tw-shadow-xl tw-border tw-border-gray-100">
@@ -111,8 +112,9 @@
                                             color="primary"
                                             size="x-large"
                                             block
-                                            class="tw-rounded-full tw-font-bold tw-h-16 tw-text-lg hover:tw-shadow-lg hover:tw--translate-y-1 tw-transition-all"
-                                            :loading="enviando">
+                                            class="tw-h-16 tw-rounded-full tw-text-lg tw-font-bold tw-transition-transform tw-duration-300 hover:tw--translate-y-1 hover:tw-shadow-lg"
+                                            :loading="enviando"
+                                            :disabled="enviando">
                                             Enviar Pedido de Inscrição
                                         </v-btn>
                                     </v-col>
@@ -132,7 +134,9 @@
 
                     <v-col
                         cols="12"
-                        md="5">
+                        md="5"
+                        class="reveal"
+                        style="--reveal-delay: 90ms">
                         <v-card
                             elevation="0"
                             class="tw-h-full tw-p-8 md:tw-p-12 tw-bg-gray-900 tw-text-white tw-rounded-[40px] tw-shadow-2xl tw-border tw-border-gray-800 tw-relative tw-overflow-hidden">
@@ -165,10 +169,11 @@
                                     <div class="tw-flex tw-justify-between tw-items-center">
                                         <span class="tw-text-2xl tw-font-mono tw-tracking-widest tw-text-primary">920 667 099</span>
                                         <v-btn
-                                            icon="mdi-content-copy"
+                                            :icon="copiado === 'MBWay' ? 'mdi-check' : 'mdi-content-copy'"
                                             variant="text"
                                             size="small"
-                                            color="gray-400"
+                                            :color="copiado === 'MBWay' ? 'primary' : 'gray-400'"
+                                            aria-label="Copiar número MBWay"
                                             @click="copiarTexto('920667099', 'MBWay')"
                                             class="group-hover:tw-text-white"></v-btn>
                                     </div>
@@ -184,10 +189,11 @@
                                     <div class="tw-flex tw-justify-between tw-items-center">
                                         <span class="tw-text-sm md:tw-text-base tw-font-mono tw-text-primary">PT50 0000 0000 0000 0000 000 00</span>
                                         <v-btn
-                                            icon="mdi-content-copy"
+                                            :icon="copiado === 'IBAN' ? 'mdi-check' : 'mdi-content-copy'"
                                             variant="text"
                                             size="small"
-                                            color="gray-400"
+                                            :color="copiado === 'IBAN' ? 'primary' : 'gray-400'"
+                                            aria-label="Copiar IBAN"
                                             @click="copiarTexto('PT50000000000000000000000', 'IBAN')"
                                             class="group-hover:tw-text-white"></v-btn>
                                     </div>
@@ -206,18 +212,22 @@
             timeout="3000"
             location="top right">
             <div class="tw-flex tw-items-center tw-gap-2 tw-font-bold">
-                <v-icon>mdi-check-circle</v-icon>
+                <v-icon>{{ snackbar.cor === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle' }}</v-icon>
                 {{ snackbar.mensagem }}
             </div>
         </v-snackbar>
+
+        <Footer />
     </div>
-    <Footer />
 </template>
 
 <script setup lang="ts">
     import { ref, reactive } from 'vue';
     import Footer from '../Layout/Footer.vue';
     import { enviarEmail } from '@/services/emailService';
+    import { useReveal } from '@/composables/useReveal';
+
+    useReveal();
 
     const enviando = ref(false);
     const sucessoSocio = ref(false);
@@ -232,6 +242,13 @@
     const TEMPLATE_ID_SOCIO = 'template_3ov2q6n';
 
     const submeterSocio = async () => {
+        if (!formSocio.nome.trim() || !formSocio.nif.trim() || !formSocio.email.includes('@') || !formSocio.morada.trim()) {
+            snackbar.mensagem = 'Preencha o nome, o NIF, o e-mail e a morada.';
+            snackbar.cor = 'error';
+            snackbar.visivel = true;
+            return;
+        }
+
         enviando.value = true;
         sucessoSocio.value = false;
 
@@ -266,9 +283,14 @@
     };
 
     const snackbar = reactive({ visivel: false, mensagem: '', cor: 'success' });
+    const copiado = ref('');
     const copiarTexto = async (texto: string, tipo: string) => {
         try {
             await navigator.clipboard.writeText(texto);
+            copiado.value = tipo;
+            window.setTimeout(() => {
+                if (copiado.value === tipo) copiado.value = '';
+            }, 1600);
             snackbar.mensagem = `${tipo} copiado!`;
             snackbar.cor = 'success';
             snackbar.visivel = true;

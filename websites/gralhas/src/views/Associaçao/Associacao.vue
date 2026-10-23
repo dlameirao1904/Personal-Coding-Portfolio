@@ -4,7 +4,7 @@
       <v-img
         src="@/assets/images/associacao/gralhas_foto7.jpg"
         cover
-        class="tw-absolute tw-inset-0 tw-brightness-75"
+        class="hero-drift tw-absolute tw-inset-0 tw-brightness-75"
       >
         <template v-slot:placeholder>
           <div class="tw-flex tw-items-center tw-justify-center tw-h-full tw-bg-gray-200">
@@ -13,7 +13,7 @@
         </template>
       </v-img>
       
-      <div class="tw-relative tw-z-10 tw-text-center tw-px-6">
+      <div class="rise-in tw-relative tw-z-10 tw-text-center tw-px-6">
         <h1 class="tw-text-5xl md:tw-text-7xl tw-font-extrabold tw-text-white tw-tracking-tighter tw-drop-shadow-2xl">
           Nossa Terra, <span class="tw-text-primary-light">Nossa Alma</span>
         </h1>
@@ -23,7 +23,7 @@
       </div>
     </section>
 
-    <section class="tw-py-24 tw-px-6 md:tw-px-16">
+    <section class="reveal tw-py-24 tw-px-6 md:tw-px-16">
       <v-container>
         <v-row class="tw-items-center">
           <v-col cols="12" md="6" class="tw-pr-md-16">
@@ -42,20 +42,22 @@
           
           <v-col cols="12" md="6" class="tw-mt-12 md:tw-mt-0">
             <div class="tw-relative">
-              <v-img
-                src="@/assets/images/associacao/gralhas_foto6.jpg"
-                class="tw-rounded-[40px] tw-shadow-2xl tw-z-10"
-                aspect-ratio="1.2"
-                cover
-              ></v-img>
-              <div class="tw-absolute tw--bottom-6 tw--left-6 tw-w-32 tw-h-32 tw-bg-secondary/10 tw-rounded-full tw--z-10"></div>
+              <div class="media-zoom tw-relative tw-z-10 tw-rounded-[40px] tw-shadow-2xl">
+                <v-img
+                  src="@/assets/images/associacao/gralhas_foto6.jpg"
+                  class="tw-rounded-[40px]"
+                  aspect-ratio="1.2"
+                  cover
+                ></v-img>
+              </div>
+              <div class="tw-absolute tw--bottom-6 tw--left-6 tw-z-0 tw-h-32 tw-w-32 tw-rounded-full tw-bg-secondary/10"></div>
             </div>
           </v-col>
         </v-row>
       </v-container>
     </section>
 
-    <section class="tw-bg-gray-900 tw-py-24 tw-text-white tw-rounded-t-[60px]">
+    <section class="reveal tw-bg-gray-900 tw-py-24 tw-text-white tw-rounded-t-[60px]">
       <v-container>
         <div class="tw-text-center tw-mb-16">
           <h2 class="tw-text-primary tw-font-bold tw-text-4xl md:tw-text-5xl">A.R.D.S.C.G</h2>
@@ -64,7 +66,7 @@
 
         <v-row class="tw-gap-y-12">
           <v-col cols="12" md="4">
-            <div class="tw-p-8 tw-bg-white/5 tw-rounded-3xl tw-border tw-border-white/10 tw-h-full">
+            <div class="lift tw-p-8 tw-bg-white/5 tw-rounded-3xl tw-border tw-border-white/10 tw-h-full">
               <v-icon color="primary" size="40" class="tw-mb-6">mdi-flag-variant</v-icon>
               <h4 class="tw-text-xl tw-font-bold tw-mb-4">O Nosso Objeto</h4>
               <p class="tw-text-gray-400 tw-leading-relaxed">
@@ -74,7 +76,7 @@
           </v-col>
 
           <v-col cols="12" md="4">
-            <div class="tw-p-8 tw-bg-white/5 tw-rounded-3xl tw-border tw-border-white/10 tw-h-full">
+            <div class="lift tw-p-8 tw-bg-white/5 tw-rounded-3xl tw-border tw-border-white/10 tw-h-full">
               <v-icon color="primary" size="40" class="tw-mb-6">mdi-sprout</v-icon>
               <h4 class="tw-text-xl tw-font-bold tw-mb-4">Resiliência</h4>
               <p class="tw-text-gray-400 tw-leading-relaxed">
@@ -84,7 +86,7 @@
           </v-col>
 
           <v-col cols="12" md="4">
-            <div class="tw-p-8 tw-bg-white/5 tw-rounded-3xl tw-border tw-border-white/10 tw-h-full">
+            <div class="lift tw-p-8 tw-bg-white/5 tw-rounded-3xl tw-border tw-border-white/10 tw-h-full">
               <v-icon color="primary" size="40" class="tw-mb-6">mdi-account-group</v-icon>
               <h4 class="tw-text-xl tw-font-bold tw-mb-4">Comunidade e Diáspora</h4>
               <p class="tw-text-gray-400 tw-leading-relaxed">
@@ -96,23 +98,27 @@
       </v-container>
     </section>
 
-    <section class="tw-py-24 tw-bg-white">
+    <section class="reveal tw-py-24 tw-bg-white">
       <v-container>
         <v-row class="tw-items-center">
           <v-col cols="12" md="7">
             <div class="tw-grid tw-grid-cols-2 tw-gap-4">
-              <v-img
-                src="@/assets/images/associacao/IMG_0955.jpg"
-                class="tw-rounded-2xl tw-shadow-lg"
-                cover
-                height="300"
-              ></v-img>
-              <v-img
-                src="@/assets/images/associacao/screenshot_20200910_0143006870047476209789029.webp"
-                class="tw-rounded-2xl tw-shadow-lg tw-mt-12"
-                cover
-                height="300"
-              ></v-img>
+              <div class="media-zoom tw-rounded-2xl tw-shadow-lg">
+                <v-img
+                  src="@/assets/images/associacao/IMG_0955.jpg"
+                  class="tw-rounded-2xl"
+                  cover
+                  height="300"
+                ></v-img>
+              </div>
+              <div class="media-zoom tw-mt-12 tw-rounded-2xl tw-shadow-lg">
+                <v-img
+                  src="@/assets/images/associacao/screenshot_20200910_0143006870047476209789029.webp"
+                  class="tw-rounded-2xl"
+                  cover
+                  height="300"
+                ></v-img>
+              </div>
             </div>
           </v-col>
           <v-col cols="12" md="5" class="tw-pl-md-12 tw-mt-12 md:tw-mt-0">
@@ -128,7 +134,7 @@
       </v-container>
     </section>
 
-    <section class="tw-py-20 tw-bg-primary/5 tw-text-center">
+    <section class="reveal tw-py-20 tw-bg-primary/5 tw-text-center">
       <v-container>
         <div class="tw-max-w-3xl tw-mx-auto">
           <h2 class="tw-text-4xl tw-font-bold tw-text-gray-900">Junte-se a esta nobre causa</h2>
@@ -140,7 +146,7 @@
             size="x-large"
             variant="flat"
             to="/agir"
-            class="tw-mt-10 tw-rounded-full tw-px-12 tw-font-bold tw-h-16"
+            class="tw-mt-10 tw-h-16 tw-rounded-full tw-px-12 tw-font-bold tw-transition-transform tw-duration-300 hover:tw--translate-y-1"
           >
             Tornar-me Membro
           </v-btn>
@@ -154,6 +160,9 @@
 
 <script setup lang="ts">
 import Footer from '../Layout/Footer.vue';
+import { useReveal } from '@/composables/useReveal';
+
+useReveal();
 </script>
 
 <style scoped>

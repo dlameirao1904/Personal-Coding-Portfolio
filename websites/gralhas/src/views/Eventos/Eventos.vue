@@ -1,10 +1,10 @@
 <template>
-    <div class="tw-bg-gray-50 tw-min-h-screen tw-pb-24">
+    <div class="tw-min-h-screen tw-bg-gray-50">
         <section class="tw-bg-gray-900 tw-text-white tw-py-24 tw-rounded-b-[60px] tw-relative tw-overflow-hidden">
             <div
                 class="tw-absolute tw-top-0 tw-right-0 tw-w-full tw-h-full tw-bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] tw-from-primary/20 tw-via-gray-900 tw-to-gray-900 tw-opacity-60"></div>
 
-            <v-container class="tw-relative tw-z-10 tw-text-center">
+            <v-container class="rise-in tw-relative tw-z-10 tw-text-center">
                 <h2 class="tw-text-primary tw-font-bold tw-text-sm tw-tracking-[0.2em] tw-uppercase tw-mb-4">Memórias Vivas</h2>
                 <h1 class="tw-text-5xl md:tw-text-6xl tw-font-extrabold tw-tracking-tight tw-mb-6">Os Nossos <span class="tw-text-primary">Eventos</span></h1>
                 <p class="tw-text-lg tw-text-gray-400 tw-max-w-2xl tw-mx-auto tw-leading-relaxed">
@@ -15,22 +15,41 @@
 
         <section class="tw--mt-12 tw-px-6 md:tw-px-16 tw-relative tw-z-20">
             <v-container>
-                <v-row>
+                <div
+                    v-if="carregando"
+                    class="tw-flex tw-justify-center tw-py-20">
+                    <v-progress-circular
+                        indeterminate
+                        color="primary"
+                        size="52"></v-progress-circular>
+                </div>
+
+                <div
+                    v-else-if="erroCarregar"
+                    class="tw-mx-auto tw-max-w-xl tw-rounded-[30px] tw-bg-white tw-px-8 tw-py-14 tw-text-center tw-shadow-xl">
+                    <h2 class="tw-text-2xl tw-font-bold tw-text-gray-900">Não foi possível carregar os eventos</h2>
+                    <p class="tw-mt-3 tw-text-gray-600">{{ erroCarregar }}</p>
+                </div>
+
+                <v-row v-else-if="eventosLista.length">
                     <v-col
-                        v-for="evento in eventosLista"
+                        v-for="(evento, index) in eventosLista"
                         :key="evento.id"
                         cols="12"
                         md="6"
-                        lg="4">
+                        lg="4"
+                        class="reveal"
+                        :style="{ '--reveal-delay': `${index * 70}ms` }">
                         <v-card
-                            class="tw-group tw-h-full tw-rounded-[30px] tw-shadow-xl hover:tw-shadow-2xl hover:tw--translate-y-2 tw-transition-all tw-duration-300 tw-border tw-border-gray-100 tw-overflow-hidden tw-cursor-pointer tw-flex tw-flex-col"
+                            class="lift tw-group tw-flex tw-h-full tw-cursor-pointer tw-flex-col tw-overflow-hidden tw-rounded-[30px] tw-border tw-border-gray-100 tw-shadow-xl hover:tw-shadow-2xl"
                             elevation="0"
                             @click="abrirEvento(evento)">
-                            <div class="tw-h-64 tw-overflow-hidden tw-relative">
+                            <div class="media-zoom tw-relative tw-h-64 tw-bg-gray-200">
                                 <v-img
+                                    v-if="evento.capa"
                                     :src="evento.capa"
                                     :alt="evento.titulo"
-                                    class="tw-w-full tw-h-full tw-transform group-hover:tw-scale-110 tw-transition-transform tw-duration-700 tw-object-cover"
+                                    class="tw-h-full tw-w-full"
                                     cover></v-img>
                             </div>
 
@@ -50,6 +69,19 @@
                         </v-card>
                     </v-col>
                 </v-row>
+
+                <div
+                    v-if="!carregando && !erroCarregar && eventosLista.length === 0"
+                    class="tw-mx-auto tw-mt-8 tw-max-w-xl tw-rounded-[30px] tw-bg-white tw-px-8 tw-py-14 tw-text-center tw-shadow-xl">
+                    <v-icon
+                        color="primary"
+                        size="42"
+                        class="tw-mb-4"
+                        >mdi-calendar-blank-outline</v-icon
+                    >
+                    <h2 class="tw-text-2xl tw-font-bold tw-text-gray-900">Ainda não há eventos publicados</h2>
+                    <p class="tw-mt-3 tw-text-gray-600">Quando houver novas memórias da aldeia, aparecem aqui.</p>
+                </div>
             </v-container>
         </section>
 
@@ -100,118 +132,174 @@
                                     cols="12"
                                     sm="6"
                                     md="4">
-                                    <v-img
-                                        :src="foto"
-                                        class="tw-rounded-2xl tw-shadow-md hover:tw-shadow-xl hover:tw-scale-[1.02] tw-transition-all tw-duration-300"
-                                        height="200"
-                                        cover
-                                        @click="abrirFoto(foto)">
-                                        <template v-slot:placeholder>
-                                            <div class="tw-flex tw-items-center tw-justify-center tw-h-full tw-bg-gray-100">
-                                                <v-progress-circular
-                                                    indeterminate
-                                                    color="primary"></v-progress-circular>
-                                            </div>
-                                        </template>
-                                    </v-img>
+                                    <button
+                                        type="button"
+                                        class="thumb"
+                                        @click="abrirFoto(index)">
+                                        <v-img
+                                            :src="foto"
+                                            class="tw-rounded-2xl tw-shadow-md"
+                                            height="200"
+                                            cover
+                                            :alt="`Fotografia ${index + 1} de ${eventoSelecionado.titulo}`">
+                                            <template v-slot:placeholder>
+                                                <div class="tw-flex tw-h-full tw-items-center tw-justify-center tw-bg-gray-100">
+                                                    <v-progress-circular
+                                                        indeterminate
+                                                        color="primary"></v-progress-circular>
+                                                </div>
+                                            </template>
+                                        </v-img>
+                                    </button>
                                 </v-col>
                             </v-row>
-                            <v-overlay
-                                v-model="fotoVisivel"
-                                class="align-center justify-center"
-                                scrim="black"
-                                opacity="0.95"
-                                z-index="3000"
-                                @click:outside="fotoVisivel = false">
-                                <div class="tw-relative tw-w-screen tw-h-screen tw-flex tw-items-center tw-justify-center">
-                                    <v-btn
-                                        icon="mdi-close"
-                                        variant="flat"
-                                        color="white"
-                                        size="large"
-                                        class="tw-absolute tw-top-4 tw-right-4 tw-z-50 tw-bg-black/30 hover:tw-bg-black/60 tw-backdrop-blur-sm"
-                                        @click="fotoVisivel = false"></v-btn>
-
-                                    <img
-                                        :src="fotoSelecionada"
-                                        class="tw-w-[95vw] tw-h-[85vh] tw-object-contain tw-transition-all tw-duration-300"
-                                        alt="Foto em tamanho gigante" />
-                                </div>
-                            </v-overlay>
                         </div>
                     </div>
                 </div>
             </v-card>
         </v-dialog>
+
+        <Teleport to="body">
+            <div
+                v-if="fotoVisivel"
+                class="lightbox"
+                @click.self="fotoVisivel = false">
+                <button
+                    type="button"
+                    class="lightbox-close"
+                    aria-label="Fechar fotografia"
+                    @click="fotoVisivel = false">
+                    <v-icon color="white">mdi-close</v-icon>
+                </button>
+
+                <button
+                    v-if="temMaisFotos"
+                    type="button"
+                    class="lightbox-nav lightbox-prev"
+                    aria-label="Fotografia anterior"
+                    @click="mudarFoto(-1)">
+                    <v-icon color="white">mdi-chevron-left</v-icon>
+                </button>
+
+                <img
+                    :key="fotoSelecionada"
+                    :src="fotoSelecionada"
+                    class="lightbox-photo"
+                    alt="Fotografia do evento"
+                    draggable="false"
+                    @pointerdown="onSwipeStart"
+                    @pointerup="onSwipeEnd" />
+
+                <button
+                    v-if="temMaisFotos"
+                    type="button"
+                    class="lightbox-nav lightbox-next"
+                    aria-label="Fotografia seguinte"
+                    @click="mudarFoto(1)">
+                    <v-icon color="white">mdi-chevron-right</v-icon>
+                </button>
+
+                <p
+                    v-if="temMaisFotos"
+                    class="lightbox-count">
+                    {{ fotoIndex + 1 }} / {{ eventoSelecionado?.fotos.length }}
+                </p>
+            </div>
+        </Teleport>
+
+        <Footer />
     </div>
-    <Footer />
 </template>
 
 <script setup lang="ts">
-    import { ref, onMounted } from 'vue';
+    import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
     import Footer from '../Layout/Footer.vue';
-
-    interface Evento {
-        id: string;
-        titulo: string;
-        capa: string;
-        descricao: string;
-        fotos: string[];
-    }
+    import { useReveal } from '@/composables/useReveal';
+    import { listarEventos, mensagemDeErro, type Evento } from '@/services/eventosService';
 
     const dialogVisivel = ref<boolean>(false);
     const eventoSelecionado = ref<Evento | null>(null);
     const eventosLista = ref<Evento[]>([]);
-
-    const capasFiles = import.meta.glob('@/assets/eventos/*/capa.jpg', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-    const descricoesFiles = import.meta.glob('@/assets/eventos/*/desc.txt', { eager: true, as: 'raw' }) as Record<string, string>;
-    const todasFotosFiles = import.meta.glob('@/assets/eventos/*/*.{jpg,jpeg,png,webp}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+    const carregando = ref(true);
+    const erroCarregar = ref('');
 
     const fotoVisivel = ref<boolean>(false);
     const fotoSelecionada = ref<string>('');
+    const fotoIndex = ref(0);
+    const temMaisFotos = computed(() => (eventoSelecionado.value?.fotos.length ?? 0) > 1);
+    let swipeStartX = 0;
 
-    const abrirFoto = (foto: string) => {
-        fotoSelecionada.value = foto;
+    const { refresh } = useReveal();
+
+    const abrirFoto = (index: number) => {
+        const fotos = eventoSelecionado.value?.fotos ?? [];
+        if (!fotos[index]) return;
+        fotoIndex.value = index;
+        fotoSelecionada.value = fotos[index];
         fotoVisivel.value = true;
     };
 
-    const carregarEventos = () => {
-        const eventosTemp: Evento[] = [];
+    const mudarFoto = (direcao: number) => {
+        const fotos = eventoSelecionado.value?.fotos ?? [];
+        if (fotos.length < 2) return;
+        fotoIndex.value = (fotoIndex.value + direcao + fotos.length) % fotos.length;
+        fotoSelecionada.value = fotos[fotoIndex.value];
+    };
 
-        for (const path in capasFiles) {
-            const regex = /eventos\/([^/]+)\/capa\.jpg$/i;
-            const match = path.match(regex);
+    const onSwipeStart = (event: PointerEvent) => {
+        swipeStartX = event.clientX;
+    };
 
-            if (match) {
-                const nomePasta = match[1];
+    const onSwipeEnd = (event: PointerEvent) => {
+        const delta = event.clientX - swipeStartX;
+        if (delta > 48) mudarFoto(-1);
+        if (delta < -48) mudarFoto(1);
+    };
 
-                const tituloFormatado = nomePasta
-                    .split('-')
-                    .map((palavra) => palavra.charAt(0).toUpperCase() + palavra.slice(1))
-                    .join(' ');
+    const onKeydown = (event: KeyboardEvent) => {
+        if (!fotoVisivel.value) return;
+        event.stopPropagation();
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            fotoVisivel.value = false;
+        }
+        if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            mudarFoto(1);
+        }
+        if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            mudarFoto(-1);
+        }
+    };
 
-                const descPath = Object.keys(descricoesFiles).find((p) => p.includes(`eventos/${nomePasta}/desc.txt`));
-                const descricaoTexto = descPath ? descricoesFiles[descPath] : 'Descrição não disponível.';
+    const carregarEventos = async () => {
+        carregando.value = true;
+        erroCarregar.value = '';
 
-                const fotosDaPasta = Object.keys(todasFotosFiles)
-                    .filter((p) => p.includes(`eventos/${nomePasta}/`) && !p.toLowerCase().endsWith('capa.jpg'))
-                    .map((p) => todasFotosFiles[p]);
-
-                eventosTemp.push({
-                    id: nomePasta,
-                    titulo: tituloFormatado,
-                    capa: capasFiles[path],
-                    descricao: descricaoTexto,
-                    fotos: fotosDaPasta,
-                });
-            }
+        try {
+            eventosLista.value = await listarEventos();
+        } catch (error) {
+            erroCarregar.value = mensagemDeErro(error);
+        } finally {
+            carregando.value = false;
         }
 
-        eventosLista.value = eventosTemp;
+        await nextTick();
+        refresh();
     };
+
+    watch(dialogVisivel, (aberto) => {
+        if (!aberto) fotoVisivel.value = false;
+    });
 
     onMounted(() => {
         carregarEventos();
+        window.addEventListener('keydown', onKeydown, true);
+    });
+
+    onBeforeUnmount(() => {
+        window.removeEventListener('keydown', onKeydown, true);
     });
 
     const abrirEvento = (evento: Evento) => {
@@ -229,5 +317,96 @@
     }
     .tw-whitespace-pre-line {
         white-space: pre-line;
+    }
+
+    .thumb {
+        display: block;
+        width: 100%;
+        overflow: hidden;
+        border-radius: 1rem;
+        cursor: zoom-in;
+    }
+
+    .thumb :deep(.v-img) {
+        transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .lightbox {
+        position: fixed;
+        z-index: 4000;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.92);
+        animation: lightbox-in 0.22s ease;
+    }
+
+    .lightbox-photo {
+        width: min(92vw, 1400px);
+        height: 82vh;
+        object-fit: contain;
+        animation: lightbox-in 0.28s ease;
+        touch-action: pan-y;
+    }
+
+    .lightbox-close,
+    .lightbox-nav {
+        position: absolute;
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.16);
+        cursor: pointer;
+    }
+
+    .lightbox-close {
+        top: 1rem;
+        right: 1rem;
+    }
+
+    .lightbox-prev {
+        left: 1rem;
+    }
+
+    .lightbox-next {
+        right: 1rem;
+    }
+
+    .lightbox-count {
+        position: absolute;
+        bottom: 1.25rem;
+        margin: 0;
+        color: white;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+    }
+
+    @keyframes lightbox-in {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+        .thumb:hover :deep(.v-img) {
+            transform: scale(1.04);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .lightbox,
+        .lightbox-photo,
+        .thumb :deep(.v-img) {
+            animation: none;
+            transition: none;
+        }
     }
 </style>
