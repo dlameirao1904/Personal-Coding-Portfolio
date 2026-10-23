@@ -1,26 +1,23 @@
-import { RouteRecordRaw, createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 
 import Home from '@/views/Home.vue'
+import Portfolio from '@/views/Portfolio/Portfolio.vue'
 import Homepage from '@/views/Homepage/Homepage.vue'
-
-import About from '@/views/About/About.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'Home',
-    redirect: { name: 'Homepage' },
     component: Home,
     children: [
       {
-        path: '/',
-        name: 'Homepage',
-        component: Homepage,
+        path: '',
+        name: 'Portfolio',
+        component: Portfolio,
       },
       {
-        path: 'about',
-        name: 'About',
-        component: About,
+        path: 'jornada',
+        name: 'Jornada',
+        component: Homepage,
       },
     ],
   },

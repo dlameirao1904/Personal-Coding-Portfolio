@@ -34,6 +34,15 @@ module.exports = {
                 '9xl': '7rem',
                 '10xl': '8rem',
             },
+            keyframes: {
+                marquee: {
+                    '0%': { transform: 'translateX(0)' },
+                    '100%': { transform: 'translateX(-50%)' },
+                },
+            },
+            animation: {
+                marquee: 'marquee 46s linear infinite',
+            },
         },
     },
 

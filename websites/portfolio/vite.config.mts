@@ -19,7 +19,7 @@ export default ({ mode }) => {
   const appColor =
     typeof theme.colors.primary === 'string' ? theme.colors.primary : theme.colors.primary.DEFAULT
   process.env.VITE_APP_COLOR_THEME = appColor
-  const appName = 'Diogo'
+  const appName = 'Diogo Aires'
   process.env.VITE_APP_NAME = appName
 
   return defineConfig({
@@ -44,7 +44,8 @@ export default ({ mode }) => {
         template: {
           transformAssetUrls,
           compilerOptions: {
-            isCustomElement: (tag) => tag.startsWith('Tres') && tag !== 'TresCanvas',
+            isCustomElement: (tag) =>
+              (tag.startsWith('Tres') && tag !== 'TresCanvas') || tag === 'primitive',
           },
         },
       }),

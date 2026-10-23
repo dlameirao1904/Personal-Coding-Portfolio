@@ -1,5 +1,5 @@
 <template>
-  <TresGroup ref="playerRef" :position="[0, 0, 40]">
+  <TresGroup ref="playerRef">
     <TresMesh :position="[0, 1.2, 0]" cast-shadow>
       <TresBoxGeometry :args="[0.5, 0.7, 0.3]" />
       <TresMeshStandardMaterial color="#d97706" :flatShading="true" />
@@ -79,198 +79,375 @@
 </template>
 
 <script setup lang="ts">
-import { shallowRef, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, shallowRef, watch } from 'vue'
 import { useLoop, useTresContext } from '@tresjs/core'
 import { Group, Raycaster, Vector3 } from 'three'
+import { SPAWN, passageById, passages } from '@/data/journey'
+import { hikeKeys, hikeStick, releaseHikeKeys, setHikeKeyFromEvent } from '@/game/controls'
 
-const { scene, camera, controls } = useTresContext()
-const raycaster = new Raycaster()
-const downVector = new Vector3(0, -1, 0)
-const rayOrigin = new Vector3()
+const emit = defineEmits(['arrive', 'started'])
 
-// Variáveis de referência para os membros do corpo
+const { scene, camera, sizes } = useTresContext()
 const playerRef = shallowRef<Group | null>(null)
 const leftLeg = shallowRef<Group | null>(null)
 const rightLeg = shallowRef<Group | null>(null)
 const leftArm = shallowRef<Group | null>(null)
 const rightArm = shallowRef<Group | null>(null)
 
-// --- CONFIGURAÇÃO DA CÂMARA E ZIPLINE ---
-const cameraLookTarget = new Vector3(0, 0, 40)
-const cameraOffset = new Vector3(0, 12, 25)
-let isAutoFollowing = true
-let isZiplining = false
-const ziplineEnd = new Vector3(120, 12, -10) // Ponto de chegada na Casa na Árvore
+const raycaster = new Raycaster()
+const rayOrigin = new Vector3()
+const down = new Vector3(0, -1, 0)
+const forward = new Vector3()
+const right = new Vector3()
+const up = new Vector3(0, 1, 0)
+const velocity = new Vector3()
+const desiredCam = new Vector3()
+const look = new Vector3(SPAWN[0], 1.4, SPAWN[2] - 6)
+const lookTarget = new Vector3()
 
-const keys = {
-  ArrowUp: false,
-  ArrowDown: false,
-  ArrowLeft: false,
-  ArrowRight: false,
-  w: false,
-  s: false,
-  a: false,
-  d: false,
-  ' ': false,
+const SPEED = 6.6
+const ACCEL = 28
+const AIR_ACCEL = 9
+const FRICTION = 22
+const GRAVITY = 24
+const JUMP = 7.2
+const MAX_STEP = 0.95
+const MAX_DROP = 1.05
+
+let grounded = false
+let hasLanded = false
+let coyote = 0
+let jumpBuffer = 0
+let spaceWasDown = false
+let jumpHeld = false
+let walkPhase = 0
+let announcedStart = false
+let currentPassage: string | null = null
+let lastEmitted: string | null | undefined
+let walkableReady = false
+let cameraReady = false
+let orbitYaw = Math.PI
+let orbitPitch = 0.42
+let draggingLook = false
+let lookX = 0
+let lookY = 0
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value))
 }
 
-const handleKey = (e: KeyboardEvent, value: boolean) => {
-  if (e.key in keys) keys[e.key as keyof typeof keys] = value
+function onLookDown(event: PointerEvent) {
+  if (event.button !== 0) return
+  const target = event.target as HTMLElement | null
+  if (target?.tagName !== 'CANVAS') return
+  draggingLook = true
+  lookX = event.clientX
+  lookY = event.clientY
+  const canvas = target?.closest('canvas') as HTMLElement | null
+  canvas?.style.setProperty('cursor', 'grabbing')
 }
 
-const disableAutoFollow = () => {
-  isAutoFollowing = false
+function onLookMove(event: PointerEvent) {
+  if (!draggingLook) return
+  const dx = event.clientX - lookX
+  const dy = event.clientY - lookY
+  lookX = event.clientX
+  lookY = event.clientY
+  orbitYaw -= dx * 0.0045
+  orbitPitch = clamp(orbitPitch + dy * 0.0032, 0.08, 1.05)
+}
+
+function onLookUp() {
+  if (!draggingLook) return
+  draggingLook = false
+  document.querySelector('canvas')?.style.removeProperty('cursor')
+}
+
+watch(playerRef, (player) => {
+  if (!player || player.userData.placed) return
+  player.position.set(SPAWN[0], SPAWN[1], SPAWN[2])
+  player.rotation.y = Math.PI
+  player.userData.placed = true
+})
+
+const onKeyDown = (event: KeyboardEvent) => {
+  if (setHikeKeyFromEvent(event, true)) event.preventDefault()
+}
+const onKeyUp = (event: KeyboardEvent) => {
+  setHikeKeyFromEvent(event, false)
 }
 
 onMounted(() => {
-  window.addEventListener('keydown', (e) => handleKey(e, true))
-  window.addEventListener('keyup', (e) => handleKey(e, false))
-  window.addEventListener('mousedown', disableAutoFollow)
-  window.addEventListener('wheel', disableAutoFollow)
-  window.addEventListener('touchstart', disableAutoFollow)
+  window.addEventListener('keydown', onKeyDown)
+  window.addEventListener('keyup', onKeyUp)
+  window.addEventListener('blur', releaseHikeKeys)
+  window.addEventListener('pointerdown', onLookDown)
+  window.addEventListener('pointermove', onLookMove)
+  window.addEventListener('pointerup', onLookUp)
+  window.addEventListener('pointercancel', onLookUp)
 })
 
-const { onBeforeRender } = useLoop()
-const speed = 12
-let velocityY = 0
-const gravity = 10
-const jumpForce = 8
-let isGrounded = false
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeyDown)
+  window.removeEventListener('keyup', onKeyUp)
+  window.removeEventListener('blur', releaseHikeKeys)
+  window.removeEventListener('pointerdown', onLookDown)
+  window.removeEventListener('pointermove', onLookMove)
+  window.removeEventListener('pointerup', onLookUp)
+  window.removeEventListener('pointercancel', onLookUp)
+  releaseHikeKeys()
+})
 
-const emit = defineEmits(['section-changed', 'enter-treehouse'])
+function approach(current: number, target: number, rate: number, dt: number) {
+  const max = rate * dt
+  const delta = target - current
+  if (Math.abs(delta) <= max) return target
+  return current + Math.sign(delta) * max
+}
 
-onBeforeRender(({ delta, elapsed }) => {
-  if (!playerRef.value) return
+function sample(x: number, z: number) {
+  const root = scene.value?.getObjectByName('walkable')
+  if (!root) return null
+  if (!walkableReady) {
+    root.updateMatrixWorld(true)
+    walkableReady = true
+  }
+  rayOrigin.set(x, 80, z)
+  raycaster.set(rayOrigin, down)
+  raycaster.far = 120
+  const hits = raycaster.intersectObject(root, true)
+  return hits.length ? hits[0].point.y : null
+}
 
-  if (isZiplining) {
-    const currentPos = playerRef.value.position
-    const dist = currentPos.distanceTo(ziplineEnd)
+function canStand(x: number, z: number, feetY: number) {
+  const floor = sample(x, z)
+  if (floor === null) return false
+  const rise = floor - feetY
+  const drop = feetY - floor
+  if (rise > MAX_STEP) return false
+  if (grounded && drop > MAX_DROP) return false
+  return true
+}
 
-    if (dist < 1.5) {
-      isZiplining = false
-      emit('enter-treehouse')
-    } else {
-      const dir = new Vector3().subVectors(ziplineEnd, currentPos).normalize()
-      playerRef.value.position.add(dir.multiplyScalar(40 * delta))
-      playerRef.value.lookAt(ziplineEnd)
+function easeAngle(current: number, target: number, dt: number) {
+  let delta = target - current
+  while (delta > Math.PI) delta -= Math.PI * 2
+  while (delta < -Math.PI) delta += Math.PI * 2
+  return current + delta * (1 - Math.exp(-dt * 12))
+}
+
+function nearestPassage(x: number, z: number) {
+  let project: string | null = null
+  let projectDistance = Infinity
+  for (const passage of passages) {
+    if (passage.kind !== 'project') continue
+    const distance = Math.hypot(x - passage.position[0], z - passage.position[2])
+    if (distance <= passage.radius && distance < projectDistance) {
+      project = passage.id
+      projectDistance = distance
+    }
+  }
+  if (project) return project
+
+  let step: string | null = null
+  let stepDistance = Infinity
+  for (const passage of passages) {
+    if (passage.kind === 'project') continue
+    const distance = Math.hypot(x - passage.position[0], z - passage.position[2])
+    if (distance <= passage.radius && distance < stepDistance) {
+      step = passage.id
+      stepDistance = distance
+    }
+  }
+  return step
+}
+
+function updatePassage(x: number, z: number) {
+  const detected = nearestPassage(x, z)
+  if (currentPassage) {
+    const current = passageById[currentPassage]
+    const distance = Math.hypot(x - current.position[0], z - current.position[2])
+    const stick = current.radius * (current.kind === 'project' ? 1.18 : 1.12)
+    const enteredProject = detected && passageById[detected].kind === 'project'
+    if (distance > stick || (enteredProject && detected !== currentPassage)) {
+      currentPassage = detected
     }
   } else {
-    let moveZ = (keys.ArrowUp || keys.w ? -1 : 0) + (keys.ArrowDown || keys.s ? 1 : 0)
-    let moveX = (keys.ArrowLeft || keys.a ? -1 : 0) + (keys.ArrowRight || keys.d ? 1 : 0)
+    currentPassage = detected
+  }
+  if (currentPassage !== lastEmitted) {
+    lastEmitted = currentPassage
+    emit('arrive', currentPassage)
+  }
+}
 
-    if (moveX !== 0 || moveZ !== 0) {
-      isAutoFollowing = true
-      const length = Math.sqrt(moveX * moveX + moveZ * moveZ)
-      moveX /= length
-      moveZ /= length
+function swingLimb(limb: Group | null, target: number, dt: number) {
+  if (!limb) return
+  limb.rotation.x = approach(limb.rotation.x, target, 10, dt)
+}
 
-      const nextX = playerRef.value.position.x + moveX * speed * delta
-      const nextZ = playerRef.value.position.z + moveZ * speed * delta
+function reset() {
+  const player = playerRef.value
+  if (!player) return
+  player.position.set(SPAWN[0], SPAWN[1], SPAWN[2])
+  player.rotation.y = Math.PI
+  orbitYaw = Math.PI
+  orbitPitch = 0.42
+  velocity.set(0, 0, 0)
+  grounded = false
+  hasLanded = false
+  coyote = 0
+  jumpBuffer = 0
+  jumpHeld = false
+}
 
-      rayOrigin.set(nextX, 100, nextZ)
-      raycaster.set(rayOrigin, downVector)
-      const nextIntersects = raycaster.intersectObjects(scene.value.children, true)
+defineExpose({ reset })
 
-      let nextFloorY = 0
-      const validHits = nextIntersects.filter((h) => {
-        let o: any = h.object
-        while (o) {
-          if (o === playerRef.value) return false
-          o = o.parent
-        }
-        return true
-      })
-      if (validHits.length > 0) nextFloorY = validHits[0].point.y
+const { onBeforeRender } = useLoop()
 
-      if (nextFloorY - playerRef.value.position.y <= 1.2) {
-        playerRef.value.position.x = nextX
-        playerRef.value.position.z = nextZ
-      }
+onBeforeRender(({ delta }) => {
+  const player = playerRef.value
+  if (!player || !player.userData.placed) return
+  const dt = Math.min(delta, 0.05)
 
-      playerRef.value.rotation.y = Math.atan2(moveX, moveZ)
-
-      const ws = 15,
-        wa = 0.6
-      if (leftLeg.value) leftLeg.value.rotation.x = Math.sin(elapsed * ws) * wa
-      if (rightLeg.value) rightLeg.value.rotation.x = -Math.sin(elapsed * ws) * wa
-      if (leftArm.value) leftArm.value.rotation.x = -Math.sin(elapsed * ws) * wa
-      if (rightArm.value) rightArm.value.rotation.x = Math.sin(elapsed * ws) * wa
-    } else {
-      if (leftLeg.value) leftLeg.value.rotation.x = 0
-      if (rightLeg.value) rightLeg.value.rotation.x = 0
-    }
-
-    if (keys[' '] && isGrounded) {
-      velocityY = jumpForce
-      isGrounded = false
-    }
-    velocityY -= gravity * delta
-    playerRef.value.position.y += velocityY * delta
-
-    rayOrigin.set(playerRef.value.position.x, 100, playerRef.value.position.z)
-    raycaster.set(rayOrigin, downVector)
-    const intersects = raycaster.intersectObjects(scene.value.children, true)
-    const validIntersects = intersects.filter((h) => {
-      let o: any = h.object
-      while (o) {
-        if (o === playerRef.value) return false
-        o = o.parent
-      }
-      return true
-    })
-
-    let floorY = 0
-    let currentSection = null
-    if (validIntersects.length > 0) {
-      floorY = validIntersects[0].point.y
-      const objName = validIntersects[0].object.name
-      if (['AboutMe', 'Projects', 'Experience'].includes(objName)) currentSection = objName
-      if (objName === 'ZiplineStart') isZiplining = true
-    }
-
-    const bounce =
-      (moveX !== 0 || moveZ !== 0) && isGrounded ? Math.abs(Math.sin(elapsed * 15)) * 0.2 : 0
-    if (playerRef.value.position.y <= floorY) {
-      playerRef.value.position.y = floorY + bounce
-      velocityY = 0
-      isGrounded = true
-    } else {
-      isGrounded = false
-    }
-
-    emit('section-changed', currentSection)
+  const activeCamera = camera.activeCamera.value
+  if (activeCamera) {
+    activeCamera.getWorldDirection(forward)
+    forward.y = 0
+    if (forward.lengthSq() < 1e-4) forward.set(0, 0, -1)
+    else forward.normalize()
+    right.crossVectors(forward, up).normalize()
+  } else {
+    forward.set(0, 0, -1)
+    right.set(1, 0, 0)
   }
 
-  const activeCamera =
-    (camera as any)?.value || (scene.value?.getObjectByProperty('isCamera', true) as any)
-  const activeControls = (controls as any)?.value || (controls as any)
+  const stickMag = Math.hypot(hikeStick.x, hikeStick.y)
+  const along =
+    stickMag > 0.01
+      ? hikeStick.y
+      : (hikeKeys.w || hikeKeys.ArrowUp ? 1 : 0) - (hikeKeys.s || hikeKeys.ArrowDown ? 1 : 0)
+  const strafe =
+    stickMag > 0.01
+      ? hikeStick.x
+      : (hikeKeys.d || hikeKeys.ArrowRight ? 1 : 0) - (hikeKeys.a || hikeKeys.ArrowLeft ? 1 : 0)
+  let wishX = forward.x * along + right.x * strafe
+  let wishZ = forward.z * along + right.z * strafe
+  const wishLen = Math.hypot(wishX, wishZ)
+  if (wishLen > 1) {
+    wishX /= wishLen
+    wishZ /= wishLen
+  }
 
-  if (activeCamera && playerRef.value) {
-    if (isAutoFollowing || isZiplining) {
-      if (activeControls) activeControls.enabled = false
+  const pushing = wishLen > 0.01 && hasLanded
+  const rate = pushing ? (grounded ? ACCEL : AIR_ACCEL) : FRICTION
+  velocity.x = approach(velocity.x, pushing ? wishX * SPEED : 0, rate, dt)
+  velocity.z = approach(velocity.z, pushing ? wishZ * SPEED : 0, rate, dt)
 
-      const targetCamPos = new Vector3(
-        playerRef.value.position.x,
-        playerRef.value.position.y + 12,
-        playerRef.value.position.z + 25,
-      )
-
-      activeCamera.position.lerp(targetCamPos, 0.05)
-      cameraLookTarget.lerp(playerRef.value.position, 0.08)
-      activeCamera.lookAt(cameraLookTarget)
-    } else {
-      if (activeControls) {
-        activeControls.enabled = true
-
-        if (activeControls.target) {
-          activeControls.target.copy(playerRef.value.position)
-        }
-
-        if (typeof activeControls.update === 'function') {
-          activeControls.update()
-        }
-      }
+  if (hasLanded && (Math.abs(velocity.x) > 0.001 || Math.abs(velocity.z) > 0.001)) {
+    const nextX = player.position.x + velocity.x * dt
+    const nextZ = player.position.z + velocity.z * dt
+    if (canStand(nextX, nextZ, player.position.y)) {
+      player.position.x = nextX
+      player.position.z = nextZ
+    } else if (canStand(nextX, player.position.z, player.position.y)) {
+      player.position.x = nextX
+      velocity.z = 0
+    } else if (canStand(player.position.x, nextZ, player.position.y)) {
+      player.position.z = nextZ
+      velocity.x = 0
     }
   }
+
+  if (wishLen > 0.2 && hasLanded) {
+    player.rotation.y = easeAngle(player.rotation.y, Math.atan2(wishX, wishZ), dt)
+  }
+
+  if (hikeKeys[' '] && !spaceWasDown) jumpBuffer = 0.12
+  spaceWasDown = hikeKeys[' ']
+  if (!hikeKeys[' ']) jumpBuffer = Math.max(0, jumpBuffer - dt)
+  if (grounded) coyote = 0.14
+  else coyote = Math.max(0, coyote - dt)
+
+  if (jumpBuffer > 0 && coyote > 0 && hasLanded) {
+    velocity.y = JUMP
+    jumpBuffer = 0
+    coyote = 0
+    grounded = false
+    jumpHeld = true
+  }
+  if (jumpHeld && !hikeKeys[' ']) {
+    if (velocity.y > 0) velocity.y *= 0.45
+    jumpHeld = false
+  }
+
+  velocity.y -= GRAVITY * dt
+  const nextY = player.position.y + velocity.y * dt
+  const ground = sample(player.position.x, player.position.z)
+
+  if (ground !== null && nextY <= ground) {
+    const fellFar = player.position.y - ground > 2.5
+    player.position.y = ground
+    velocity.y = 0
+    grounded = true
+    hasLanded = true
+    if (fellFar) reset()
+  } else if (
+    ground !== null &&
+    grounded &&
+    velocity.y <= 0 &&
+    player.position.y - ground <= MAX_DROP
+  ) {
+    player.position.y = ground
+    velocity.y = 0
+  } else {
+    player.position.y = nextY
+    grounded = false
+  }
+
+  if (player.position.y < -20) reset()
+
+  const speed = Math.hypot(velocity.x, velocity.z)
+  if (!announcedStart && hasLanded && speed > 0.4) {
+    announcedStart = true
+    emit('started')
+  }
+
+  const moving = grounded && speed > 0.35
+  if (moving) walkPhase += dt * (8 + speed)
+  const swing = moving ? Math.sin(walkPhase) * 0.55 : 0
+  swingLimb(leftLeg.value, swing, dt)
+  swingLimb(rightLeg.value, -swing, dt)
+  swingLimb(leftArm.value, -swing * 0.75, dt)
+  swingLimb(rightArm.value, swing * 0.75, dt)
+
+  updatePassage(player.position.x, player.position.z)
+
+  if (!activeCamera) return
+  const narrow = sizes.width.value < 800
+  const distance = narrow ? 10.5 : 12.8
+  const gazeX = Math.sin(orbitYaw)
+  const gazeZ = Math.cos(orbitYaw)
+  const horizontal = Math.cos(orbitPitch) * distance
+  desiredCam.set(
+    player.position.x - gazeX * horizontal,
+    player.position.y + 1.15 + Math.sin(orbitPitch) * distance,
+    player.position.z - gazeZ * horizontal,
+  )
+  lookTarget.set(
+    player.position.x + gazeX * 7,
+    player.position.y + 1.35 + (0.48 - orbitPitch) * 9,
+    player.position.z + gazeZ * 7,
+  )
+  const follow = 1 - Math.exp(-dt * (draggingLook ? 16 : 5.5))
+  if (!cameraReady) {
+    activeCamera.position.copy(desiredCam)
+    look.copy(lookTarget)
+    cameraReady = true
+  } else {
+    activeCamera.position.lerp(desiredCam, follow)
+    look.lerp(lookTarget, 1 - Math.exp(-dt * 8))
+  }
+  activeCamera.lookAt(look)
 })
 </script>
