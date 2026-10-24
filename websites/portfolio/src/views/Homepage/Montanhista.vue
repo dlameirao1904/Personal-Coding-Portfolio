@@ -84,6 +84,7 @@ import { useLoop, useTresContext } from '@tresjs/core'
 import { Group, Raycaster, Vector3 } from 'three'
 import { SPAWN, passageById, passages } from '@/data/journey'
 import { hikeKeys, hikeStick, releaseHikeKeys, setHikeKeyFromEvent } from '@/game/controls'
+import { toStageDelta } from '@/game/orientation'
 
 const emit = defineEmits(['arrive', 'started'])
 
@@ -149,8 +150,7 @@ function onLookDown(event: PointerEvent) {
 
 function onLookMove(event: PointerEvent) {
   if (!draggingLook) return
-  const dx = event.clientX - lookX
-  const dy = event.clientY - lookY
+  const { x: dx, y: dy } = toStageDelta(event.clientX - lookX, event.clientY - lookY)
   lookX = event.clientX
   lookY = event.clientY
   orbitYaw -= dx * 0.0045
