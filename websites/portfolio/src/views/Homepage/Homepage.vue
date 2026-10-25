@@ -10,7 +10,12 @@
       <TresDirectionalLight :position="[32, 58, 22]" :intensity="1.75" cast-shadow />
 
       <Montanha :active-id="activeId" />
-      <Montanhista ref="hiker" @arrive="onArrive" @started="started = true" />
+      <Montanhista
+        ref="hiker"
+        :reading-id="readingId"
+        @arrive="onArrive"
+        @started="started = true"
+      />
     </TresCanvas>
 
     <header
@@ -63,7 +68,7 @@
     </article>
 
     <article
-      v-else-if="passage"
+      v-else-if="passage && passage.kind !== 'project'"
       class="journey-card tw-absolute tw-right-[18px] tw-top-[76px] tw-z-[2] tw-max-h-[min(62vh,560px)] tw-w-[min(380px,calc(100vw-36px))] tw-overflow-auto tw-rounded-[22px] tw-bg-[#f7f3eaf0] tw-p-5 tw-shadow-[0_16px_40px_#17211c1f] max-md:tw-bottom-4 max-md:tw-left-4 max-md:tw-right-4 max-md:tw-top-auto max-md:tw-max-h-[32vh] max-md:tw-w-auto"
     >
       <p class="tw-mb-2 tw-text-[0.72rem] tw-uppercase tw-tracking-[0.12em] tw-text-[#8a4632]">
@@ -123,14 +128,63 @@
       </ul>
     </article>
 
+    <div
+      v-if="projectPrompt"
+      class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+    >
+      <p
+        class="tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+      >
+        <span class="tw-mr-2 tw-text-[0.72rem] tw-uppercase tw-tracking-[0.12em] tw-text-[#8a4632]">
+          {{ passage?.short }}
+        </span>
+        <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">Carrega em E para ver</span>
+        <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">Toca para ver</span>
+      </p>
+      <button
+        type="button"
+        class="tw-hidden tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#0e3328] tw-px-4 tw-py-2 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#f7f3ea] max-md:tw-inline-block [@media(pointer:coarse)]:tw-inline-block"
+        @click="openProject"
+      >
+        Ver
+      </button>
+    </div>
+
+    <div
+      v-if="readingId && passage"
+      class="tw-absolute tw-bottom-6 tw-left-1/2 tw-z-[4] tw-flex tw-w-[min(640px,calc(100%-2rem))] tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+    >
+      <p v-if="passage.links?.length" class="tw-m-0 tw-flex tw-flex-wrap tw-justify-center tw-gap-4">
+        <a
+          v-for="link in passage.links"
+          :key="link.href"
+          class="tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-3 tw-py-2 tw-text-[0.92rem] tw-text-[#0e3328] tw-underline tw-underline-offset-[0.18em]"
+          :href="link.href"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {{ link.label }}
+        </a>
+      </p>
+      <button
+        type="button"
+        class="tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#17211c]"
+        @click="readingId = null"
+      >
+        <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">E para voltar</span>
+        <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">Voltar ao trilho</span>
+      </button>
+    </div>
+
     <p
-      v-if="started"
+      v-if="started && !readingId"
       class="tw-absolute tw-bottom-[18px] tw-left-1/2 tw-z-[2] tw-m-0 tw--translate-x-1/2 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eae0] tw-px-3 tw-py-2 tw-text-[0.82rem] tw-text-[#3d4943] max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden"
     >
       WASD ou setas para andar · Espaço para saltar · Arrasta para olhar
     </p>
     <div
       class="tw-pointer-events-none tw-absolute tw-inset-0 tw-z-[3] tw-hidden max-md:tw-block [@media(pointer:coarse)]:tw-block"
+      :class="{ 'tw-invisible': readingId }"
       aria-hidden="true"
     >
       <div
@@ -163,46 +217,48 @@
       </button>
     </div>
 
-    <div
-      v-if="showRotatePrompt"
-      class="tw-absolute tw-inset-0 tw-z-[8] tw-flex tw-items-center tw-justify-center tw-bg-[#17211ccc] tw-p-6"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="rotate-title"
-    >
+    <Teleport to="body">
       <div
-        class="tw-w-[min(360px,100%)] tw-rounded-[22px] tw-bg-[#f7f3eaf0] tw-p-6 tw-text-center tw-shadow-[0_16px_40px_#17211c1f]"
+        v-if="showRotatePrompt"
+        class="tw-fixed tw-inset-0 tw-z-[10000] tw-flex tw-items-center tw-justify-center tw-bg-[#17211ce6] tw-p-6"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rotate-title"
       >
-        <div class="phone-hint" aria-hidden="true">
-          <span class="phone-hint__body" />
+        <div
+          class="tw-w-[min(360px,100%)] tw-rounded-[22px] tw-bg-[#f7f3eaf0] tw-p-6 tw-text-center tw-shadow-[0_16px_40px_#17211c1f]"
+        >
+          <div class="phone-hint" aria-hidden="true">
+            <span class="phone-hint__body" />
+          </div>
+          <p class="tw-mb-2 tw-text-[0.72rem] tw-uppercase tw-tracking-[0.12em] tw-text-[#8a4632]">
+            Orientação
+          </p>
+          <h2
+            id="rotate-title"
+            class="tw-m-0 tw-font-[Fraunces,Georgia,serif] tw-text-[clamp(1.55rem,2vw,2rem)] tw-font-[560] tw-leading-[1.05] tw-tracking-[-0.03em]"
+          >
+            Roda o telemóvel
+          </h2>
+          <p class="tw-mt-3 tw-leading-[1.45]">
+            O trilho vê-se melhor na horizontal. Se o ecrã não rodar, a jornada vira sozinha.
+          </p>
+          <button
+            type="button"
+            class="tw-mt-5 tw-w-full tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#0e3328] tw-px-4 tw-py-3 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#f7f3ea] hover:tw-bg-[#17211c] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-[3px] focus-visible:tw-outline-[#0e3328]"
+            @click="continueInLandscape"
+          >
+            Continuar
+          </button>
+          <RouterLink
+            class="tw-mt-4 tw-inline-block tw-text-[0.92rem] tw-text-[#0e3328] tw-underline tw-underline-offset-[0.18em]"
+            to="/"
+          >
+            Voltar ao portefólio
+          </RouterLink>
         </div>
-        <p class="tw-mb-2 tw-text-[0.72rem] tw-uppercase tw-tracking-[0.12em] tw-text-[#8a4632]">
-          Orientação
-        </p>
-        <h2
-          id="rotate-title"
-          class="tw-m-0 tw-font-[Fraunces,Georgia,serif] tw-text-[clamp(1.55rem,2vw,2rem)] tw-font-[560] tw-leading-[1.05] tw-tracking-[-0.03em]"
-        >
-          Roda o telemóvel
-        </h2>
-        <p class="tw-mt-3 tw-leading-[1.45]">
-          O trilho vê-se melhor na horizontal. Se o ecrã não rodar, a jornada vira sozinha.
-        </p>
-        <button
-          type="button"
-          class="tw-mt-5 tw-w-full tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#0e3328] tw-px-4 tw-py-3 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#f7f3ea] hover:tw-bg-[#17211c] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-[3px] focus-visible:tw-outline-[#0e3328]"
-          @click="continueInLandscape"
-        >
-          Continuar
-        </button>
-        <RouterLink
-          class="tw-mt-4 tw-inline-block tw-text-[0.92rem] tw-text-[#0e3328] tw-underline tw-underline-offset-[0.18em]"
-          to="/"
-        >
-          Voltar ao portefólio
-        </RouterLink>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
@@ -217,19 +273,44 @@ import Montanha from './Montanha.vue'
 import Montanhista from './Montanhista.vue'
 
 const activeId = ref<string | null>(null)
+const readingId = ref<string | null>(null)
 const started = ref(false)
 const seen = ref<string[]>([])
 const hiker = ref<{ reset: () => void } | null>(null)
 
 const passage = computed(() => (activeId.value ? passageById[activeId.value] : null))
+const projectPrompt = computed(
+  () => started.value && passage.value?.kind === 'project' && !readingId.value,
+)
 
 function isCurrent(id: string) {
   const current = passage.value?.parentId ?? passage.value?.id
   return current === id
 }
 
+function openProject() {
+  if (passage.value?.kind !== 'project') return
+  readingId.value = passage.value.id
+}
+
+function onInspectKey(event: KeyboardEvent) {
+  if (event.repeat) return
+  const key = event.key.toLowerCase()
+  if (key === 'escape') {
+    readingId.value = null
+    return
+  }
+  if (key !== 'e') return
+  if (readingId.value) {
+    readingId.value = null
+    return
+  }
+  openProject()
+}
+
 function onArrive(id: string | null) {
   activeId.value = id
+  if (readingId.value && readingId.value !== id) readingId.value = null
   if (!id) return
   const stepId = passageById[id].parentId ?? id
   if (!seen.value.includes(stepId)) seen.value = [...seen.value, stepId]
@@ -242,6 +323,7 @@ function railClass(id: string) {
 }
 
 function backToStart() {
+  readingId.value = null
   hiker.value?.reset()
 }
 
@@ -323,26 +405,38 @@ function onBlur() {
 }
 
 const coarseQuery = window.matchMedia('(pointer: coarse)')
+const hoverNoneQuery = window.matchMedia('(hover: none)')
+const narrowQuery = window.matchMedia('(max-width: 900px)')
 const portraitQuery = window.matchMedia('(orientation: portrait)')
-const coarse = ref(coarseQuery.matches)
-const portrait = ref(portraitQuery.matches)
+const handheld = ref(false)
+const portrait = ref(false)
 const promptDismissed = ref(false)
 let lockAttempted = false
 let weRequestedFullscreen = false
 let orientationLocked = false
 
 const showRotatePrompt = computed(
-  () => coarse.value && portrait.value && !promptDismissed.value,
+  () => handheld.value && portrait.value && !promptDismissed.value,
 )
 
 function readPortrait() {
+  if (window.innerHeight !== window.innerWidth) return window.innerHeight > window.innerWidth
   const type = screen.orientation?.type
   if (type) return type.startsWith('portrait')
   return portraitQuery.matches
 }
 
+function readHandheld() {
+  const ua = navigator.userAgent
+  const iPadOs = /Macintosh/i.test(ua) && navigator.maxTouchPoints > 1
+  const mobileUa = /Android|iPhone|iPod|Mobile/i.test(ua) || iPadOs
+  const touch = navigator.maxTouchPoints > 0 || coarseQuery.matches || hoverNoneQuery.matches
+  const narrow = narrowQuery.matches || window.innerWidth <= 900
+  return mobileUa || (touch && narrow)
+}
+
 function onMediaChange() {
-  coarse.value = coarseQuery.matches
+  handheld.value = readHandheld()
   portrait.value = readPortrait()
   if (!portrait.value) {
     journeyTurned.value = false
@@ -350,6 +444,8 @@ function onMediaChange() {
     lockAttempted = false
   }
 }
+
+onMediaChange()
 
 function tryLockLandscape() {
   const root = document.documentElement
@@ -393,7 +489,7 @@ function continueInLandscape() {
 }
 
 function onLandscapeGesture(event: PointerEvent) {
-  if (!coarse.value || portrait.value || lockAttempted) return
+  if (!handheld.value || portrait.value || lockAttempted) return
   const target = event.target
   if (target instanceof Element && target.closest('a')) return
   lockAttempted = true
@@ -423,19 +519,32 @@ watch(journeyTurned, async () => {
 
 onMounted(() => {
   document.body.style.overflow = 'hidden'
+  onMediaChange()
   window.addEventListener('blur', onBlur)
+  window.addEventListener('resize', onMediaChange)
+  window.addEventListener('orientationchange', onMediaChange)
+  window.addEventListener('keydown', onInspectKey)
   coarseQuery.addEventListener('change', onMediaChange)
+  hoverNoneQuery.addEventListener('change', onMediaChange)
+  narrowQuery.addEventListener('change', onMediaChange)
   portraitQuery.addEventListener('change', onMediaChange)
   screen.orientation?.addEventListener('change', onMediaChange)
+  window.visualViewport?.addEventListener('resize', onMediaChange)
   window.addEventListener('pointerdown', onLandscapeGesture, true)
 })
 
 onUnmounted(() => {
   document.body.style.overflow = ''
   window.removeEventListener('blur', onBlur)
+  window.removeEventListener('resize', onMediaChange)
+  window.removeEventListener('orientationchange', onMediaChange)
+  window.removeEventListener('keydown', onInspectKey)
   coarseQuery.removeEventListener('change', onMediaChange)
+  hoverNoneQuery.removeEventListener('change', onMediaChange)
+  narrowQuery.removeEventListener('change', onMediaChange)
   portraitQuery.removeEventListener('change', onMediaChange)
   screen.orientation?.removeEventListener('change', onMediaChange)
+  window.visualViewport?.removeEventListener('resize', onMediaChange)
   window.removeEventListener('pointerdown', onLandscapeGesture, true)
   onBlur()
   releaseOrientation()

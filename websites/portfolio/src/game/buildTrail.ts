@@ -211,6 +211,7 @@ export function buildTrail() {
       stump.position.set(project.position[0], top + stumpHeight / 2, project.position[2])
       stump.castShadow = true
       stump.receiveShadow = true
+      stump.userData.projectMarker = project.id
       walkable.add(stump)
 
       const scales = [0.48, 0.34, 0.22]
@@ -224,6 +225,7 @@ export function buildTrail() {
         )
         stoneMesh.rotation.set(index, index * 0.6, 0.2)
         stoneMesh.castShadow = true
+        stoneMesh.userData.projectMarker = project.id
         scenery.add(stoneMesh)
         crown += scale * 0.85
       })

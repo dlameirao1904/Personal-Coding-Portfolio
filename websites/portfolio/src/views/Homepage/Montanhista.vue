@@ -81,11 +81,13 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, shallowRef, watch } from 'vue'
 import { useLoop, useTresContext } from '@tresjs/core'
-import { Group, Raycaster, Vector3 } from 'three'
+import { Group, Raycaster, Vector3, type Object3D } from 'three'
 import { SPAWN, passageById, passages } from '@/data/journey'
+import { disposeComputer, makeComputer, paintComputer } from '@/game/computer'
 import { hikeKeys, hikeStick, releaseHikeKeys, setHikeKeyFromEvent } from '@/game/controls'
 import { toStageDelta } from '@/game/orientation'
 
+const props = defineProps<{ readingId: string | null }>()
 const emit = defineEmits(['arrive', 'started'])
 
 const { scene, camera, sizes } = useTresContext()
@@ -105,6 +107,12 @@ const velocity = new Vector3()
 const desiredCam = new Vector3()
 const look = new Vector3(SPAWN[0], 1.4, SPAWN[2] - 6)
 const lookTarget = new Vector3()
+const deskCam = new Vector3()
+const deskLook = new Vector3()
+const camGoal = new Vector3()
+const lookGoal = new Vector3()
+const computer = makeComputer()
+let deskWeight = 0
 
 const SPEED = 6.6
 const ACCEL = 28
@@ -137,7 +145,51 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
 
+function placeDesk(id: string) {
+  const passage = passageById[id]
+  const player = playerRef.value
+  if (!passage || !player) return
+  let dx = player.position.x - passage.position[0]
+  let dz = player.position.z - passage.position[2]
+  const len = Math.hypot(dx, dz)
+  if (len < 0.2) {
+    dx = 0
+    dz = 1
+  } else {
+    dx /= len
+    dz /= len
+  }
+  computer.position.set(passage.position[0], passage.position[1], passage.position[2])
+  computer.rotation.y = Math.atan2(dx, dz)
+  computer.visible = true
+  paintComputer(computer, passage)
+  const screenY = 1.18 * computer.scale.y
+  const screenForward = 0.08 * computer.scale.z
+  deskLook.set(
+    passage.position[0] + dx * screenForward,
+    passage.position[1] + screenY,
+    passage.position[2] + dz * screenForward,
+  )
+  deskCam.set(
+    passage.position[0] + dx * (screenForward + 1.65),
+    passage.position[1] + screenY,
+    passage.position[2] + dz * (screenForward + 1.65),
+  )
+  setMarkerVisible(id, false)
+}
+
+function setMarkerVisible(id: string, visible: boolean) {
+  const root = scene.value
+  if (!root) return
+  root.traverse((object: Object3D) => {
+    const marker = object.userData.projectMarker as string | undefined
+    const sign = object.userData.id as string | undefined
+    if (marker === id || (sign === id && object.type === 'Sprite')) object.visible = visible
+  })
+}
+
 function onLookDown(event: PointerEvent) {
+  if (props.readingId) return
   if (event.button !== 0) return
   const target = event.target as HTMLElement | null
   if (target?.tagName !== 'CANVAS') return
@@ -177,6 +229,22 @@ const onKeyUp = (event: KeyboardEvent) => {
   setHikeKeyFromEvent(event, false)
 }
 
+watch(
+  () => props.readingId,
+  (id, previous) => {
+    if (previous) setMarkerVisible(previous, true)
+    if (id) placeDesk(id)
+  },
+)
+
+watch(
+  scene,
+  (value) => {
+    if (value && computer.parent !== value) value.add(computer)
+  },
+  { immediate: true },
+)
+
 onMounted(() => {
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('keyup', onKeyUp)
@@ -196,6 +264,8 @@ onUnmounted(() => {
   window.removeEventListener('pointerup', onLookUp)
   window.removeEventListener('pointercancel', onLookUp)
   releaseHikeKeys()
+  scene.value?.remove(computer)
+  disposeComputer(computer)
 })
 
 function approach(current: number, target: number, rate: number, dt: number) {
@@ -309,6 +379,13 @@ onBeforeRender(({ delta }) => {
   const player = playerRef.value
   if (!player || !player.userData.placed) return
   const dt = Math.min(delta, 0.05)
+  const reading = Boolean(props.readingId)
+  deskWeight = approach(deskWeight, reading ? 1 : 0, 2.4, dt)
+  if (!reading && deskWeight < 0.01) {
+    deskWeight = 0
+    computer.visible = false
+  }
+  player.visible = deskWeight < 0.25
 
   const activeCamera = camera.activeCamera.value
   if (activeCamera) {
@@ -339,12 +416,12 @@ onBeforeRender(({ delta }) => {
     wishZ /= wishLen
   }
 
-  const pushing = wishLen > 0.01 && hasLanded
+  const pushing = !reading && wishLen > 0.01 && hasLanded
   const rate = pushing ? (grounded ? ACCEL : AIR_ACCEL) : FRICTION
   velocity.x = approach(velocity.x, pushing ? wishX * SPEED : 0, rate, dt)
   velocity.z = approach(velocity.z, pushing ? wishZ * SPEED : 0, rate, dt)
 
-  if (hasLanded && (Math.abs(velocity.x) > 0.001 || Math.abs(velocity.z) > 0.001)) {
+  if (!reading && hasLanded && (Math.abs(velocity.x) > 0.001 || Math.abs(velocity.z) > 0.001)) {
     const nextX = player.position.x + velocity.x * dt
     const nextZ = player.position.z + velocity.z * dt
     if (canStand(nextX, nextZ, player.position.y)) {
@@ -359,17 +436,19 @@ onBeforeRender(({ delta }) => {
     }
   }
 
-  if (wishLen > 0.2 && hasLanded) {
+  if (!reading && wishLen > 0.2 && hasLanded) {
     player.rotation.y = easeAngle(player.rotation.y, Math.atan2(wishX, wishZ), dt)
   }
 
-  if (hikeKeys[' '] && !spaceWasDown) jumpBuffer = 0.12
+  if (!reading && hikeKeys[' '] && !spaceWasDown) jumpBuffer = 0.12
   spaceWasDown = hikeKeys[' ']
   if (!hikeKeys[' ']) jumpBuffer = Math.max(0, jumpBuffer - dt)
   if (grounded) coyote = 0.14
   else coyote = Math.max(0, coyote - dt)
 
-  if (jumpBuffer > 0 && coyote > 0 && hasLanded) {
+  if (reading) velocity.set(0, 0, 0)
+
+  if (!reading && jumpBuffer > 0 && coyote > 0 && hasLanded) {
     velocity.y = JUMP
     jumpBuffer = 0
     coyote = 0
@@ -381,8 +460,8 @@ onBeforeRender(({ delta }) => {
     jumpHeld = false
   }
 
-  velocity.y -= GRAVITY * dt
-  const nextY = player.position.y + velocity.y * dt
+  if (!reading) velocity.y -= GRAVITY * dt
+  const nextY = reading ? player.position.y : player.position.y + velocity.y * dt
   const ground = sample(player.position.x, player.position.z)
 
   if (ground !== null && nextY <= ground) {
@@ -439,14 +518,16 @@ onBeforeRender(({ delta }) => {
     player.position.y + 1.35 + (0.48 - orbitPitch) * 9,
     player.position.z + gazeZ * 7,
   )
-  const follow = 1 - Math.exp(-dt * (draggingLook ? 16 : 5.5))
+  camGoal.copy(desiredCam).lerp(deskCam, deskWeight)
+  lookGoal.copy(lookTarget).lerp(deskLook, deskWeight)
+  const follow = 1 - Math.exp(-dt * (draggingLook ? 16 : deskWeight > 0.05 ? 3.2 : 5.5))
   if (!cameraReady) {
-    activeCamera.position.copy(desiredCam)
-    look.copy(lookTarget)
+    activeCamera.position.copy(camGoal)
+    look.copy(lookGoal)
     cameraReady = true
   } else {
-    activeCamera.position.lerp(desiredCam, follow)
-    look.lerp(lookTarget, 1 - Math.exp(-dt * 8))
+    activeCamera.position.lerp(camGoal, follow)
+    look.lerp(lookGoal, 1 - Math.exp(-dt * (deskWeight > 0.05 ? 4 : 8)))
   }
   activeCamera.lookAt(look)
 })
