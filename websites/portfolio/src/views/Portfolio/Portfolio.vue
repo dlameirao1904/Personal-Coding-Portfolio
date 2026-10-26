@@ -49,7 +49,9 @@
         </p>
 
         <p class="tw-mt-4 tw-max-w-[40rem] tw-text-[1.12rem] tw-leading-[1.55]">
-          Cresci em Montalegre, entre a serra do Larouco e o rio Cávado.
+          Cresci em Montalegre, entre a serra do Larouco e o rio Cávado. Desde os 16 anos que
+          trabalho em restauração e, desde os 23, numa padaria, nas horas vagas e aos fins de
+          semana.
         </p>
         <div class="tw-mt-8 tw-flex tw-flex-wrap tw-items-center tw-gap-x-6 tw-gap-y-4">
           <a :class="solid" href="#percurso">Ler o percurso</a>
@@ -62,8 +64,9 @@
             {{ language.name }} · {{ language.level }}
           </span>
         </p>
+
         <ol
-          class="tw-m-0 tw-mt-12 tw-grid tw-list-none tw-grid-cols-1 tw-gap-3 tw-p-0 sm:tw-grid-cols-3"
+          class="tw-m-0 tw-mt-12 tw-grid tw-list-none tw-grid-cols-1 tw-gap-3 tw-p-0 sm:tw-grid-cols-2 xl:tw-grid-cols-4"
         >
           <li v-for="item in beats" :key="item.href">
             <a
@@ -308,7 +311,7 @@
           </ol>
         </section>
 
-        <section id="competencias" class="tw-scroll-mt-20 tw-pb-16 tw-pt-14 md:tw-pt-20">
+        <section id="competencias" class="tw-scroll-mt-20 tw-pb-4 tw-pt-14 md:tw-pt-20">
           <header class="tw-mb-8 tw-grid tw-grid-cols-1 tw-gap-4 md:tw-grid-cols-[4.5rem_1fr]">
             <p
               class="tw-m-0 tw-mt-2 tw-text-[0.75rem] tw-uppercase tw-tracking-[0.16em] tw-text-[#8a918b]"
@@ -339,6 +342,46 @@
             </ul>
           </div>
         </section>
+
+        <section id="pessoal" class="tw-scroll-mt-20 tw-pb-16 tw-pt-14 md:tw-pt-20">
+          <header class="tw-mb-8 tw-grid tw-grid-cols-1 tw-gap-4 md:tw-grid-cols-[4.5rem_1fr]">
+            <p
+              class="tw-m-0 tw-mt-2 tw-text-[0.75rem] tw-uppercase tw-tracking-[0.16em] tw-text-[#8a918b]"
+            >
+              05
+            </p>
+            <div>
+              <h2 :class="sectionTitle">Pessoal</h2>
+              <p
+                class="tw-mt-3 tw-max-w-[38rem] tw-text-[1.05rem] tw-leading-normal tw-text-[#3e4a43]"
+              >
+                Turnos, campo, e o que ouço quando fecho o portátil.
+              </p>
+            </div>
+          </header>
+          <ol class="tw-m-0 tw-list-none tw-p-0">
+            <li
+              v-for="(note, index) in personalNotes"
+              :key="note.id"
+              class="tw-grid tw-grid-cols-1 tw-gap-4 tw-border-t tw-border-[#17211c1f] tw-py-7 md:tw-grid-cols-[11rem_1fr] md:tw-gap-8"
+            >
+              <div class="tw-flex tw-flex-col tw-gap-1.5 tw-text-[0.92rem] tw-text-[#5e6a62]">
+                <span class="tw-text-[0.72rem] tw-uppercase tw-tracking-[0.12em] tw-text-[#8a4632]">
+                  {{ String(index + 1).padStart(2, '0') }}
+                </span>
+                <span>{{ note.period }}</span>
+              </div>
+              <article>
+                <h3
+                  class="tw-m-0 tw-font-[Fraunces,Georgia,serif] tw-text-[1.7rem] tw-font-[560] tw-leading-[1.05] tw-tracking-[-0.03em]"
+                >
+                  {{ note.title }}
+                </h3>
+                <p class="tw-mt-3 tw-max-w-[40rem] tw-leading-[1.5]">{{ note.summary }}</p>
+              </article>
+            </li>
+          </ol>
+        </section>
       </div>
 
       <section
@@ -349,7 +392,7 @@
           <p
             class="tw-mb-4 tw-text-[0.75rem] tw-uppercase tw-tracking-[0.16em] tw-text-[#f3efe6c7]"
           >
-            05
+            06
           </p>
           <h2
             class="tw-m-0 tw-max-w-[16ch] tw-font-[Fraunces,Georgia,serif] tw-text-[clamp(2.4rem,5vw,4.2rem)] tw-font-[560] tw-leading-[0.96] tw-tracking-[-0.035em]"
@@ -426,7 +469,7 @@
 
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { learning, profile, skillGroups, steps } from '@/data/journey'
+import { learning, personalNotes, profile, skillGroups, steps } from '@/data/journey'
 import { marquee, personalProjects, universityYears } from '@/data/projects'
 
 const nav = [
@@ -434,6 +477,7 @@ const nav = [
   { href: '#universidade', label: 'Universidade' },
   { href: '#projetos', label: 'Projetos' },
   { href: '#competencias', label: 'Competências' },
+  { href: '#pessoal', label: 'Pessoal' },
 ]
 
 const scrollTo = (href: string) => {
@@ -463,6 +507,12 @@ const beats = [
     title: 'Projetos',
     text: 'Universidade, o atelier e o que tenho construído à parte.',
     href: '#projetos',
+  },
+  {
+    index: '04',
+    title: 'Pessoal',
+    text: 'Restauração, futebol, boxe, leitura e música.',
+    href: '#pessoal',
   },
 ]
 

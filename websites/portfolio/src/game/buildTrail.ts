@@ -20,7 +20,17 @@ import {
   DoubleSide,
 } from 'three'
 import { pathNodes, steps, type Vec3 } from '@/data/journey'
-import { CAVADO_HALF, CAVADO_SIGN, cavado, distToCavado, WADE_SINK, WATER_EDGE } from '@/game/cavado'
+import { atelierPad } from '@/game/atelier'
+import { addRomanBridge, bridgeBlocksTree } from '@/game/bridge'
+import {
+  CAVADO_HALF,
+  CAVADO_SIGN,
+  cavado,
+  distToCavado,
+  WADE_SINK,
+  WATER_EDGE,
+} from '@/game/cavado'
+import { addPitch, pitchBlocksTree } from '@/game/pitch'
 
 const PATH_WIDTH = 6.6
 const PATH_HALF = PATH_WIDTH / 2
@@ -74,8 +84,18 @@ function smoothstep(edge0: number, edge1: number, value: number) {
   return t * t * (3 - 2 * t)
 }
 
+const RANGE_COLS = 110
+const RANGE_ROWS = 72
+
+function rangePoint(col: number, row: number) {
+  return {
+    x: -HALF_W + (col / RANGE_COLS) * HALF_W * 2,
+    z: BACK_Z + (row / RANGE_ROWS) * (FOOT_Z - BACK_Z),
+  }
+}
+
 /** Altura do chão da montanha, em coordenadas do mundo. O sopé a sul encontra o patamar do trilho. */
-function mountainY(x: number, z: number) {
+function terrainY(x: number, z: number) {
   const flank = smoothstep(36, HALF_W, Math.abs(x))
   const back = smoothstep(CREST_Z - 8, BACK_Z, z)
   const edge = Math.max(flank, back)
@@ -102,6 +122,77 @@ function mountainY(x: number, z: number) {
 
 function onMountain(x: number, z: number) {
   return z <= FOOT_Z && z >= BACK_Z && Math.abs(x) <= HALF_W
+}
+
+function findSummit() {
+  let bestX = -14
+  let bestZ = CREST_Z
+  let bestY = -Infinity
+  for (let x = -40; x <= 40; x += 1) {
+    for (let z = CREST_Z - 14; z <= CREST_Z + 8; z += 1) {
+      const y = terrainY(x, z)
+      if (y > bestY) {
+        bestY = y
+        bestX = x
+        bestZ = z
+      }
+    }
+  }
+  return { x: bestX, y: bestY, z: bestZ }
+}
+
+/** Proporção da capela face ao montanhista: 1,5× altura, 1,5× largura, 5× comprimento. */
+const HIKER = { height: 1.75, width: 0.86, depth: 0.66 }
+export const chapelSize = {
+  width: HIKER.width * 1.5,
+  height: HIKER.height * 1.5,
+  depth: HIKER.depth * 5,
+}
+
+function chapelOnRock() {
+  const peak = findSummit()
+  const halfX = chapelSize.width / 2
+  const halfZ = chapelSize.depth / 2
+  const col0 = Math.floor(((peak.x - halfX + HALF_W) / (HALF_W * 2)) * RANGE_COLS)
+  const col1 = Math.ceil(((peak.x + halfX + HALF_W) / (HALF_W * 2)) * RANGE_COLS)
+  const row0 = Math.floor(((peak.z - halfZ - BACK_Z) / (FOOT_Z - BACK_Z)) * RANGE_ROWS)
+  const row1 = Math.ceil(((peak.z + halfZ - BACK_Z) / (FOOT_Z - BACK_Z)) * RANGE_ROWS)
+  const min = rangePoint(col0, row0)
+  const max = rangePoint(col1, row1)
+  let padY = 0
+  let count = 0
+  for (let row = row0; row <= row1; row++) {
+    for (let col = col0; col <= col1; col++) {
+      const point = rangePoint(col, row)
+      padY += terrainY(point.x, point.z)
+      count++
+    }
+  }
+  padY /= count || 1
+  return {
+    x: (min.x + max.x) / 2,
+    y: padY - 0.01,
+    z: (min.z + max.z) / 2,
+    padY,
+    minX: min.x,
+    maxX: max.x,
+    minZ: min.z,
+    maxZ: max.z,
+  }
+}
+
+const chapelSeat = chapelOnRock()
+
+/** Cume onde a capela assenta, com a base encostada à rocha nivelada. */
+export const summit = { x: chapelSeat.x, y: chapelSeat.y, z: chapelSeat.z }
+
+function mountainY(x: number, z: number) {
+  const onSeat =
+    x >= chapelSeat.minX - 1e-3 &&
+    x <= chapelSeat.maxX + 1e-3 &&
+    z >= chapelSeat.minZ - 1e-3 &&
+    z <= chapelSeat.maxZ + 1e-3
+  return onSeat ? chapelSeat.padY : terrainY(x, z)
 }
 
 function distToSegment(px: number, pz: number, a: Vec3, b: Vec3) {
@@ -155,11 +246,16 @@ export type ForestTree = {
   broad: boolean
 }
 
-/** Árvore desta célula, ou null se o sítio está livre. Um quarto das células fica sem árvore. */
+/** Árvore desta célula, ou null se o sítio está livre. Fica de fora um quarto das células, e mais um décimo das árvores que restavam. */
+const atelierClearing = atelierPad()
+
 export function forestTree(ix: number, iz: number): ForestTree | null {
-  if (cellHash(ix + 41, iz - 9) < 0.25) return null
+  if (cellHash(ix + 41, iz - 9) < 0.325) return null
   const x = ix * TREE_SPACING + (cellHash(ix, iz) - 0.5) * TREE_SPACING * 0.8
   const z = iz * TREE_SPACING + (cellHash(ix + 101, iz - 17) - 0.5) * TREE_SPACING * 0.8
+  if (Math.hypot(x - atelierClearing.x, z - atelierClearing.z) < atelierClearing.radius + 1.2)
+    return null
+  if (bridgeBlocksTree(x, z) || pitchBlocksTree(x, z)) return null
   if (onMountain(x, z) || clearance(x, z) < 4.4 || distToCavado(x, z) < CAVADO_HALF + 7) return null
   for (let segment = 0; segment < rampNodes.length - 1; segment++) {
     if (distToSegment(x, z, rampNodes[segment], rampNodes[segment + 1]) < 6) return null
@@ -197,7 +293,9 @@ export function treesAround(x: number, z: number, radius: number) {
 }
 
 export function openValley(x: number, z: number) {
-  if (onMountain(x, z) || clearance(x, z) < 5.5 || distToCavado(x, z) < CAVADO_HALF + 4) return false
+  if (pitchBlocksTree(x, z)) return false
+  if (onMountain(x, z) || clearance(x, z) < 5.5 || distToCavado(x, z) < CAVADO_HALF + 4)
+    return false
   for (let segment = 0; segment < rampNodes.length - 1; segment++) {
     if (distToSegment(x, z, rampNodes[segment], rampNodes[segment + 1]) < 5) return false
   }
@@ -357,11 +455,7 @@ export function buildTrail() {
       let crown = top + stumpHeight * 0.55
       scales.forEach((scale, index) => {
         const stoneMesh = new Mesh(track(new DodecahedronGeometry(scale, 0)), cairnMat)
-        stoneMesh.position.set(
-          project.position[0] + (index - 1) * 0.04,
-          crown,
-          project.position[2],
-        )
+        stoneMesh.position.set(project.position[0] + (index - 1) * 0.04, crown, project.position[2])
         stoneMesh.rotation.set(index, index * 0.6, 0.2)
         stoneMesh.castShadow = true
         stoneMesh.userData.projectMarker = project.id
@@ -427,7 +521,12 @@ export function buildTrail() {
   })
   materials.push(waterMat)
 
-  const addRibbon = (points: Array<[number, number]>, half: number, y: number, material: Material) => {
+  const addRibbon = (
+    points: Array<[number, number]>,
+    half: number,
+    y: number,
+    material: Material,
+  ) => {
     const positions: number[] = []
     const uvs: number[] = []
     const indices: number[] = []
@@ -440,7 +539,8 @@ export function buildTrail() {
       const len = Math.hypot(dx, dz) || 1
       dx /= len
       dz /= len
-      if (i > 0) travelled += Math.hypot(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1])
+      if (i > 0)
+        travelled += Math.hypot(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1])
       const [x, z] = points[i]
       positions.push(x - dz * half, y, z + dx * half, x + dz * half, y, z - dx * half)
       uvs.push(travelled, 0, travelled, 1)
@@ -508,8 +608,8 @@ export function buildTrail() {
   }
   addDisc(6.2, 42, 0.02, 4.4, stone)
 
-  const cols = 110
-  const rows = 72
+  const cols = RANGE_COLS
+  const rows = RANGE_ROWS
   const positions: number[] = []
   const colors: number[] = []
   const indices: number[] = []
@@ -590,10 +690,18 @@ export function buildTrail() {
 
   const floorBase = positions.length / 3
   positions.push(
-    -HALF_W, floorY, BACK_Z,
-    HALF_W, floorY, BACK_Z,
-    HALF_W, floorY, FOOT_Z,
-    -HALF_W, floorY, FOOT_Z,
+    -HALF_W,
+    floorY,
+    BACK_Z,
+    HALF_W,
+    floorY,
+    BACK_Z,
+    HALF_W,
+    floorY,
+    FOOT_Z,
+    -HALF_W,
+    floorY,
+    FOOT_Z,
   )
   for (const [x, z] of [
     [-HALF_W, BACK_Z],
@@ -677,14 +785,44 @@ export function buildTrail() {
         if (!tree || trunkCount >= TREE_CAPACITY) continue
         const { x: tx, z: tz, scale, rot, broad, oak } = tree
         if (oak) {
-          writeTree(trunks, trunkCount, tx, VALLEY_Y + 0.42 * scale, tz, 0.34 * scale, 0.84 * scale, 0.34 * scale, rot)
+          writeTree(
+            trunks,
+            trunkCount,
+            tx,
+            VALLEY_Y + 0.42 * scale,
+            tz,
+            0.34 * scale,
+            0.84 * scale,
+            0.34 * scale,
+            rot,
+          )
           const crown = broad ? oaksB : oaksA
           const crownIndex = broad ? countOakB : countOakA
-          writeTree(crown, crownIndex, tx, VALLEY_Y + 1.32 * scale, tz, 1.28 * scale, 0.95 * scale, 1.28 * scale, rot)
+          writeTree(
+            crown,
+            crownIndex,
+            tx,
+            VALLEY_Y + 1.32 * scale,
+            tz,
+            1.28 * scale,
+            0.95 * scale,
+            1.28 * scale,
+            rot,
+          )
           if (broad) countOakB++
           else countOakA++
         } else {
-          writeTree(trunks, trunkCount, tx, VALLEY_Y + 0.7 * scale, tz, 0.22 * scale, 1.4 * scale, 0.22 * scale, rot)
+          writeTree(
+            trunks,
+            trunkCount,
+            tx,
+            VALLEY_Y + 0.7 * scale,
+            tz,
+            0.22 * scale,
+            1.4 * scale,
+            0.22 * scale,
+            rot,
+          )
           if (broad) {
             writeTree(crownsB, countB, tx, VALLEY_Y + 2.35 * scale, tz, scale, scale, scale, rot)
             countB++
@@ -717,6 +855,8 @@ export function buildTrail() {
   }
   walkable.userData.trees = blockers
   walkable.userData.solids = [] as { x: number; z: number; r: number }[]
+  addRomanBridge(walkable, scenery)
+  addPitch(walkable, scenery)
   walkable.userData.follow = follow
   follow(0, 48)
 

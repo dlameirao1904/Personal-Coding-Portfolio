@@ -17,6 +17,10 @@
         @started="started = true"
       />
       <Atlas />
+      <Atelier />
+      <Capela />
+      <Campo />
+      <Trotinete />
     </TresCanvas>
 
     <div
@@ -54,6 +58,13 @@
           >
             Portefólio
           </RouterLink>
+          <button
+            type="button"
+            class="tw-cursor-pointer tw-rounded-xl tw-border-0 tw-bg-transparent tw-px-3 tw-py-2 tw-text-left tw-font-[inherit] tw-text-[0.95rem] tw-text-[#17211c] hover:tw-bg-[#0e332814]"
+            @click="openPrompt"
+          >
+            Prompt
+          </button>
         </div>
       </div>
       <JourneyMap class="tw-pointer-events-auto" />
@@ -77,6 +88,7 @@
       <p class="tw-mt-3 tw-leading-[1.45]">«Só a Natureza é divina, e ela não é divina...»</p>
       <p class="tw-mt-3 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#5c675f] max-md:tw-hidden">
         WASD ou setas para andar. Shift para correr. Espaço para saltar. Arrasta o rato para olhar.
+        Clica no Atlas. No menu há um Prompt.
       </p>
       <p
         class="tw-mt-3 tw-hidden tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#5c675f] max-md:tw-block"
@@ -147,7 +159,89 @@
     </article>
 
     <div
-      v-if="projectPrompt"
+      v-if="ridingScooter && !readingId"
+      class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+    >
+      <p
+        class="tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+      >
+        <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">E para descer</span>
+        <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">Trotinete</span>
+      </p>
+      <button
+        type="button"
+        class="tw-hidden tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#0e3328] tw-px-4 tw-py-2 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#f7f3ea] max-md:tw-inline-block [@media(pointer:coarse)]:tw-inline-block"
+        @click="ridingScooter = false"
+      >
+        Descer
+      </button>
+    </div>
+
+    <div
+      v-else-if="scooterNear && !readingId"
+      class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+    >
+      <p
+        class="tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+      >
+        <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">E para subir</span>
+        <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">Trotinete</span>
+      </p>
+      <button
+        type="button"
+        class="tw-hidden tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#0e3328] tw-px-4 tw-py-2 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#f7f3ea] max-md:tw-inline-block [@media(pointer:coarse)]:tw-inline-block"
+        @click="mountScooter"
+      >
+        Subir
+      </button>
+    </div>
+
+    <div
+      v-else-if="penalty.call"
+      class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-2"
+    >
+      <p
+        class="tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+      >
+        {{ penaltyText }}
+      </p>
+      <p
+        class="tw-m-0 tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-3 tw-py-1 tw-text-[0.82rem] tw-text-[#3d4943]"
+      >
+        Golos {{ penalty.goals }} · Defesas {{ penalty.saves }}
+      </p>
+    </div>
+
+    <div
+      v-else-if="penalty.near && !readingId"
+      class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+    >
+      <p
+        class="tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+      >
+        <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">
+          E para chutar. Vira-te para mirar e arrasta o olhar para a altura.
+        </span>
+        <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">
+          Vira-te e arrasta o olhar para mirar.
+        </span>
+      </p>
+      <button
+        type="button"
+        class="tw-hidden tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#0e3328] tw-px-4 tw-py-2 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#f7f3ea] max-md:tw-inline-block [@media(pointer:coarse)]:tw-inline-block"
+        @click="askPenalty"
+      >
+        Chutar
+      </button>
+      <p
+        class="tw-m-0 tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-3 tw-py-1 tw-text-[0.82rem] tw-text-[#3d4943]"
+      >
+        Golos {{ penalty.goals }} · Defesas {{ penalty.saves }}
+      </p>
+    </div>
+
+    <div
+      v-if="projectPrompt && !scooterNear && !ridingScooter && !penalty.near && !penalty.call"
       class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
     >
       <p
@@ -156,8 +250,12 @@
         <span class="tw-mr-2 tw-text-[0.72rem] tw-uppercase tw-tracking-[0.12em] tw-text-[#8a4632]">
           {{ passage?.short }}
         </span>
-        <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">Carrega em E para ver</span>
-        <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">Toca para ver</span>
+        <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden"
+          >Carrega em E para ver</span
+        >
+        <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline"
+          >Toca para ver</span
+        >
       </p>
       <button
         type="button"
@@ -172,7 +270,10 @@
       v-if="readingId && passage"
       class="tw-absolute tw-bottom-6 tw-left-1/2 tw-z-[4] tw-flex tw-w-[min(640px,calc(100%-2rem))] tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
     >
-      <p v-if="passage.links?.length" class="tw-m-0 tw-flex tw-flex-wrap tw-justify-center tw-gap-4">
+      <p
+        v-if="passage.links?.length"
+        class="tw-m-0 tw-flex tw-flex-wrap tw-justify-center tw-gap-4"
+      >
         <a
           v-for="link in passage.links"
           :key="link.href"
@@ -190,9 +291,64 @@
         @click="readingId = null"
       >
         <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">E para voltar</span>
-        <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">Voltar ao trilho</span>
+        <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline"
+          >Voltar ao trilho</span
+        >
       </button>
     </div>
+
+    <p
+      v-if="marinaLine"
+      class="tw-pointer-events-none tw-absolute tw-left-1/2 tw-top-[7.4rem] tw-z-[6] tw-m-0 tw-max-w-[min(28rem,calc(100%-2rem))] tw--translate-x-1/2 tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-center tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+    >
+      {{ marinaLine }}
+    </p>
+
+    <p
+      v-if="atlasLine"
+      class="tw-pointer-events-none tw-absolute tw-left-1/2 tw-top-[4.6rem] tw-z-[6] tw-m-0 tw-max-w-[min(28rem,calc(100%-2rem))] tw--translate-x-1/2 tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-center tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+    >
+      {{ atlasLine }}
+    </p>
+
+    <form
+      v-if="promptOpen"
+      class="tw-absolute tw-left-[18px] tw-top-[4.6rem] tw-z-[6] tw-flex tw-w-[min(420px,calc(100%-36px))] tw-flex-col tw-overflow-hidden tw-rounded-2xl tw-bg-[#10241cf2] tw-font-mono tw-text-[0.92rem] tw-text-[#e7f3ea] tw-shadow-[0_16px_40px_#17211c33]"
+      @submit.prevent="runCommand"
+    >
+      <div
+        class="tw-flex tw-items-center tw-justify-between tw-border-b tw-border-[#f3efe61a] tw-px-3 tw-py-2"
+      >
+        <span class="tw-text-[0.72rem] tw-uppercase tw-tracking-[0.14em] tw-text-[#e7c7a4]"
+          >Prompt</span
+        >
+        <button
+          type="button"
+          class="tw-cursor-pointer tw-border-0 tw-bg-transparent tw-font-[inherit] tw-text-[0.82rem] tw-text-[#e7f3ea] hover:tw-underline"
+          @click="promptOpen = false"
+        >
+          Fechar
+        </button>
+      </div>
+      <div ref="promptLog" class="tw-max-h-40 tw-overflow-auto tw-px-3 tw-py-2 tw-leading-relaxed">
+        <p v-for="(line, index) in promptLines" :key="index" class="tw-m-0 tw-whitespace-pre-wrap">
+          {{ line }}
+        </p>
+      </div>
+      <label
+        class="tw-flex tw-items-center tw-gap-2 tw-border-t tw-border-[#f3efe61a] tw-px-3 tw-py-2"
+      >
+        <span class="tw-text-[#e7c7a4]">&gt;</span>
+        <input
+          ref="promptInput"
+          v-model="promptLine"
+          class="tw-min-w-0 tw-flex-1 tw-border-0 tw-bg-transparent tw-font-[inherit] tw-text-[0.92rem] tw-text-[#e7f3ea] tw-outline-none"
+          autocomplete="off"
+          spellcheck="false"
+          aria-label="Código"
+        />
+      </label>
+    </form>
 
     <div
       class="tw-pointer-events-none tw-absolute tw-inset-0 tw-z-[3] tw-hidden max-md:tw-block [@media(pointer:coarse)]:tw-block"
@@ -292,12 +448,32 @@ import { TresCanvas } from '@tresjs/core'
 import { passageById, steps } from '@/data/journey'
 import { releaseHikeKeys, setHikeKey, setHikeStick, type HikeKey } from '@/game/controls'
 import { journeyTurned, toStageDelta } from '@/game/orientation'
+import { askPenalty, penalty } from '@/game/pitch'
+import {
+  atlasLine,
+  callScooter,
+  dismissScooter,
+  marinaLine,
+  mountScooter,
+  ridingScooter,
+  scooterNear,
+  terminalOpen,
+} from '@/game/spot'
 import JourneyMap from './JourneyMap.vue'
 import Atlas from './Atlas.vue'
+import Atelier from './Atelier.vue'
+import Campo from './Campo.vue'
+import Capela from './Capela.vue'
 import Montanha from './Montanha.vue'
 import Montanhista from './Montanhista.vue'
+import Trotinete from './Trotinete.vue'
 
 const menuOpen = ref(false)
+const promptOpen = ref(false)
+const promptLine = ref('')
+const promptLines = ref<string[]>(['Escreve um código e carrega em Enter.'])
+const promptInput = ref<HTMLInputElement | null>(null)
+const promptLog = ref<HTMLElement | null>(null)
 const activeId = ref<string | null>(null)
 const readingId = ref<string | null>(null)
 const started = ref(false)
@@ -305,6 +481,12 @@ const seen = ref<string[]>([])
 const hiker = ref<{ reset: () => void } | null>(null)
 
 const passage = computed(() => (activeId.value ? passageById[activeId.value] : null))
+const penaltyText = computed(() => {
+  if (penalty.call === 'golo') return 'Golo.'
+  if (penalty.call === 'defesa') return 'Defendeu.'
+  if (penalty.call === 'trave') return 'Ao poste.'
+  return 'Fora.'
+})
 const projectPrompt = computed(
   () => started.value && passage.value?.kind === 'project' && !readingId.value,
 )
@@ -319,16 +501,80 @@ function openProject() {
   readingId.value = passage.value.id
 }
 
+function openPrompt() {
+  menuOpen.value = false
+  promptOpen.value = true
+  terminalOpen.value = true
+  releaseHikeKeys()
+  nextTick(() => promptInput.value?.focus())
+}
+
+watch(promptOpen, (open) => {
+  terminalOpen.value = open
+  if (open) releaseHikeKeys()
+})
+
+function runCommand() {
+  const raw = promptLine.value.trim()
+  promptLine.value = ''
+  if (!raw) return
+  promptLines.value.push(`> ${raw}`)
+  const code = raw.toLowerCase().replace(/\s+/g, ' ')
+  if (code === 'del trot') {
+    const result = dismissScooter()
+    promptLines.value.push(
+      result === 'removed'
+        ? 'A trotinete saiu do mapa. Escreve trot para a chamar outra vez.'
+        : 'Não há trotinete no mapa.',
+    )
+  } else if (code === 'trot') {
+    const result = callScooter()
+    promptLines.value.push(
+      result === 'spawn'
+        ? 'A trotinete ficou à tua frente. Chega-te e carrega em E para subir.'
+        : result === 'dismount'
+          ? 'Desceste. A trotinete ficou onde a deixaste.'
+          : 'A trotinete já está no mapa. Escreve del trot para a tirar.',
+    )
+    if (result === 'spawn' || result === 'dismount') promptOpen.value = false
+  } else {
+    promptLines.value.push('Não conheço esse código.')
+  }
+  nextTick(() => {
+    const log = promptLog.value
+    if (log) log.scrollTop = log.scrollHeight
+  })
+}
+
 function onInspectKey(event: KeyboardEvent) {
   if (event.repeat) return
+  const typing =
+    event.target instanceof HTMLElement && Boolean(event.target.closest('input, textarea'))
   const key = event.key.toLowerCase()
   if (key === 'escape') {
+    if (promptOpen.value) {
+      promptOpen.value = false
+      return
+    }
     readingId.value = null
     return
   }
+  if (typing) return
   if (key !== 'e') return
   if (readingId.value) {
     readingId.value = null
+    return
+  }
+  if (ridingScooter.value) {
+    ridingScooter.value = false
+    return
+  }
+  if (scooterNear.value) {
+    mountScooter()
+    return
+  }
+  if (penalty.near) {
+    askPenalty()
     return
   }
   openProject()
@@ -455,9 +701,7 @@ let lockAttempted = false
 let weRequestedFullscreen = false
 let orientationLocked = false
 
-const showRotatePrompt = computed(
-  () => handheld.value && portrait.value && !promptDismissed.value,
-)
+const showRotatePrompt = computed(() => handheld.value && portrait.value && !promptDismissed.value)
 
 function readPortrait() {
   if (window.innerHeight !== window.innerWidth) return window.innerHeight > window.innerWidth
@@ -574,6 +818,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  terminalOpen.value = false
   document.body.style.overflow = ''
   window.removeEventListener('blur', onBlur)
   window.removeEventListener('resize', onMediaChange)

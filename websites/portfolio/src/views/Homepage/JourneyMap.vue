@@ -15,7 +15,7 @@
       class="tw-fixed tw-inset-0 tw-z-[30] tw-flex tw-items-center tw-justify-center tw-bg-[#17211ccc] tw-p-4"
       role="dialog"
       aria-modal="true"
-        aria-label="Mapa do vale"
+      aria-label="Mapa do vale"
       @click.self="open = false"
     >
       <div
@@ -45,6 +45,19 @@
           </li>
           <li class="tw-flex tw-items-center tw-gap-1.5">
             <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#8a6a32]" /> Pessoal
+          </li>
+          <li class="tw-flex tw-items-center tw-gap-1.5">
+            <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#8d5a45]" /> Atelier
+          </li>
+          <li class="tw-flex tw-items-center tw-gap-1.5">
+            <span
+              class="tw-h-2 tw-w-2 tw-rounded-full tw-border tw-border-[#8d7b66] tw-bg-[#f4efe4]"
+            />
+            Capela
+          </li>
+          <li class="tw-flex tw-items-center tw-gap-1.5">
+            <span class="tw-h-2 tw-w-3 tw-rounded-sm tw-bg-[#2f7a3e]" />
+            Campo
           </li>
           <li class="tw-flex tw-items-center tw-gap-1.5">
             <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#b91c1c]" /> Tu

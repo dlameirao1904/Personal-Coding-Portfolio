@@ -61,6 +61,11 @@ type Fish = {
   speed: number
   phase: number
   sway: number
+  depth: number
+  /** 0 debaixo de água, 1 à superfície. */
+  rise: number
+  mode: 'deep' | 'up' | 'top' | 'down'
+  timer: number
 }
 
 const materials = new Map<string, MeshStandardMaterial>()
@@ -289,7 +294,7 @@ export function mountWildlife(scenery: Group, walkable: Group) {
 
   const fishGeo = new SphereGeometry(0.28, 7, 5)
   const fishTail = new BoxGeometry(0.06, 0.28, 0.32)
-  const fishColors = ['#ffb703', '#7fd3e8', '#f4d35e', '#90e0ef']
+  const fishColors = ['#1a3330', '#243044', '#3a3428', '#163e42']
   let center = 0
   let best = Infinity
   samples.forEach((sample, index) => {
@@ -306,10 +311,8 @@ export function mountWildlife(scenery: Group, walkable: Group) {
     const color = fishColors[n % fishColors.length]
     const skin = new MeshStandardMaterial({
       color,
-      emissive: color,
-      emissiveIntensity: 0.45,
-      roughness: 0.32,
-      metalness: 0.08,
+      roughness: 0.95,
+      metalness: 0,
       flatShading: true,
     })
     const root = new Group()
@@ -328,9 +331,13 @@ export function mountWildlife(scenery: Group, walkable: Group) {
       tail,
       along: fishMin + ((fishMax - fishMin) * n) / 50,
       dir: n % 2 ? 1 : -1,
-      speed: 2.2 + rnd() * 1.4,
+      speed: 0.42 + rnd() * 0.38,
       phase: rnd() * Math.PI * 2,
-      sway: 14 + rnd() * 16,
+      sway: 10 + rnd() * 12,
+      depth: 0.16 + rnd() * 0.22,
+      rise: 0,
+      mode: 'deep',
+      timer: 4 + rnd() * 12,
     })
   }
 
@@ -523,17 +530,35 @@ export function mountWildlife(scenery: Group, walkable: Group) {
       const blend = swimmer.along - i
       const a = samples[i]
       const b = samples[Math.min(samples.length - 1, i + 1)]
-      const side = Math.sin(time * 0.7 + swimmer.phase) * swimmer.sway
+      swimmer.timer -= dt
+      if (swimmer.mode === 'deep' && swimmer.timer <= 0) swimmer.mode = 'up'
+      if (swimmer.mode === 'up') {
+        swimmer.rise = Math.min(1, swimmer.rise + dt * 1.5)
+        if (swimmer.rise >= 1) {
+          swimmer.mode = 'top'
+          swimmer.timer = 1
+        }
+      } else if (swimmer.mode === 'top' && swimmer.timer <= 0) swimmer.mode = 'down'
+      else if (swimmer.mode === 'down') {
+        swimmer.rise = Math.max(0, swimmer.rise - dt * 1.3)
+        if (swimmer.rise <= 0) {
+          swimmer.mode = 'deep'
+          swimmer.timer = 8 + Math.random() * 14
+        }
+      }
+      const side = Math.sin(time * 0.35 + swimmer.phase) * swimmer.sway
       const tx = a.tx * swimmer.dir
       const tz = a.tz * swimmer.dir
+      const submerged = waterSurfaceY() - swimmer.depth
+      const surfaced = waterSurfaceY() + 0.05
       swimmer.root.position.set(
         a.x + (b.x - a.x) * blend - tz * side,
-        waterSurfaceY() + 0.22 + Math.sin(time * 2.4 + swimmer.phase) * 0.12,
+        submerged + (surfaced - submerged) * swimmer.rise,
         a.z + (b.z - a.z) * blend + tx * side,
       )
       swimmer.root.rotation.y = Math.atan2(tx, tz)
       swimmer.root.updateMatrixWorld(true)
-      swimmer.tail.rotation.y = Math.sin(time * 8 + swimmer.phase) * 0.6
+      swimmer.tail.rotation.y = Math.sin(time * 3.2 + swimmer.phase) * 0.45
     }
   }
 

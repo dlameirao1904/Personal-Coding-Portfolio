@@ -118,13 +118,29 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, shallowRef, watch } from 'vue'
 import { useLoop, useTresContext } from '@tresjs/core'
-import { Group, Mesh, MeshBasicMaterial, Raycaster, SphereGeometry, Vector3, type Object3D } from 'three'
+import {
+  Group,
+  Mesh,
+  MeshBasicMaterial,
+  Raycaster,
+  SphereGeometry,
+  Vector3,
+  type Object3D,
+} from 'three'
 import { SPAWN, passageById, passages } from '@/data/journey'
+import { onBridge } from '@/game/bridge'
 import { WADE_SINK, cavadoSample, waterSurfaceY } from '@/game/cavado'
 import { disposeComputer, makeComputer, paintComputer } from '@/game/computer'
 import { hikeKeys, hikeStick, releaseHikeKeys, setHikeKeyFromEvent } from '@/game/controls'
 import { toStageDelta } from '@/game/orientation'
-import { hikerPose, hikerSpot } from '@/game/spot'
+import {
+  hikerPose,
+  hikerSpot,
+  ridingScooter,
+  scooter,
+  scooterNear,
+  terminalOpen,
+} from '@/game/spot'
 
 const props = defineProps<{ readingId: string | null }>()
 const emit = defineEmits(['arrive', 'started'])
@@ -174,6 +190,7 @@ const MAX_STEP = 0.95
 const MAX_DROP = 1.05
 
 let grounded = false
+let wasRiding = false
 let hasLanded = false
 let coyote = 0
 let jumpBuffer = 0
@@ -272,9 +289,13 @@ watch(playerRef, (player) => {
 })
 
 const onKeyDown = (event: KeyboardEvent) => {
+  if (terminalOpen.value) return
+  const target = event.target
+  if (target instanceof HTMLElement && target.closest('input, textarea')) return
   if (setHikeKeyFromEvent(event, true)) event.preventDefault()
 }
 const onKeyUp = (event: KeyboardEvent) => {
+  if (terminalOpen.value) return
   setHikeKeyFromEvent(event, false)
 }
 
@@ -358,6 +379,7 @@ function sample(x: number, z: number) {
 function floorAt(x: number, z: number) {
   const ground = sample(x, z)
   if (ground === null) return null
+  if (onBridge(x, z)) return ground
   return ground - cavadoSample(x, z).depth * WADE_SINK
 }
 
@@ -429,6 +451,7 @@ function publishPose(player: Group) {
   hikerPose.y = player.position.y
   hikerPose.z = player.position.z
   hikerPose.yaw = player.rotation.y
+  hikerPose.look = orbitPitch
   hikerPose.visible = player.visible
   hikerPose.ready = true
 }
@@ -444,6 +467,8 @@ function reset() {
   player.position.set(SPAWN[0], SPAWN[1], SPAWN[2])
   hikerSpot.value = { x: SPAWN[0], z: SPAWN[2] }
   player.rotation.y = Math.PI
+  ridingScooter.value = false
+  wasRiding = false
   publishPose(player)
   orbitYaw = Math.PI
   orbitPitch = 0.42
@@ -500,7 +525,9 @@ onBeforeRender(({ delta }) => {
     wishZ /= wishLen
   }
 
-  const wadeNow = cavadoSample(player.position.x, player.position.z)
+  const wadeNow = onBridge(player.position.x, player.position.z)
+    ? { depth: 0, flowX: 0, flowZ: 0 }
+    : cavadoSample(player.position.x, player.position.z)
   waterTime += dt
   const tickWater = scene.value?.getObjectByName('walkable')?.userData.tickWater as
     | ((time: number) => void)
@@ -511,10 +538,25 @@ onBeforeRender(({ delta }) => {
     | undefined
   live?.(dt, player.position.x, player.position.y, player.position.z)
 
+  const riding = ridingScooter.value
+  if (riding && !wasRiding) {
+    player.position.x = scooter.x
+    player.position.z = scooter.z
+    player.rotation.y = scooter.yaw
+    velocity.set(0, 0, 0)
+  }
   const pushing = !reading && wishLen > 0.01 && hasLanded
   const running = pushing && hikeKeys.Shift
-  const rate = pushing ? (grounded ? (running ? ACCEL * 1.25 : ACCEL) : AIR_ACCEL) : FRICTION
-  const pace = SPEED * (running ? RUN : 1) * (1 - wadeNow.depth * 0.62)
+  const rate = pushing
+    ? grounded
+      ? running || riding
+        ? ACCEL * 1.35
+        : ACCEL
+      : AIR_ACCEL
+    : riding
+      ? 16
+      : FRICTION
+  const pace = (riding ? SPEED * RUN * 2 : SPEED * (running ? RUN : 1)) * (1 - wadeNow.depth * 0.62)
   const drift = 1.7 * wadeNow.depth
   velocity.x = approach(velocity.x, (pushing ? wishX * pace : 0) + wadeNow.flowX * drift, rate, dt)
   velocity.z = approach(velocity.z, (pushing ? wishZ * pace : 0) + wadeNow.flowZ * drift, rate, dt)
@@ -560,7 +602,9 @@ onBeforeRender(({ delta }) => {
 
   if (!reading) velocity.y -= GRAVITY * dt
   const nextY = reading ? player.position.y : player.position.y + velocity.y * dt
-  const wade = cavadoSample(player.position.x, player.position.z)
+  const wade = onBridge(player.position.x, player.position.z)
+    ? { depth: 0, flowX: 0, flowZ: 0 }
+    : cavadoSample(player.position.x, player.position.z)
   const ground = floorAt(player.position.x, player.position.z)
   const bob = Math.sin(waterTime * 2.5) * 0.04 * wade.depth
   const bed = ground === null ? null : ground + bob
@@ -572,12 +616,7 @@ onBeforeRender(({ delta }) => {
     grounded = true
     hasLanded = true
     if (fellFar) reset()
-  } else if (
-    bed !== null &&
-    grounded &&
-    velocity.y <= 0 &&
-    player.position.y - bed <= MAX_DROP
-  ) {
+  } else if (bed !== null && grounded && velocity.y <= 0 && player.position.y - bed <= MAX_DROP) {
     player.position.y = bed
     velocity.y = 0
   } else {
@@ -602,7 +641,23 @@ onBeforeRender(({ delta }) => {
   }
 
   const moving = grounded && speed > 0.35
-  const stride = running && moving ? 0.78 : wade.depth > 0.2 ? 0.28 : 0.55
+  if (riding) {
+    scooter.x = player.position.x
+    scooter.y = player.position.y
+    scooter.z = player.position.z
+    scooter.yaw = player.rotation.y
+    scooterNear.value = false
+  } else if (scooter.on) {
+    const parked = floorAt(scooter.x, scooter.z)
+    if (parked !== null) scooter.y = parked
+    const near = Math.hypot(player.position.x - scooter.x, player.position.z - scooter.z)
+    scooterNear.value = near < 1.7
+  } else {
+    scooterNear.value = false
+  }
+  wasRiding = riding
+
+  const stride = riding ? 0.06 : running && moving ? 0.78 : wade.depth > 0.2 ? 0.28 : 0.55
   if (moving) walkPhase += dt * (running ? 11 + speed : 8 + speed) * (wade.depth > 0.2 ? 0.72 : 1)
   const swing = moving ? Math.sin(walkPhase) * stride : 0
   const wet = grounded && wade.depth > 0.05
@@ -630,6 +685,11 @@ onBeforeRender(({ delta }) => {
   swingLimb(rightArm.value, swing * 0.75, dt)
 
   updatePassage(player.position.x, player.position.z)
+
+  if (!draggingLook && deskWeight < 0.05 && wishLen > 0.2) {
+    orbitYaw = easeAngle(orbitYaw, player.rotation.y, dt)
+    if (orbitPitch < 0.5) orbitPitch = approach(orbitPitch, 0.5, 0.55, dt)
+  }
 
   if (!activeCamera) return
   const narrow = sizes.width.value < 800

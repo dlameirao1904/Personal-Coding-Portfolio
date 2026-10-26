@@ -98,6 +98,44 @@ export const skillGroups = [
 
 export const learning = ['Oracle', 'Django', 'Kotlin', 'React Native', 'Laravel', 'PHP']
 
+export interface PersonalNote {
+  id: string
+  period: string
+  title: string
+  summary: string
+}
+
+/** O que fica fora do percurso de software. */
+export const personalNotes: PersonalNote[] = [
+  {
+    id: 'restauracao',
+    period: 'Desde os 16 anos',
+    title: 'Restauração',
+    summary:
+      'Restaurantes, bares e discotecas, como servente. Foi o primeiro trabalho, bem antes do código.',
+  },
+  {
+    id: 'padaria',
+    period: 'Desde os 23 anos',
+    title: 'Padaria',
+    summary:
+      'Ajudante de pasteleiro, e servente nas horas vagas e aos fins de semana. Continua, em paralelo com a IOTech e o mestrado.',
+  },
+  {
+    id: 'desporto',
+    period: 'Infância — hoje',
+    title: 'Futebol, futsal e boxe',
+    summary:
+      'Futsal e futebol durante a infância toda. Continua a ser das coisas que mais me importam. Pratiquei boxe, e o desporto ao ar livre nunca saiu.',
+  },
+  {
+    id: 'escuta',
+    period: 'Fora do turno',
+    title: 'Leitura e música',
+    summary: 'Gosto de ler e adoro música, desde Radiohead a Tool.',
+  },
+]
+
 export const SPAWN: Vec3 = [0, 0.45, 48]
 
 /** Polilinha do trilho, do início até aos dois passos que decorrem agora. */

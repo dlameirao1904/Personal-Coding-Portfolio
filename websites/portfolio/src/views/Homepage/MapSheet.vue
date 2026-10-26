@@ -44,38 +44,25 @@
     />
     <g v-for="place in places" :key="place.id">
       <circle :cx="place.x" :cy="place.y" :r="wide ? 3.4 : 4.2" :fill="place.color" />
-      <text
-        v-if="wide"
-        :x="place.x + 6"
-        :y="place.y + 3"
-        fill="#17211c"
-        font-size="8"
-        font-family="Outfit, sans-serif"
-      >
-        {{ place.label }}
-      </text>
     </g>
-    <text
-      v-if="wide"
-      :x="X(0)"
-      :y="Y(-168)"
-      fill="#f7f3ea"
-      font-size="9"
-      font-family="Outfit, sans-serif"
-      text-anchor="middle"
-    >
-      Montanha
-    </text>
-    <text
-      v-if="wide"
-      :x="X(28)"
-      :y="Y(98)"
-      fill="#17211c"
-      font-size="8"
-      font-family="Outfit, sans-serif"
-    >
-      Cávado
-    </text>
+    <circle :cx="atelier.x" :cy="atelier.y" :r="wide ? 3.6 : 4.4" fill="#8d5a45" />
+    <rect
+      :x="pitch.x"
+      :y="pitch.y"
+      :width="pitch.w"
+      :height="pitch.h"
+      fill="#2f7a3e"
+      stroke="#f4efe4"
+      :stroke-width="wide ? 0.7 : 1.1"
+    />
+    <circle
+      :cx="chapel.x"
+      :cy="chapel.y"
+      :r="wide ? 3.2 : 4"
+      fill="#f4efe4"
+      stroke="#8d7b66"
+      stroke-width="0.6"
+    />
     <circle :cx="you.x" :cy="you.y" r="4.5" fill="#b91c1c" stroke="#f7f3ea" stroke-width="1.4" />
   </svg>
 </template>
@@ -83,6 +70,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { pathNodes, steps } from '@/data/journey'
+import { ATELIER } from '@/game/atelier'
+import { summit } from '@/game/buildTrail'
+import { PITCH_HALF_X, PITCH_HALF_Z, PITCH_X, PITCH_Z } from '@/game/pitch'
 import { CAVADO_HALF, cavado } from '@/game/cavado'
 import { hikerSpot } from '@/game/spot'
 
@@ -134,6 +124,10 @@ const world = computed(() => {
   for (const [x, z] of [...mountainWorld, ...slopeWorld, ...ridgeWorld, ...cavado]) mark(x, z)
   for (const node of pathNodes) mark(node[0], node[2])
   for (const step of steps) mark(step.position[0], step.position[2])
+  mark(ATELIER.x, ATELIER.z)
+  mark(summit.x, summit.z)
+  mark(PITCH_X - PITCH_HALF_X, PITCH_Z - PITCH_HALF_Z)
+  mark(PITCH_X + PITCH_HALF_X, PITCH_Z + PITCH_HALF_Z)
   mark(0, -340)
   mark(0, 240)
   const margin = 20
@@ -185,12 +179,26 @@ const trail = computed(() => pathNodes.map((node) => `${X(node[0])},${Y(node[2])
 const places = computed(() =>
   steps.map((step) => ({
     id: step.id,
-    label: step.short,
     x: X(step.position[0]),
     y: Y(step.position[2]),
     color: step.kind === 'work' ? '#8a4632' : step.kind === 'personal' ? '#8a6a32' : '#0e3328',
   })),
 )
+
+const atelier = computed(() => ({ x: X(ATELIER.x), y: Y(ATELIER.z) }))
+const chapel = computed(() => ({ x: X(summit.x), y: Y(summit.z) }))
+const pitch = computed(() => {
+  const x0 = X(PITCH_X - PITCH_HALF_X)
+  const x1 = X(PITCH_X + PITCH_HALF_X)
+  const y0 = Y(PITCH_Z - PITCH_HALF_Z)
+  const y1 = Y(PITCH_Z + PITCH_HALF_Z)
+  return {
+    x: Math.min(x0, x1),
+    y: Math.min(y0, y1),
+    w: Math.abs(x1 - x0),
+    h: Math.abs(y1 - y0),
+  }
+})
 
 const you = computed(() => {
   const x = X(hikerSpot.value.x)
