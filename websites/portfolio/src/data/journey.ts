@@ -261,7 +261,7 @@ export const steps: JourneyStep[] = [
     period: 'Set 2019 — Jan 2024',
     place: 'Braga',
     summary:
-      'Licenciatura na Universidade do Minho. Os trabalhos de cada ano estão neste patamar, dos dois lados do trilho.',
+      'Licenciatura em Ciências da Computação na Universidade do Minho. Os trabalhos de cada ano estão neste patamar, dos dois lados do trilho.',
     stack: [],
     sceneNote:
       'Da entrada para a saída: primeiro ano, depois o segundo, e o terceiro mais à frente.',
@@ -355,7 +355,7 @@ export const steps: JourneyStep[] = [
     period: 'Set 2025 — atual',
     place: 'Braga',
     summary:
-      'Mestrado em curso, no perfil de Criptografia. O trabalho de códigos é o criptossistema de McEliece. O projeto é o Vertice.',
+      'Mestrado em curso, no perfil de Criptografia. Há dois trabalhos: uma aplicação sobre criptografia, da cifra de César ao McEliece, e o Vertice, que planeia produção.',
     stack: ['Criptografia'],
     relation: 'Em paralelo com a IOTech',
     sceneNote:
@@ -376,7 +376,7 @@ export const steps: JourneyStep[] = [
     period: 'Em paralelo',
     place: 'Braga',
     summary:
-      'O site do atelier da Marina, o Martrack, o site de Gralhas, o Quantic Rover, a reconstrução 3D e um SIEM local.',
+      'O site da associação de Gralhas, o atelier da Marina e o Martrack, o painel do Quantic Rover, a reconstrução 3D e um SIEM local para estudar.',
     stack: [],
     sceneNote: 'À chegada estão o Atelier e o Martrack. Os outros quatro ficam mais à frente.',
     position: [-14, 18, -104],

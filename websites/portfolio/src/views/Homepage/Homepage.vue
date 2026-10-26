@@ -18,32 +18,49 @@
       />
     </TresCanvas>
 
-    <header
-      class="tw-pointer-events-none tw-absolute tw-left-[18px] tw-right-[18px] tw-top-[18px] tw-z-[2] tw-flex tw-items-center tw-gap-4"
+    <div
+      class="tw-pointer-events-none tw-absolute tw-left-[18px] tw-right-[18px] tw-top-[max(18px,env(safe-area-inset-top,0px))] tw-z-[4] tw-flex tw-items-start tw-justify-between"
     >
-      <RouterLink
-        class="tw-pointer-events-auto tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#f7f3eaeb] tw-px-[0.9rem] tw-py-[0.55rem] tw-text-[0.92rem] tw-text-[#17211c] tw-no-underline hover:tw-bg-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-[3px] focus-visible:tw-outline-[#0e3328]"
-        to="/"
-      >
-        Portefólio
-      </RouterLink>
-      <p
-        class="tw-pointer-events-auto tw-m-0 tw-ml-1 tw-mr-auto tw-text-[0.72rem] tw-uppercase tw-tracking-[0.14em] tw-text-[#24312b]"
-      >
-        Jornada
-      </p>
-      <button
-        type="button"
-        class="tw-pointer-events-auto tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#f7f3eaeb] tw-px-[0.9rem] tw-py-[0.55rem] tw-font-[inherit] tw-text-[0.92rem] tw-text-[#17211c] hover:tw-bg-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-[3px] focus-visible:tw-outline-[#0e3328]"
-        @click="backToStart"
-      >
-        Início do trilho
-      </button>
-    </header>
+      <div class="tw-pointer-events-auto tw-relative">
+        <button
+          type="button"
+          class="tw-flex tw-h-11 tw-w-11 tw-cursor-pointer tw-items-center tw-justify-center tw-rounded-full tw-border-0 tw-bg-[#f7f3eaeb] tw-text-[#17211c] hover:tw-bg-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-[3px] focus-visible:tw-outline-[#0e3328]"
+          :aria-expanded="menuOpen"
+          aria-label="Menu"
+          @click="menuOpen = !menuOpen"
+        >
+          <span class="tw-flex tw-w-4 tw-flex-col tw-gap-1" aria-hidden="true">
+            <span class="tw-block tw-h-0.5 tw-rounded-full tw-bg-current" />
+            <span class="tw-block tw-h-0.5 tw-rounded-full tw-bg-current" />
+            <span class="tw-block tw-h-0.5 tw-rounded-full tw-bg-current" />
+          </span>
+        </button>
+        <div
+          v-if="menuOpen"
+          class="tw-absolute tw-left-0 tw-top-[calc(100%+0.45rem)] tw-flex tw-w-52 tw-flex-col tw-gap-1 tw-rounded-2xl tw-bg-[#f7f3eaf0] tw-p-2 tw-shadow-[0_12px_28px_#17211c24]"
+        >
+          <button
+            type="button"
+            class="tw-cursor-pointer tw-rounded-xl tw-border-0 tw-bg-transparent tw-px-3 tw-py-2 tw-text-left tw-font-[inherit] tw-text-[0.95rem] tw-text-[#17211c] hover:tw-bg-[#0e332814]"
+            @click="chooseStart"
+          >
+            Início do trilho
+          </button>
+          <RouterLink
+            class="tw-rounded-xl tw-px-3 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-no-underline hover:tw-bg-[#0e332814]"
+            to="/"
+            @click="menuOpen = false"
+          >
+            Portefólio
+          </RouterLink>
+        </div>
+      </div>
+      <JourneyMap class="tw-pointer-events-auto" />
+    </div>
 
     <article
       v-if="!started"
-      class="journey-card tw-absolute tw-right-[18px] tw-top-[76px] tw-z-[2] tw-max-h-[min(62vh,560px)] tw-w-[min(380px,calc(100vw-36px))] tw-overflow-auto tw-rounded-[22px] tw-bg-[#f7f3eaf0] tw-p-5 tw-shadow-[0_16px_40px_#17211c1f] max-md:tw-bottom-4 max-md:tw-left-4 max-md:tw-right-4 max-md:tw-top-auto max-md:tw-max-h-[32vh] max-md:tw-w-auto"
+      class="journey-card tw-absolute tw-right-[18px] tw-top-[9.6rem] tw-z-[2] tw-max-h-[min(62vh,560px)] tw-w-[min(380px,calc(100vw-36px))] tw-overflow-auto tw-rounded-[22px] tw-bg-[#f7f3eaf0] tw-p-5 tw-shadow-[0_16px_40px_#17211c1f] max-md:tw-bottom-auto max-md:tw-left-auto max-md:tw-right-3 max-md:tw-top-[9.6rem] max-md:tw-max-h-[38vh] max-md:tw-w-[min(17.5rem,calc(100vw-6.5rem))] max-md:tw-rounded-2xl max-md:tw-p-3.5 max-md:tw-shadow-[0_10px_28px_#17211c33]"
     >
       <p class="tw-mb-2 tw-text-[0.72rem] tw-uppercase tw-tracking-[0.12em] tw-text-[#8a4632]">
         O trilho
@@ -58,18 +75,18 @@
       </p>
       <p class="tw-mt-3 tw-leading-[1.45]">«Só a Natureza é divina, e ela não é divina...»</p>
       <p class="tw-mt-3 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#5c675f] max-md:tw-hidden">
-        WASD ou setas para andar. Espaço para saltar. Arrasta o rato para olhar.
+        WASD ou setas para andar. Shift para correr. Espaço para saltar. Arrasta o rato para olhar.
       </p>
       <p
         class="tw-mt-3 tw-hidden tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#5c675f] max-md:tw-block"
       >
-        Joystick para andar. Botão para saltar. Arrasta para olhar.
+        Joystick para andar. Segura em Correr. Botão para saltar. Arrasta para olhar.
       </p>
     </article>
 
     <article
       v-else-if="passage && passage.kind !== 'project'"
-      class="journey-card tw-absolute tw-right-[18px] tw-top-[76px] tw-z-[2] tw-max-h-[min(62vh,560px)] tw-w-[min(380px,calc(100vw-36px))] tw-overflow-auto tw-rounded-[22px] tw-bg-[#f7f3eaf0] tw-p-5 tw-shadow-[0_16px_40px_#17211c1f] max-md:tw-bottom-4 max-md:tw-left-4 max-md:tw-right-4 max-md:tw-top-auto max-md:tw-max-h-[32vh] max-md:tw-w-auto"
+      class="journey-card tw-absolute tw-right-[18px] tw-top-[9.6rem] tw-z-[2] tw-max-h-[min(62vh,560px)] tw-w-[min(380px,calc(100vw-36px))] tw-overflow-auto tw-rounded-[22px] tw-bg-[#f7f3eaf0] tw-p-5 tw-shadow-[0_16px_40px_#17211c1f] max-md:tw-bottom-auto max-md:tw-left-auto max-md:tw-right-3 max-md:tw-top-[9.6rem] max-md:tw-max-h-[38vh] max-md:tw-w-[min(17.5rem,calc(100vw-6.5rem))] max-md:tw-rounded-2xl max-md:tw-p-3.5 max-md:tw-shadow-[0_10px_28px_#17211c33]"
     >
       <p class="tw-mb-2 tw-text-[0.72rem] tw-uppercase tw-tracking-[0.12em] tw-text-[#8a4632]">
         {{ passage.kicker }}
@@ -176,12 +193,6 @@
       </button>
     </div>
 
-    <p
-      v-if="started && !readingId"
-      class="tw-absolute tw-bottom-[18px] tw-left-1/2 tw-z-[2] tw-m-0 tw--translate-x-1/2 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eae0] tw-px-3 tw-py-2 tw-text-[0.82rem] tw-text-[#3d4943] max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden"
-    >
-      WASD ou setas para andar · Espaço para saltar · Arrasta para olhar
-    </p>
     <div
       class="tw-pointer-events-none tw-absolute tw-inset-0 tw-z-[3] tw-hidden max-md:tw-block [@media(pointer:coarse)]:tw-block"
       :class="{ 'tw-invisible': readingId }"
@@ -204,6 +215,17 @@
           :style="knobStyle"
         />
       </div>
+      <button
+        type="button"
+        class="tw-pointer-events-auto tw-absolute tw-bottom-[max(7.4rem,calc(env(safe-area-inset-bottom,0px)+7rem))] tw-left-[max(1.35rem,env(safe-area-inset-left,0px))] tw-h-16 tw-w-16 tw-cursor-pointer tw-select-none tw-rounded-full tw-border-0 tw-font-[inherit] tw-text-[0.82rem] tw-text-[#17211c] tw-touch-none tw-shadow-[0_8px_20px_#17211c24]"
+        :class="runHeld ? 'tw-bg-white' : 'tw-bg-[#f7f3eaf0]'"
+        @pointerdown.prevent="onRunDown"
+        @pointerup="hold('Shift', false)"
+        @pointercancel="hold('Shift', false)"
+        @contextmenu.prevent
+      >
+        Correr
+      </button>
       <button
         type="button"
         class="tw-pointer-events-auto tw-absolute tw-bottom-[max(0.35rem,env(safe-area-inset-bottom,0px))] tw-left-[max(1rem,env(safe-area-inset-left,0px))] tw-h-24 tw-w-24 tw-cursor-pointer tw-select-none tw-rounded-full tw-border-0 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#17211c] tw-touch-none tw-shadow-[0_8px_20px_#17211c24]"
@@ -269,9 +291,11 @@ import { TresCanvas } from '@tresjs/core'
 import { passageById, steps } from '@/data/journey'
 import { releaseHikeKeys, setHikeKey, setHikeStick, type HikeKey } from '@/game/controls'
 import { journeyTurned, toStageDelta } from '@/game/orientation'
+import JourneyMap from './JourneyMap.vue'
 import Montanha from './Montanha.vue'
 import Montanhista from './Montanhista.vue'
 
+const menuOpen = ref(false)
 const activeId = ref<string | null>(null)
 const readingId = ref<string | null>(null)
 const started = ref(false)
@@ -327,9 +351,15 @@ function backToStart() {
   hiker.value?.reset()
 }
 
+function chooseStart() {
+  menuOpen.value = false
+  backToStart()
+}
+
 const stickBase = ref<HTMLElement | null>(null)
 const stickOffset = ref({ x: 0, y: 0 })
 const jumpHeld = ref(false)
+const runHeld = ref(false)
 let stickPointer: number | null = null
 
 const STICK_RADIUS = 40
@@ -341,6 +371,7 @@ const knobStyle = computed(() => ({
 
 function hold(key: HikeKey, down: boolean) {
   if (key === ' ') jumpHeld.value = down
+  if (key === 'Shift') runHeld.value = down
   setHikeKey(key, down)
 }
 
@@ -348,6 +379,12 @@ function onJumpDown(event: PointerEvent) {
   const button = event.currentTarget as HTMLElement
   button.setPointerCapture(event.pointerId)
   hold(' ', true)
+}
+
+function onRunDown(event: PointerEvent) {
+  const button = event.currentTarget as HTMLElement
+  button.setPointerCapture(event.pointerId)
+  hold('Shift', true)
 }
 
 function onStickDown(event: PointerEvent) {
@@ -401,6 +438,7 @@ function onBlur() {
   stickPointer = null
   stickOffset.value = { x: 0, y: 0 }
   jumpHeld.value = false
+  runHeld.value = false
   releaseHikeKeys()
 }
 
@@ -567,7 +605,7 @@ onUnmounted(() => {
 }
 
 .journey-turned .journey-card {
-  top: 76px !important;
+  top: 9.6rem !important;
   right: 18px !important;
   bottom: auto !important;
   left: auto !important;

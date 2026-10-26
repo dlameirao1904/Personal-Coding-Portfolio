@@ -18,10 +18,12 @@ import { passages } from '@/data/journey'
 import { buildTrail } from '@/game/buildTrail'
 import { CAVADO_SIGN } from '@/game/cavado'
 import { makeNotice, makeSign } from '@/game/labels'
+import { disposeWildlife, mountWildlife } from '@/game/wildlife'
 
 const props = defineProps<{ activeId: string | null }>()
 
 const world = buildTrail()
+mountWildlife(world.scenery, world.walkable)
 const signs: Sprite[] = []
 let notice: Group | null = null
 const { scene } = useTresContext()
@@ -85,9 +87,11 @@ onMounted(() => {
         world.scenery.add(cavado)
         signs.push(cavado)
         notice = makeNotice('Em construção', ['Esta parte da jornada', 'ainda está a ser feita.'])
-        notice.position.set(54.8, -7.79, 97)
-        notice.rotation.y = Math.atan2(-4, -10)
+        notice.position.set(41.6, -8, 73.6)
+        notice.rotation.y = Math.atan2(-1, -1)
         world.scenery.add(notice)
+        const solids = world.walkable.userData.solids as { x: number; z: number; r: number }[]
+        solids.push({ x: notice.position.x, z: notice.position.z, r: 1.45 })
         tint(props.activeId)
       } catch (error) {
         console.error(error)
@@ -108,5 +112,6 @@ onUnmounted(() => {
     material.dispose()
   }
   world.dispose()
+  disposeWildlife()
 })
 </script>

@@ -37,22 +37,43 @@
       </TresMesh>
     </TresGroup>
 
+    <TresMesh :position="[0, 0.8, 0]" cast-shadow>
+      <TresBoxGeometry :args="[0.48, 0.22, 0.32]" />
+      <TresMeshStandardMaterial color="#1e3a8a" :flatShading="true" />
+    </TresMesh>
+    <TresMesh :position="[0, 0.9, 0]" cast-shadow>
+      <TresBoxGeometry :args="[0.54, 0.1, 0.36]" />
+      <TresMeshStandardMaterial color="#78350f" :flatShading="true" />
+    </TresMesh>
+    <TresMesh :position="[0, 0.9, 0.16]">
+      <TresBoxGeometry :args="[0.08, 0.08, 0.04]" />
+      <TresMeshStandardMaterial color="#e7c7a4" :flatShading="true" />
+    </TresMesh>
+
     <TresGroup ref="leftArm" :position="[-0.35, 1.45, 0]">
       <TresMesh :position="[0, -0.2, 0]" cast-shadow>
         <TresBoxGeometry :args="[0.15, 0.4, 0.15]" />
-        <TresMeshStandardMaterial color="#d97706" />
+        <TresMeshStandardMaterial color="#d97706" :flatShading="true" />
+      </TresMesh>
+      <TresMesh :position="[0, -0.44, 0.02]" cast-shadow>
+        <TresBoxGeometry :args="[0.16, 0.12, 0.14]" />
+        <TresMeshStandardMaterial color="#ffdbac" :flatShading="true" />
       </TresMesh>
     </TresGroup>
 
     <TresGroup ref="rightArm" :position="[0.35, 1.45, 0]">
       <TresMesh :position="[0, -0.2, 0]" cast-shadow>
         <TresBoxGeometry :args="[0.15, 0.4, 0.15]" />
-        <TresMeshStandardMaterial color="#d97706" />
+        <TresMeshStandardMaterial color="#d97706" :flatShading="true" />
       </TresMesh>
-      <TresGroup :position="[0, -0.4, 0.1]" :rotation="[1.5, 0, 0]">
-        <TresMesh>
-          <TresBoxGeometry :args="[0.04, 0.6, 0.04]" />
-          <TresMeshStandardMaterial color="#4b5563" />
+      <TresMesh :position="[0, -0.42, 0.06]" cast-shadow>
+        <TresBoxGeometry :args="[0.16, 0.12, 0.16]" />
+        <TresMeshStandardMaterial color="#ffdbac" :flatShading="true" />
+      </TresMesh>
+      <TresGroup :position="[0, -0.42, 0.12]" :rotation="[1.5, 0, 0]">
+        <TresMesh cast-shadow>
+          <TresBoxGeometry :args="[0.04, 0.7, 0.04]" />
+          <TresMeshStandardMaterial color="#4b5563" :flatShading="true" />
         </TresMesh>
       </TresGroup>
     </TresGroup>
@@ -60,32 +81,50 @@
     <TresGroup ref="leftLeg" :position="[-0.15, 0.85, 0]">
       <TresMesh :position="[0, -0.3, 0]" cast-shadow>
         <TresBoxGeometry :args="[0.2, 0.5, 0.25]" />
-        <TresMeshStandardMaterial color="#1e3a8a" />
+        <TresMeshStandardMaterial color="#1e3a8a" :flatShading="true" />
+      </TresMesh>
+      <TresMesh :position="[0, -0.56, 0.08]" cast-shadow>
+        <TresBoxGeometry :args="[0.22, 0.12, 0.36]" />
+        <TresMeshStandardMaterial color="#3f2e24" :flatShading="true" />
       </TresMesh>
     </TresGroup>
 
     <TresGroup ref="rightLeg" :position="[0.15, 0.85, 0]">
       <TresMesh :position="[0, -0.3, 0]" cast-shadow>
         <TresBoxGeometry :args="[0.2, 0.5, 0.25]" />
-        <TresMeshStandardMaterial color="#1e3a8a" />
+        <TresMeshStandardMaterial color="#1e3a8a" :flatShading="true" />
+      </TresMesh>
+      <TresMesh :position="[0, -0.56, 0.08]" cast-shadow>
+        <TresBoxGeometry :args="[0.22, 0.12, 0.36]" />
+        <TresMeshStandardMaterial color="#3f2e24" :flatShading="true" />
       </TresMesh>
     </TresGroup>
 
-    <TresMesh :position="[0, 1.25, -0.25]" cast-shadow>
-      <TresBoxGeometry :args="[0.45, 0.6, 0.25]" />
-      <TresMeshStandardMaterial color="#365314" />
-    </TresMesh>
+    <TresGroup :position="[0, 1.25, -0.25]">
+      <!-- Corpo da Mochila -->
+      <TresMesh cast-shadow>
+        <TresBoxGeometry :args="[0.45, 0.6, 0.25]" />
+        <TresMeshStandardMaterial color="#365314" :roughness="0.9" />
+      </TresMesh>
+      <!-- Saco de Cama (Rolo) -->
+      <TresMesh :position="[0, 0.38, 0]" :rotation="[0, 0, Math.PI / 2]" cast-shadow>
+        <TresCylinderGeometry :args="[0.12, 0.12, 0.45, 8]" />
+        <TresMeshStandardMaterial color="#fbbf24" :flatShading="true" :roughness="1" />
+      </TresMesh>
+    </TresGroup>
   </TresGroup>
 </template>
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, shallowRef, watch } from 'vue'
 import { useLoop, useTresContext } from '@tresjs/core'
-import { Group, Raycaster, Vector3, type Object3D } from 'three'
+import { Group, Mesh, MeshBasicMaterial, Raycaster, SphereGeometry, Vector3, type Object3D } from 'three'
 import { SPAWN, passageById, passages } from '@/data/journey'
+import { WADE_SINK, cavadoSample, waterSurfaceY } from '@/game/cavado'
 import { disposeComputer, makeComputer, paintComputer } from '@/game/computer'
 import { hikeKeys, hikeStick, releaseHikeKeys, setHikeKeyFromEvent } from '@/game/controls'
 import { toStageDelta } from '@/game/orientation'
+import { hikerSpot } from '@/game/spot'
 
 const props = defineProps<{ readingId: string | null }>()
 const emit = defineEmits(['arrive', 'started'])
@@ -112,9 +151,20 @@ const deskLook = new Vector3()
 const camGoal = new Vector3()
 const lookGoal = new Vector3()
 const computer = makeComputer()
+const splashMat = new MeshBasicMaterial({ color: '#e7f6f8', transparent: true, opacity: 0.82 })
+const splashGeo = new SphereGeometry(0.07, 6, 4)
+const splash = new Group()
+const drops = Array.from({ length: 8 }, () => {
+  const drop = new Mesh(splashGeo, splashMat)
+  splash.add(drop)
+  return drop
+})
+splash.visible = false
 let deskWeight = 0
+let waterTime = 0
 
 const SPEED = 6.6
+const RUN = 1.75
 const ACCEL = 28
 const AIR_ACCEL = 9
 const FRICTION = 22
@@ -133,7 +183,6 @@ let walkPhase = 0
 let announcedStart = false
 let currentPassage: string | null = null
 let lastEmitted: string | null | undefined
-let walkableReady = false
 let cameraReady = false
 let orbitYaw = Math.PI
 let orbitPitch = 0.42
@@ -241,6 +290,7 @@ watch(
   scene,
   (value) => {
     if (value && computer.parent !== value) value.add(computer)
+    if (value && splash.parent !== value) value.add(splash)
   },
   { immediate: true },
 )
@@ -265,6 +315,9 @@ onUnmounted(() => {
   window.removeEventListener('pointercancel', onLookUp)
   releaseHikeKeys()
   scene.value?.remove(computer)
+  scene.value?.remove(splash)
+  splashGeo.dispose()
+  splashMat.dispose()
   disposeComputer(computer)
 })
 
@@ -275,22 +328,42 @@ function approach(current: number, target: number, rate: number, dt: number) {
   return current + Math.sign(delta) * max
 }
 
+function treeBlocks(x: number, z: number) {
+  const data = scene.value?.getObjectByName('walkable')?.userData
+  const lists = [data?.trees, data?.solids] as ({ x: number; z: number; r: number }[] | undefined)[]
+  for (const list of lists) {
+    if (!list) continue
+    for (let i = 0; i < list.length; i++) {
+      const item = list[i]
+      const dx = x - item.x
+      const dz = z - item.z
+      if (dx * dx + dz * dz < item.r * item.r) return true
+    }
+  }
+  return false
+}
+
 function sample(x: number, z: number) {
   const root = scene.value?.getObjectByName('walkable')
   if (!root) return null
-  if (!walkableReady) {
-    root.updateMatrixWorld(true)
-    walkableReady = true
-  }
-  rayOrigin.set(x, 80, z)
+  const follow = root.userData.follow as ((px: number, pz: number) => void) | undefined
+  follow?.(x, z)
+  rayOrigin.set(x, 160, z)
   raycaster.set(rayOrigin, down)
-  raycaster.far = 120
+  raycaster.far = 220
   const hits = raycaster.intersectObject(root, true)
   return hits.length ? hits[0].point.y : null
 }
 
+function floorAt(x: number, z: number) {
+  const ground = sample(x, z)
+  if (ground === null) return null
+  return ground - cavadoSample(x, z).depth * WADE_SINK
+}
+
 function canStand(x: number, z: number, feetY: number) {
-  const floor = sample(x, z)
+  if (treeBlocks(x, z)) return false
+  const floor = floorAt(x, z)
   if (floor === null) return false
   const rise = floor - feetY
   const drop = feetY - floor
@@ -360,6 +433,7 @@ function reset() {
   const player = playerRef.value
   if (!player) return
   player.position.set(SPAWN[0], SPAWN[1], SPAWN[2])
+  hikerSpot.value = { x: SPAWN[0], z: SPAWN[2] }
   player.rotation.y = Math.PI
   orbitYaw = Math.PI
   orbitPitch = 0.42
@@ -416,10 +490,24 @@ onBeforeRender(({ delta }) => {
     wishZ /= wishLen
   }
 
+  const wadeNow = cavadoSample(player.position.x, player.position.z)
+  waterTime += dt
+  const tickWater = scene.value?.getObjectByName('walkable')?.userData.tickWater as
+    | ((time: number) => void)
+    | undefined
+  tickWater?.(waterTime)
+  const live = scene.value?.getObjectByName('walkable')?.userData.tickWildlife as
+    | ((step: number, x: number, y: number, z: number) => void)
+    | undefined
+  live?.(dt, player.position.x, player.position.y, player.position.z)
+
   const pushing = !reading && wishLen > 0.01 && hasLanded
-  const rate = pushing ? (grounded ? ACCEL : AIR_ACCEL) : FRICTION
-  velocity.x = approach(velocity.x, pushing ? wishX * SPEED : 0, rate, dt)
-  velocity.z = approach(velocity.z, pushing ? wishZ * SPEED : 0, rate, dt)
+  const running = pushing && hikeKeys.Shift
+  const rate = pushing ? (grounded ? (running ? ACCEL * 1.25 : ACCEL) : AIR_ACCEL) : FRICTION
+  const pace = SPEED * (running ? RUN : 1) * (1 - wadeNow.depth * 0.62)
+  const drift = 1.7 * wadeNow.depth
+  velocity.x = approach(velocity.x, (pushing ? wishX * pace : 0) + wadeNow.flowX * drift, rate, dt)
+  velocity.z = approach(velocity.z, (pushing ? wishZ * pace : 0) + wadeNow.flowZ * drift, rate, dt)
 
   if (!reading && hasLanded && (Math.abs(velocity.x) > 0.001 || Math.abs(velocity.z) > 0.001)) {
     const nextX = player.position.x + velocity.x * dt
@@ -462,22 +550,25 @@ onBeforeRender(({ delta }) => {
 
   if (!reading) velocity.y -= GRAVITY * dt
   const nextY = reading ? player.position.y : player.position.y + velocity.y * dt
-  const ground = sample(player.position.x, player.position.z)
+  const wade = cavadoSample(player.position.x, player.position.z)
+  const ground = floorAt(player.position.x, player.position.z)
+  const bob = Math.sin(waterTime * 2.5) * 0.04 * wade.depth
+  const bed = ground === null ? null : ground + bob
 
-  if (ground !== null && nextY <= ground) {
-    const fellFar = player.position.y - ground > 2.5
-    player.position.y = ground
+  if (bed !== null && nextY <= bed) {
+    const fellFar = ground !== null && player.position.y - ground > 2.5
+    player.position.y = bed
     velocity.y = 0
     grounded = true
     hasLanded = true
     if (fellFar) reset()
   } else if (
-    ground !== null &&
+    bed !== null &&
     grounded &&
     velocity.y <= 0 &&
-    player.position.y - ground <= MAX_DROP
+    player.position.y - bed <= MAX_DROP
   ) {
-    player.position.y = ground
+    player.position.y = bed
     velocity.y = 0
   } else {
     player.position.y = nextY
@@ -486,6 +577,12 @@ onBeforeRender(({ delta }) => {
 
   if (player.position.y < -20) reset()
 
+  const movedX = player.position.x - hikerSpot.value.x
+  const movedZ = player.position.z - hikerSpot.value.z
+  if (movedX * movedX + movedZ * movedZ > 0.04) {
+    hikerSpot.value = { x: player.position.x, z: player.position.z }
+  }
+
   const speed = Math.hypot(velocity.x, velocity.z)
   if (!announcedStart && hasLanded && speed > 0.4) {
     announcedStart = true
@@ -493,8 +590,28 @@ onBeforeRender(({ delta }) => {
   }
 
   const moving = grounded && speed > 0.35
-  if (moving) walkPhase += dt * (8 + speed)
-  const swing = moving ? Math.sin(walkPhase) * 0.55 : 0
+  const stride = running && moving ? 0.78 : wade.depth > 0.2 ? 0.28 : 0.55
+  if (moving) walkPhase += dt * (running ? 11 + speed : 8 + speed) * (wade.depth > 0.2 ? 0.72 : 1)
+  const swing = moving ? Math.sin(walkPhase) * stride : 0
+  const wet = grounded && wade.depth > 0.05
+  splash.visible = wet
+  if (wet) {
+    const surface = waterSurfaceY()
+    const kick = Math.min(1, speed * 0.4)
+    for (let i = 0; i < drops.length; i++) {
+      const cycle = (waterTime * (0.65 + kick) + i * 0.37) % 1
+      const ang = i * 0.78 + waterTime * 0.4
+      const radius = 0.22 + cycle * (0.5 + kick * 0.8)
+      const drop = drops[i]
+      drop.visible = cycle < 0.9
+      drop.position.set(
+        player.position.x + Math.cos(ang) * radius + wade.flowX * cycle * 0.35,
+        surface + Math.sin(cycle * Math.PI) * 0.18,
+        player.position.z + Math.sin(ang) * radius + wade.flowZ * cycle * 0.35,
+      )
+      drop.scale.setScalar(Math.max(0.25, (1 - cycle) * (0.8 + kick)))
+    }
+  }
   swingLimb(leftLeg.value, swing, dt)
   swingLimb(rightLeg.value, -swing, dt)
   swingLimb(leftArm.value, -swing * 0.75, dt)

@@ -1,10 +1,10 @@
 import {
   CanvasTexture,
+  BoxGeometry,
   CylinderGeometry,
   Group,
   Mesh,
   MeshStandardMaterial,
-  PlaneGeometry,
   Sprite,
   SpriteMaterial,
   SRGBColorSpace,
@@ -99,7 +99,7 @@ export function makeNotice(kicker: string, lines: string[]) {
     group.add(post)
   }
   const board = new Mesh(
-    new PlaneGeometry(2.8, 1.55),
+    new BoxGeometry(2.8, 1.55, 0.08),
     new MeshStandardMaterial({ map: texture, roughness: 1, metalness: 0 }),
   )
   board.position.y = 1.65

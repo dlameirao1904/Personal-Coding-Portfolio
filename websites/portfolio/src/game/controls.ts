@@ -10,6 +10,7 @@ export const hikeKeys = reactive({
   s: false,
   d: false,
   ' ': false,
+  Shift: false,
 })
 
 /** Analog move from the on-screen stick. x is strafe, y is forward, each in [-1, 1]. */
@@ -27,6 +28,7 @@ const named: Record<string, HikeKey> = {
   s: 's',
   d: 'd',
   ' ': ' ',
+  shift: 'Shift',
 }
 
 export function setHikeKey(key: HikeKey, down: boolean) {
