@@ -158,7 +158,15 @@
 import { shallowRef } from 'vue'
 import { useLoop } from '@tresjs/core'
 import { Vector3, type Group } from 'three'
-import { atlasPlaying, greetMarina, marinaGreeting, marinaSpot, type MarinaPlay } from '@/game/spot'
+import {
+  atlasPlaying,
+  greetMarina,
+  hikerPose,
+  marinaGreeting,
+  marinaSpot,
+  marinaWave,
+  type MarinaPlay,
+} from '@/game/spot'
 
 const rootRef = shallowRef<Group | null>(null)
 const armRight = shallowRef<Group | null>(null)
@@ -200,6 +208,7 @@ onBeforeRender(({ delta }) => {
   const root = rootRef.value
   if (!root) return
   const greeting = marinaGreeting.value
+  const waving = greeting && marinaWave.value
   const playing = atlasPlaying.value && !greeting
   let mode: MarinaPlay = 'bake'
   if (playing) {
@@ -212,7 +221,19 @@ onBeforeRender(({ delta }) => {
   let tx = 0
   let tz = -3.25
   let tyaw = 0
-  if (mode === 'run') {
+  if (waving) {
+    root.getWorldPosition(world)
+    let parentYaw = 0
+    let parent = root.parent
+    while (parent) {
+      parentYaw += parent.rotation.y
+      parent = parent.parent
+      if (!parent) break
+    }
+    tyaw = Math.atan2(hikerPose.x - world.x, hikerPose.z - world.z) - parentYaw
+    tx = root.position.x
+    tz = root.position.z
+  } else if (mode === 'run') {
     runAngle += dt * 1.35
     tx = Math.sin(runAngle) * 2.2
     tz = 2.3 + Math.cos(runAngle) * 1.5
@@ -242,7 +263,7 @@ onBeforeRender(({ delta }) => {
 
   const sweep = (Math.sin(time * 2.2) + 1) * 0.5
   const stride = mode === 'run' ? Math.sin(time * 11) : 0
-  const standing = mode === 'bake' ? 0 : 1
+  const standing = mode === 'bake' && !waving ? 0 : 1
   const leg = footBitten.value
   if (leg) {
     const lift = mode === 'bite' ? 0.7 + Math.sin(time * 7) * 0.2 : 0
@@ -254,7 +275,11 @@ onBeforeRender(({ delta }) => {
 
   const arm = armRight.value
   if (arm) {
-    if (mode === 'bake') {
+    if (waving) {
+      arm.rotation.x = 0.35
+      arm.rotation.y = 0
+      arm.rotation.z = 0.15
+    } else if (mode === 'bake') {
       arm.rotation.x = 0.85 + sweep * 0.7
       arm.rotation.y = 0.15 + Math.sin(time * 2.2) * 0.45
       arm.rotation.z = 0.35 + (1 - sweep) * 0.25
@@ -270,7 +295,11 @@ onBeforeRender(({ delta }) => {
   }
   const pet = armLeft.value
   if (pet) {
-    if (mode === 'pet') {
+    if (waving) {
+      pet.rotation.x = -1.15
+      pet.rotation.y = 0
+      pet.rotation.z = Math.sin(time * 9) * 0.55
+    } else if (mode === 'pet') {
       pet.rotation.x = 1.55 + Math.sin(time * 6) * 0.18
       pet.rotation.z = -0.15
     } else if (mode === 'run') {
@@ -286,16 +315,18 @@ onBeforeRender(({ delta }) => {
   }
   const head = headRef.value
   if (head) {
-    head.rotation.y = greeting ? 0.15 : 0
-    head.rotation.x = greeting
-      ? -0.42
-      : mode === 'pet'
-        ? 0.7
-        : mode === 'bite'
-          ? 0.45
-          : mode === 'run'
-            ? 0.05
-            : 0.28 + Math.sin(time * 2.2) * 0.06
+    head.rotation.y = greeting ? Math.sin(time * 2) * 0.12 : 0
+    head.rotation.x = waving
+      ? -0.12
+      : greeting
+        ? -0.42
+        : mode === 'pet'
+          ? 0.7
+          : mode === 'bite'
+            ? 0.45
+            : mode === 'run'
+              ? 0.05
+              : 0.28 + Math.sin(time * 2.2) * 0.06
   }
 })
 </script>

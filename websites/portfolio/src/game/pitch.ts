@@ -58,11 +58,8 @@ function boardTexture() {
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillStyle = '#1c6b32'
-  ctx.font = '600 72px Outfit, sans-serif'
-  ctx.fillText('Penáltis', 256, 108)
-  ctx.fillStyle = '#17211c'
-  ctx.font = '500 36px Outfit, sans-serif'
-  ctx.fillText('Chuta à baliza', 256, 176)
+  ctx.font = '600 84px Outfit, sans-serif'
+  ctx.fillText('O Rolo', 256, 128)
   const texture = new CanvasTexture(canvas)
   texture.colorSpace = SRGBColorSpace
   texture.needsUpdate = true

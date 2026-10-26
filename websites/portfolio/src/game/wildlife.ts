@@ -203,9 +203,9 @@ export function mountWildlife(scenery: Group, walkable: Group) {
       let x = 0
       let z = 0
       let placed = false
-      for (let attempt = 0; attempt < 40; attempt++) {
-        x = -160 + rnd() * 320
-        z = rnd() * 140
+      for (let attempt = 0; attempt < 80; attempt++) {
+        x = -280 + rnd() * 560
+        z = -40 + rnd() * 320
         if (openValley(x, z) && treesAround(x, z, climb ? 8 : 3).length > 0) {
           placed = true
           break
@@ -236,8 +236,8 @@ export function mountWildlife(scenery: Group, walkable: Group) {
     return list
   }
 
-  const rabbits = spawnWalker(false, 28)
-  const squirrels = spawnWalker(true, 30)
+  const rabbits = spawnWalker(false, 84)
+  const squirrels = spawnWalker(true, 90)
 
   const wingGeo = new BoxGeometry(0.4, 0.035, 0.16)
   const beakGeo = new BoxGeometry(0.06, 0.04, 0.08)
@@ -260,8 +260,8 @@ export function mountWildlife(scenery: Group, walkable: Group) {
     beak.position.set(0, eagle ? 0.08 : 0.04, eagle ? 0.4 : 0.2)
     root.add(body, left, right, head, beak)
     scenery.add(root)
-    const x = -200 + rnd() * 400
-    const z = -50 + rnd() * 220
+    const x = -280 + rnd() * 560
+    const z = -80 + rnd() * 360
     const y = GROUND + (eagle ? 8 + rnd() * 5 : 3.2 + rnd() * 2.4)
     const yaw = rnd() * Math.PI * 2
     const speed = eagle ? 7.5 : 5
@@ -289,25 +289,17 @@ export function mountWildlife(scenery: Group, walkable: Group) {
   }
 
   const birds: Bird[] = []
-  for (let n = 0; n < 20; n++) birds.push(makeBird(false))
-  for (let n = 0; n < 15; n++) birds.push(makeBird(true))
+  for (let n = 0; n < 60; n++) birds.push(makeBird(false))
+  for (let n = 0; n < 45; n++) birds.push(makeBird(true))
 
   const fishGeo = new SphereGeometry(0.28, 7, 5)
   const fishTail = new BoxGeometry(0.06, 0.28, 0.32)
   const fishColors = ['#1a3330', '#243044', '#3a3428', '#163e42']
-  let center = 0
-  let best = Infinity
-  samples.forEach((sample, index) => {
-    const dist = Math.hypot(sample.x, sample.z - 120)
-    if (dist < best) {
-      best = dist
-      center = index
-    }
-  })
-  const fishMin = Math.max(0, center - 260)
-  const fishMax = Math.min(samples.length - 2, center + 260)
+  const fishMin = 0
+  const fishMax = Math.max(1, samples.length - 2)
+  const fishCount = 150
   const fish: Fish[] = []
-  for (let n = 0; n < 50; n++) {
+  for (let n = 0; n < fishCount; n++) {
     const color = fishColors[n % fishColors.length]
     const skin = new MeshStandardMaterial({
       color,
@@ -329,7 +321,7 @@ export function mountWildlife(scenery: Group, walkable: Group) {
     fish.push({
       root,
       tail,
-      along: fishMin + ((fishMax - fishMin) * n) / 50,
+      along: fishMin + ((fishMax - fishMin) * n) / fishCount,
       dir: n % 2 ? 1 : -1,
       speed: 0.42 + rnd() * 0.38,
       phase: rnd() * Math.PI * 2,
@@ -375,10 +367,17 @@ export function mountWildlife(scenery: Group, walkable: Group) {
       }
     }
     if (!animal.climb) {
-      for (const rock of rocks) consider(rock.x, rock.z, rock.r, null, Math.hypot(rock.x - animal.x, rock.z - animal.z))
+      for (const rock of rocks)
+        consider(rock.x, rock.z, rock.r, null, Math.hypot(rock.x - animal.x, rock.z - animal.z))
     }
     for (const tree of treesAround(animal.x, animal.z, 16)) {
-      consider(tree.x, tree.z, 0.9, animal.climb ? tree.climb : null, Math.hypot(tree.x - animal.x, tree.z - animal.z))
+      consider(
+        tree.x,
+        tree.z,
+        0.9,
+        animal.climb ? tree.climb : null,
+        Math.hypot(tree.x - animal.x, tree.z - animal.z),
+      )
     }
     animal.cover = best
   }

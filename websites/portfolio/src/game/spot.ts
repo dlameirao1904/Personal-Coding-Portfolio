@@ -60,7 +60,7 @@ let atlasTimer = 0
 
 export function greetAtlas() {
   atlasGreeting.value = true
-  atlasLine.value = 'Eu sou o Atlas, e estou aqui para te acompanhar'
+  atlasLine.value = 'Olá! Eu sou o Atlas, e adoro andar contigo 🐾💛'
   window.clearTimeout(atlasTimer)
   atlasTimer = window.setTimeout(() => {
     atlasGreeting.value = false
@@ -71,6 +71,8 @@ export function greetAtlas() {
 /** A Marina olha para quem clicou. Com o Atlas, sai dos bolos para brincar. */
 export const marinaGreeting = ref(false)
 export const marinaLine = ref<string | null>(null)
+/** A Marina estava a brincar com o Atlas, por isso para e acena. */
+export const marinaWave = ref(false)
 export const atlasPlaying = ref(false)
 export type MarinaPlay = 'bake' | 'run' | 'pet' | 'bite'
 export const marinaSpot = {
@@ -84,11 +86,16 @@ export const marinaSpot = {
 let marinaTimer = 0
 
 export function greetMarina() {
+  const playing = atlasPlaying.value
+  marinaWave.value = playing
   marinaGreeting.value = true
-  marinaLine.value = 'Sou a Marina. Este bolo ainda está a ser acabado.'
+  marinaLine.value = playing
+    ? 'Olá! Estava a brincar com o Atlas 🐾💛'
+    : 'Olá! Eu sou a Marina, e fico tão feliz por te ver 💛'
   window.clearTimeout(marinaTimer)
   marinaTimer = window.setTimeout(() => {
     marinaGreeting.value = false
+    marinaWave.value = false
     marinaLine.value = null
   }, 4600)
 }
