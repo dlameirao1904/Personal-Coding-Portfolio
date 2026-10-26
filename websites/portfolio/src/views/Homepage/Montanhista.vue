@@ -124,7 +124,7 @@ import { WADE_SINK, cavadoSample, waterSurfaceY } from '@/game/cavado'
 import { disposeComputer, makeComputer, paintComputer } from '@/game/computer'
 import { hikeKeys, hikeStick, releaseHikeKeys, setHikeKeyFromEvent } from '@/game/controls'
 import { toStageDelta } from '@/game/orientation'
-import { hikerSpot } from '@/game/spot'
+import { hikerPose, hikerSpot } from '@/game/spot'
 
 const props = defineProps<{ readingId: string | null }>()
 const emit = defineEmits(['arrive', 'started'])
@@ -424,6 +424,15 @@ function updatePassage(x: number, z: number) {
   }
 }
 
+function publishPose(player: Group) {
+  hikerPose.x = player.position.x
+  hikerPose.y = player.position.y
+  hikerPose.z = player.position.z
+  hikerPose.yaw = player.rotation.y
+  hikerPose.visible = player.visible
+  hikerPose.ready = true
+}
+
 function swingLimb(limb: Group | null, target: number, dt: number) {
   if (!limb) return
   limb.rotation.x = approach(limb.rotation.x, target, 10, dt)
@@ -435,6 +444,7 @@ function reset() {
   player.position.set(SPAWN[0], SPAWN[1], SPAWN[2])
   hikerSpot.value = { x: SPAWN[0], z: SPAWN[2] }
   player.rotation.y = Math.PI
+  publishPose(player)
   orbitYaw = Math.PI
   orbitPitch = 0.42
   velocity.set(0, 0, 0)
@@ -576,6 +586,8 @@ onBeforeRender(({ delta }) => {
   }
 
   if (player.position.y < -20) reset()
+
+  publishPose(player)
 
   const movedX = player.position.x - hikerSpot.value.x
   const movedZ = player.position.z - hikerSpot.value.z

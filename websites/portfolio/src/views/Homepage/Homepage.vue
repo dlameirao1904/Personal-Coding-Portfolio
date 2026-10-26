@@ -16,6 +16,7 @@
         @arrive="onArrive"
         @started="started = true"
       />
+      <Atlas />
     </TresCanvas>
 
     <div
@@ -292,6 +293,7 @@ import { passageById, steps } from '@/data/journey'
 import { releaseHikeKeys, setHikeKey, setHikeStick, type HikeKey } from '@/game/controls'
 import { journeyTurned, toStageDelta } from '@/game/orientation'
 import JourneyMap from './JourneyMap.vue'
+import Atlas from './Atlas.vue'
 import Montanha from './Montanha.vue'
 import Montanhista from './Montanhista.vue'
 
