@@ -131,7 +131,7 @@ import {
   type Object3D,
 } from 'three'
 import { SPAWN, passageById, passages } from '@/data/journey'
-import { footstep } from '@/game/ambience'
+import { footstep, scooterDrive, scooterStop } from '@/game/ambience'
 import { atelierGaze } from '@/game/atelier'
 import { baking } from '@/game/cake'
 import { onBridge } from '@/game/bridge'
@@ -248,10 +248,12 @@ function placeDesk(id: string) {
     passage.position[1] + screenY,
     passage.position[2] + dz * screenForward,
   )
+  const short = sizes.height.value > 0 && sizes.height.value < 620
+  const gap = short ? 1.16 : 1.65
   deskCam.set(
-    passage.position[0] + dx * (screenForward + 1.65),
+    passage.position[0] + dx * (screenForward + gap),
     passage.position[1] + screenY,
-    passage.position[2] + dz * (screenForward + 1.65),
+    passage.position[2] + dz * (screenForward + gap),
   )
   setMarkerVisible(id, false)
 }
@@ -294,12 +296,17 @@ function onLookMove(event: PointerEvent) {
 
 function fillBakeAim() {
   const gaze = atelierGaze()
-  bakeCam.set(gaze.x, gaze.y, gaze.z)
+  const short = sizes.height.value > 0 && sizes.height.value < 620
+  bakeCam.set(gaze.x, gaze.y + (short ? 0.16 : 0), gaze.z)
   const dx = gaze.lookX - gaze.x
   const dz = gaze.lookZ - gaze.z
   const dist = Math.hypot(dx, dz) || 1
   const yaw = Math.atan2(dx, dz) + bakeYaw
-  bakeLook.set(gaze.x + Math.sin(yaw) * dist, gaze.lookY + bakePitch, gaze.z + Math.cos(yaw) * dist)
+  bakeLook.set(
+    gaze.x + Math.sin(yaw) * dist,
+    gaze.lookY + bakePitch - (short ? 0.3 : 0),
+    gaze.z + Math.cos(yaw) * dist,
+  )
 }
 
 watch(baking, (inside) => {
@@ -691,6 +698,8 @@ onBeforeRender(({ delta }) => {
     scooterNear.value = false
   }
   wasRiding = riding
+  if (riding) scooterDrive(speed)
+  else scooterStop()
 
   const stride = riding ? 0.06 : running && moving ? 0.78 : wade.depth > 0.2 ? 0.28 : 0.55
   if (moving) walkPhase += dt * (running ? 11 + speed : 8 + speed) * (wade.depth > 0.2 ? 0.72 : 1)
@@ -732,7 +741,8 @@ onBeforeRender(({ delta }) => {
 
   if (!activeCamera) return
   const narrow = sizes.width.value < 800
-  const distance = narrow ? 10.5 : 12.8
+  const short = sizes.height.value > 0 && sizes.height.value < 620
+  const distance = short ? 9.1 : narrow ? 10.5 : 12.8
   const gazeX = Math.sin(orbitYaw)
   const gazeZ = Math.cos(orbitYaw)
   const horizontal = Math.cos(orbitPitch) * distance

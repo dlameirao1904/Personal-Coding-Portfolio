@@ -1,7 +1,7 @@
 <template>
   <div
     class="tw-fixed tw-overflow-hidden tw-bg-[#6eafeb] tw-font-[Outfit,Lato,sans-serif] tw-text-[#17211c] [&_canvas]:tw-block [&_canvas]:tw-h-full [&_canvas]:tw-w-full [&_canvas]:tw-cursor-grab"
-    :class="journeyTurned ? 'journey-turned' : 'tw-inset-0'"
+    :class="[journeyTurned ? 'journey-turned' : 'tw-inset-0', { 'journey-handheld': handheld }]"
   >
     <TresCanvas clear-color="#6eafeb" shadows>
       <TresPerspectiveCamera :fov="46" :near="0.1" :far="420" />
@@ -82,6 +82,7 @@
     <article
       v-if="!started"
       class="journey-card tw-absolute tw-right-[18px] tw-top-[9.6rem] tw-z-[2] tw-max-h-[min(62vh,560px)] tw-w-[min(380px,calc(100vw-36px))] tw-overflow-auto tw-rounded-[22px] tw-bg-[#f7f3eaf0] tw-p-5 tw-shadow-[0_16px_40px_#17211c1f] max-md:tw-bottom-auto max-md:tw-left-auto max-md:tw-right-3 max-md:tw-top-[9.6rem] max-md:tw-max-h-[38vh] max-md:tw-w-[min(17.5rem,calc(100vw-6.5rem))] max-md:tw-rounded-2xl max-md:tw-p-3.5 max-md:tw-shadow-[0_10px_28px_#17211c33]"
+      :class="{ 'journey-card--shut': handheld && !cardOpen }"
     >
       <p class="tw-mb-2 tw-text-[0.72rem] tw-uppercase tw-tracking-[0.12em] tw-text-[#8a4632]">
         O trilho
@@ -91,25 +92,35 @@
       >
         Um percurso, algumas paisagens e boa disposição.
       </h1>
-      <p class="tw-mt-3 tw-leading-[1.45]">
-        Aqui, podes ver os meus passos, literalmente. Aproveita a jornada e aprecia a paisagem.
-      </p>
-      <p class="tw-mt-3 tw-leading-[1.45]">«Só a Natureza é divina, e ela não é divina...»</p>
-      <p class="tw-mt-3 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#5c675f] max-md:tw-hidden">
-        WASD ou setas para andar. Shift para correr. Espaço para saltar. Arrasta o rato para olhar.
-        Clica no Atlas. No menu há um Prompt. À porta do atelier, E entra para montar um bolo.
-      </p>
-      <p
-        class="tw-mt-3 tw-hidden tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#5c675f] max-md:tw-block"
+      <button
+        v-if="handheld"
+        type="button"
+        class="tw-mt-2 tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#0e3328] tw-px-2.5 tw-py-1 tw-font-[inherit] tw-text-[0.75rem] tw-text-[#f7f3ea]"
+        @click="cardOpen = !cardOpen"
       >
-        Joystick para andar. Segura em Correr. Botão para saltar. Arrasta para olhar. No atelier,
-        entra para montar um bolo.
-      </p>
+        {{ cardOpen ? 'Fechar' : 'Ler' }}
+      </button>
+      <div v-show="!handheld || cardOpen">
+        <p class="tw-mt-3 tw-leading-[1.45]">
+          Aqui, podes ver os meus passos, literalmente. Aproveita a jornada e aprecia a paisagem.
+        </p>
+        <p class="tw-mt-3 tw-leading-[1.45]">«Só a Natureza é divina, e ela não é divina...»</p>
+        <p v-if="!handheld" class="tw-mt-3 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#5c675f]">
+          WASD ou setas para andar. Shift para correr. Espaço para saltar. Arrasta o rato para
+          olhar. Clica no Atlas. No menu há um Prompt. À porta do atelier, E entra para montar um
+          bolo.
+        </p>
+        <p v-else class="tw-mt-3 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#5c675f]">
+          Joystick para andar. Segura em Correr. Botão para saltar. Arrasta para olhar. No atelier,
+          entra para montar um bolo.
+        </p>
+      </div>
     </article>
 
     <article
       v-else-if="passage && passage.kind !== 'project' && !baking"
       class="journey-card tw-absolute tw-right-[18px] tw-top-[9.6rem] tw-z-[2] tw-max-h-[min(62vh,560px)] tw-w-[min(380px,calc(100vw-36px))] tw-overflow-auto tw-rounded-[22px] tw-bg-[#f7f3eaf0] tw-p-5 tw-shadow-[0_16px_40px_#17211c1f] max-md:tw-bottom-auto max-md:tw-left-auto max-md:tw-right-3 max-md:tw-top-[9.6rem] max-md:tw-max-h-[38vh] max-md:tw-w-[min(17.5rem,calc(100vw-6.5rem))] max-md:tw-rounded-2xl max-md:tw-p-3.5 max-md:tw-shadow-[0_10px_28px_#17211c33]"
+      :class="{ 'journey-card--shut': handheld && !cardOpen }"
     >
       <p class="tw-mb-2 tw-text-[0.72rem] tw-uppercase tw-tracking-[0.12em] tw-text-[#8a4632]">
         {{ passage.kicker }}
@@ -120,6 +131,15 @@
       >
         {{ passage.title }}
       </h1>
+      <button
+        v-if="handheld"
+        type="button"
+        class="tw-mt-2 tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#0e3328] tw-px-2.5 tw-py-1 tw-font-[inherit] tw-text-[0.75rem] tw-text-[#f7f3ea]"
+        @click="cardOpen = !cardOpen"
+      >
+        {{ cardOpen ? 'Fechar' : 'Ler' }}
+      </button>
+      <div v-show="!handheld || cardOpen">
       <p class="tw-mt-3 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#4e5a53]">
         {{ passage.organization }} · {{ passage.period }} · {{ passage.place }}
       </p>
@@ -166,14 +186,15 @@
           {{ item }}
         </li>
       </ul>
+      </div>
     </article>
 
     <div
       v-if="ridingScooter && !readingId"
-      class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+      class="play-prompt tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
     >
       <p
-        class="tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+        class="play-prompt__label tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
       >
         <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">E para descer</span>
         <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">Trotinete</span>
@@ -189,10 +210,10 @@
 
     <div
       v-else-if="scooterNear && !readingId && !atelierNear"
-      class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+      class="play-prompt tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
     >
       <p
-        class="tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+        class="play-prompt__label tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
       >
         <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">E para subir</span>
         <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">Trotinete</span>
@@ -208,14 +229,16 @@
 
     <div
       v-if="penalty.engaged || penalty.call"
-      class="tw-pointer-events-none tw-absolute tw-left-1/2 tw-top-[4.7rem] tw-z-[4] tw-flex tw--translate-x-1/2 tw-items-stretch tw-overflow-hidden tw-rounded-2xl tw-bg-[#10241cf2] tw-text-[#f7f3ea] tw-shadow-[0_14px_32px_#17211c55]"
+      class="scoreboard tw-pointer-events-none tw-absolute tw-left-1/2 tw-top-[4.7rem] tw-z-[4] tw-flex tw--translate-x-1/2 tw-items-stretch tw-overflow-hidden tw-rounded-2xl tw-bg-[#10241cf2] tw-text-[#f7f3ea] tw-shadow-[0_14px_32px_#17211c55]"
     >
-      <div class="tw-flex tw-min-w-[8.5rem] tw-flex-col tw-items-center tw-gap-1 tw-px-4 tw-py-2.5">
+      <div
+        class="score-side tw-flex tw-min-w-[8.5rem] tw-flex-col tw-items-center tw-gap-1 tw-px-4 tw-py-2.5"
+      >
         <span class="tw-text-[0.68rem] tw-uppercase tw-tracking-[0.16em] tw-text-[#d7e4c8]"
           >Tu</span
         >
         <span
-          class="tw-font-[Fraunces,Georgia,serif] tw-text-[2.15rem] tw-font-semibold tw-leading-none"
+          class="score-num tw-font-[Fraunces,Georgia,serif] tw-text-[2.15rem] tw-font-semibold tw-leading-none"
         >
           {{ penalty.goals }}
         </span>
@@ -235,12 +258,15 @@
         </span>
       </div>
       <div class="tw-w-px tw-self-stretch tw-bg-[#f7f3ea33]" />
-      <div class="tw-flex tw-min-w-[8.5rem] tw-flex-col tw-items-center tw-gap-1 tw-px-4 tw-py-2.5">
+      <div
+        class="score-side tw-flex tw-min-w-[8.5rem] tw-flex-col tw-items-center tw-gap-1 tw-px-4 tw-py-2.5"
+      >
         <span class="tw-text-[0.68rem] tw-uppercase tw-tracking-[0.16em] tw-text-[#e2b15a]">
-          Guarda-redes
+          <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">Guarda-redes</span>
+          <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">GR</span>
         </span>
         <span
-          class="tw-font-[Fraunces,Georgia,serif] tw-text-[2.15rem] tw-font-semibold tw-leading-none"
+          class="score-num tw-font-[Fraunces,Georgia,serif] tw-text-[2.15rem] tw-font-semibold tw-leading-none"
         >
           {{ penalty.saves }}
         </span>
@@ -259,16 +285,16 @@
 
     <div
       v-if="penalty.near && !penalty.call && !readingId"
-      class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+      class="play-prompt tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
     >
       <p
-        class="tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+        class="play-prompt__label play-prompt__keep tw-m-0 tw-max-w-[16rem] tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-center tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
       >
         <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">
           E para chutar. Vira-te para mirar e arrasta o olhar para a altura.
         </span>
         <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">
-          Vira-te e arrasta o olhar para mirar.
+          Arrasta para mirar.
         </span>
       </p>
       <button
@@ -291,10 +317,10 @@
         !atelierNear &&
         !baking
       "
-      class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+      class="play-prompt tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
     >
       <p
-        class="tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+        class="play-prompt__label tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
       >
         <span class="tw-mr-2 tw-text-[0.72rem] tw-uppercase tw-tracking-[0.12em] tw-text-[#8a4632]">
           {{ passage?.short }}
@@ -317,10 +343,10 @@
 
     <div
       v-if="atelierNear && !baking && !readingId && !ridingScooter && !penalty.near"
-      class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+      class="play-prompt tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
     >
       <p
-        class="tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+        class="play-prompt__label tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
       >
         <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">E para entrar</span>
         <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">
@@ -340,7 +366,7 @@
 
     <div
       v-if="readingId && passage"
-      class="tw-absolute tw-bottom-6 tw-left-1/2 tw-z-[4] tw-flex tw-w-[min(640px,calc(100%-2rem))] tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+      class="read-dock tw-absolute tw-bottom-6 tw-left-1/2 tw-z-[4] tw-flex tw-w-[min(640px,calc(100%-2rem))] tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
     >
       <p
         v-if="passage.links?.length"
@@ -423,13 +449,13 @@
     </form>
 
     <div
-      class="tw-pointer-events-none tw-absolute tw-inset-0 tw-z-[3] tw-hidden max-md:tw-block [@media(pointer:coarse)]:tw-block"
+      class="touch-controls tw-pointer-events-none tw-absolute tw-inset-0 tw-z-[3] tw-hidden max-md:tw-block [@media(pointer:coarse)]:tw-block"
       :class="{ 'tw-invisible': readingId || baking }"
       aria-hidden="true"
     >
       <div
         ref="stickBase"
-        class="tw-pointer-events-auto tw-absolute tw-bottom-[max(0.35rem,env(safe-area-inset-bottom,0px))] tw-right-[max(1rem,env(safe-area-inset-right,0px))] tw-h-32 tw-w-32 tw-touch-none tw-select-none"
+        class="touch-stick tw-pointer-events-auto tw-absolute tw-bottom-[max(0.35rem,env(safe-area-inset-bottom,0px))] tw-right-[max(1rem,env(safe-area-inset-right,0px))] tw-h-32 tw-w-32 tw-touch-none tw-select-none"
         @pointerdown.prevent="onStickDown"
         @pointermove="onStickMove"
         @pointerup="onStickUp"
@@ -440,13 +466,13 @@
           class="tw-absolute tw-inset-0 tw-rounded-full tw-border-2 tw-border-[#17211c33] tw-bg-[#f7f3ea99] tw-shadow-[inset_0_0_0_18px_#17211c0f]"
         />
         <div
-          class="tw-absolute tw-left-1/2 tw-top-1/2 tw-h-14 tw-w-14 tw-rounded-full tw-bg-[#f7f3eaf5] tw-shadow-[0_6px_16px_#17211c33]"
+          class="touch-knob tw-absolute tw-left-1/2 tw-top-1/2 tw-h-14 tw-w-14 tw-rounded-full tw-bg-[#f7f3eaf5] tw-shadow-[0_6px_16px_#17211c33]"
           :style="knobStyle"
         />
       </div>
       <button
         type="button"
-        class="tw-pointer-events-auto tw-absolute tw-bottom-[max(7.4rem,calc(env(safe-area-inset-bottom,0px)+7rem))] tw-left-[max(1.35rem,env(safe-area-inset-left,0px))] tw-h-16 tw-w-16 tw-cursor-pointer tw-select-none tw-rounded-full tw-border-0 tw-font-[inherit] tw-text-[0.82rem] tw-text-[#17211c] tw-touch-none tw-shadow-[0_8px_20px_#17211c24]"
+        class="touch-run tw-pointer-events-auto tw-absolute tw-bottom-[max(7.4rem,calc(env(safe-area-inset-bottom,0px)+7rem))] tw-left-[max(1.35rem,env(safe-area-inset-left,0px))] tw-h-16 tw-w-16 tw-cursor-pointer tw-select-none tw-rounded-full tw-border-0 tw-font-[inherit] tw-text-[0.82rem] tw-text-[#17211c] tw-touch-none tw-shadow-[0_8px_20px_#17211c24]"
         :class="runHeld ? 'tw-bg-white' : 'tw-bg-[#f7f3eaf0]'"
         @pointerdown.prevent="onRunDown"
         @pointerup="hold('Shift', false)"
@@ -457,7 +483,7 @@
       </button>
       <button
         type="button"
-        class="tw-pointer-events-auto tw-absolute tw-bottom-[max(0.35rem,env(safe-area-inset-bottom,0px))] tw-left-[max(1rem,env(safe-area-inset-left,0px))] tw-h-24 tw-w-24 tw-cursor-pointer tw-select-none tw-rounded-full tw-border-0 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#17211c] tw-touch-none tw-shadow-[0_8px_20px_#17211c24]"
+        class="touch-jump tw-pointer-events-auto tw-absolute tw-bottom-[max(0.35rem,env(safe-area-inset-bottom,0px))] tw-left-[max(1rem,env(safe-area-inset-left,0px))] tw-h-24 tw-w-24 tw-cursor-pointer tw-select-none tw-rounded-full tw-border-0 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#17211c] tw-touch-none tw-shadow-[0_8px_20px_#17211c24]"
         :class="jumpHeld ? 'tw-bg-white' : 'tw-bg-[#f7f3eaf0]'"
         @pointerdown.prevent="onJumpDown"
         @pointerup="hold(' ', false)"
@@ -552,6 +578,7 @@ const promptLog = ref<HTMLElement | null>(null)
 const activeId = ref<string | null>(null)
 const readingId = ref<string | null>(null)
 const started = ref(false)
+const cardOpen = ref(false)
 const seen = ref<string[]>([])
 const hiker = ref<{ reset: () => void } | null>(null)
 
@@ -706,7 +733,6 @@ const jumpHeld = ref(false)
 const runHeld = ref(false)
 let stickPointer: number | null = null
 
-const STICK_RADIUS = 40
 const STICK_DEADZONE = 0.18
 
 const knobStyle = computed(() => ({
@@ -760,15 +786,16 @@ function moveStick(event: PointerEvent) {
   )
   let dx = local.x
   let dy = local.y
+  const reach = Math.max(18, Math.min(rect.width, rect.height) * 0.28)
   const len = Math.hypot(dx, dy)
-  if (len > STICK_RADIUS) {
-    dx = (dx / len) * STICK_RADIUS
-    dy = (dy / len) * STICK_RADIUS
+  if (len > reach) {
+    dx = (dx / len) * reach
+    dy = (dy / len) * reach
   }
   stickOffset.value = { x: dx, y: dy }
 
-  let nx = dx / STICK_RADIUS
-  let ny = -dy / STICK_RADIUS
+  let nx = dx / reach
+  let ny = -dy / reach
   const mag = Math.hypot(nx, ny)
   if (mag < STICK_DEADZONE) {
     setHikeStick(0, 0)
@@ -827,6 +854,14 @@ function onMediaChange() {
 
 onMediaChange()
 
+watch(started, (value) => {
+  if (value && handheld.value) cardOpen.value = false
+})
+
+watch(activeId, (id, previous) => {
+  if (handheld.value && id && id !== previous) cardOpen.value = false
+})
+
 function tryLockLandscape() {
   const root = document.documentElement
   let pending: Promise<unknown> = Promise.resolve()
@@ -856,6 +891,7 @@ function tryLockLandscape() {
 }
 
 function continueInLandscape() {
+  ensureAmbience()
   lockAttempted = true
   promptDismissed.value = true
   void tryLockLandscape().then(() => {
@@ -897,6 +933,10 @@ watch(journeyTurned, async () => {
   window.dispatchEvent(new Event('resize'))
 })
 
+function onForeground() {
+  if (document.visibilityState === 'visible') ensureAmbience()
+}
+
 onMounted(() => {
   document.body.style.overflow = 'hidden'
   onMediaChange()
@@ -911,7 +951,9 @@ onMounted(() => {
   screen.orientation?.addEventListener('change', onMediaChange)
   window.visualViewport?.addEventListener('resize', onMediaChange)
   window.addEventListener('pointerdown', onLandscapeGesture, true)
-  window.addEventListener('pointerdown', ensureAmbience)
+  window.addEventListener('pointerdown', ensureAmbience, true)
+  window.addEventListener('touchend', ensureAmbience, true)
+  document.addEventListener('visibilitychange', onForeground)
 })
 
 onUnmounted(() => {
@@ -929,7 +971,9 @@ onUnmounted(() => {
   screen.orientation?.removeEventListener('change', onMediaChange)
   window.visualViewport?.removeEventListener('resize', onMediaChange)
   window.removeEventListener('pointerdown', onLandscapeGesture, true)
-  window.removeEventListener('pointerdown', ensureAmbience)
+  window.removeEventListener('pointerdown', ensureAmbience, true)
+  window.removeEventListener('touchend', ensureAmbience, true)
+  document.removeEventListener('visibilitychange', onForeground)
   onBlur()
   releaseOrientation()
 })
@@ -971,13 +1015,192 @@ onUnmounted(() => {
   text-shadow: 0 7px 0 #0c2418;
 }
 
-.journey-turned .journey-card {
-  top: 9.6rem !important;
-  right: 18px !important;
+.journey-handheld .journey-card {
+  top: calc(max(18px, env(safe-area-inset-top, 0px)) + 3.15rem) !important;
+  right: auto !important;
   bottom: auto !important;
-  left: auto !important;
-  width: min(380px, calc(100% - 36px)) !important;
-  max-height: min(62%, 560px) !important;
+  left: 0.45rem !important;
+  width: min(13.5rem, calc(100% - 6.4rem)) !important;
+  max-height: min(32%, 8.5rem) !important;
+  padding: 0.45rem 0.6rem !important;
+  border-radius: 14px !important;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.journey-handheld .journey-card--shut {
+  max-height: none !important;
+  overflow: hidden !important;
+  width: min(11.25rem, 42%) !important;
+}
+
+.journey-handheld .journey-card--shut h1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.journey-handheld .journey-card h1 {
+  font-size: 0.98rem !important;
+  line-height: 1.12;
+}
+
+.journey-handheld .journey-card :is(p, ul) {
+  margin-top: 0.35rem !important;
+}
+
+.journey-handheld .journey-card ul,
+.journey-handheld .desk-help {
+  display: none !important;
+}
+
+.journey-handheld .hand-help {
+  display: block !important;
+}
+
+.journey-handheld .play-prompt {
+  bottom: max(0.4rem, env(safe-area-inset-bottom, 0px)) !important;
+  top: auto !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  max-width: min(14rem, calc(100% - 13rem)) !important;
+}
+
+.journey-handheld .play-prompt__label:not(.play-prompt__keep) {
+  display: none !important;
+}
+
+.journey-handheld .play-prompt__keep {
+  font-size: 0.75rem !important;
+  padding: 0.28rem 0.6rem !important;
+  max-width: 9.5rem !important;
+  white-space: normal !important;
+}
+
+.journey-handheld .read-dock {
+  top: calc(max(10px, env(safe-area-inset-top, 0px)) + 3.4rem) !important;
+  bottom: auto !important;
+  width: min(18rem, calc(100% - 7.5rem)) !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  gap: 0.35rem !important;
+}
+
+.journey-handheld .scoreboard {
+  top: max(0.35rem, env(safe-area-inset-top, 0px)) !important;
+}
+
+.journey-handheld .score-side {
+  min-width: 4.4rem !important;
+  gap: 0 !important;
+  padding: 0.28rem 0.55rem !important;
+}
+
+.journey-handheld .score-num {
+  font-size: 1.35rem !important;
+}
+
+.journey-handheld .penalty-banner {
+  top: 38%;
+  font-size: clamp(2rem, 8vw, 3.1rem);
+  -webkit-text-stroke-width: 4px;
+}
+
+.journey-handheld :deep(.map-thumb) {
+  width: 4.1rem !important;
+  height: 4.1rem !important;
+  padding: 0.28rem !important;
+  border-radius: 0.85rem !important;
+}
+
+.journey-handheld :deep(.map-panel) {
+  max-height: min(88%, 760px) !important;
+  width: min(440px, calc(100% - 1.25rem)) !important;
+  padding: 0.75rem !important;
+}
+
+.journey-handheld .touch-controls {
+  display: block !important;
+}
+
+.journey-handheld .touch-stick {
+  width: 6.15rem !important;
+  height: 6.15rem !important;
+}
+
+.journey-handheld .touch-knob {
+  width: 2.65rem !important;
+  height: 2.65rem !important;
+}
+
+.journey-handheld .touch-jump {
+  width: 4.5rem !important;
+  height: 4.5rem !important;
+  font-size: 0.82rem !important;
+}
+
+.journey-handheld .touch-run {
+  width: 3.35rem !important;
+  height: 3.35rem !important;
+  bottom: max(5.15rem, calc(env(safe-area-inset-bottom, 0px) + 4.85rem)) !important;
+  font-size: 0.68rem !important;
+}
+
+.journey-handheld :deep(.cake-dock) {
+  bottom: max(0.4rem, env(safe-area-inset-bottom, 0px)) !important;
+  left: 0.55rem !important;
+  right: 0.55rem !important;
+  width: auto !important;
+  transform: none !important;
+  padding: 0.4rem 0.5rem 0.45rem !important;
+  border-radius: 16px !important;
+}
+
+.journey-handheld :deep(.cake-kicker),
+.journey-handheld :deep(.cake-dock__help) {
+  display: none !important;
+}
+
+.journey-handheld :deep(.cake-dock__top) {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.journey-handheld :deep(.cake-dock__title) {
+  margin-top: 0 !important;
+  font-size: 0.95rem !important;
+  text-align: left !important;
+}
+
+.journey-handheld :deep(.cake-dock__leave) {
+  padding: 0.28rem 0.7rem !important;
+  font-size: 0.78rem !important;
+}
+
+.journey-handheld :deep(.cake-steps) {
+  flex-wrap: nowrap !important;
+  justify-content: flex-start !important;
+  gap: 0.35rem !important;
+  margin-top: 0.35rem !important;
+  overflow-x: auto;
+  scrollbar-width: none;
+  touch-action: pan-x;
+  position: relative;
+}
+
+.journey-handheld :deep(.cake-steps)::-webkit-scrollbar {
+  display: none;
+}
+
+.journey-handheld :deep(.cake-step) {
+  flex: none !important;
+  padding: 0.28rem 0.6rem !important;
+  font-size: 0.75rem !important;
 }
 
 .phone-hint {

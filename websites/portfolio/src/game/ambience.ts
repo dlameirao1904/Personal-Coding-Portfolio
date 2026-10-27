@@ -1,4 +1,4 @@
-/** Rio, pássaros, o ladrar do Atlas e a voz da Marina. O browser só deixa som depois de um gesto. */
+/** Rio, pássaros, o ladrar do Atlas, a voz da Marina e o motor da trotinete. O browser só deixa som depois de um gesto. */
 
 let ctx: AudioContext | null = null
 let master: GainNode | null = null
@@ -15,8 +15,36 @@ function speakers() {
 }
 
 function audio() {
-  if (!ctx) ctx = new AudioContext()
+  if (ctx) return ctx
+  const host = window as Window & { webkitAudioContext?: typeof AudioContext }
+  const Ctor = window.AudioContext ?? host.webkitAudioContext
+  if (!Ctor) throw new Error('Web Audio indisponível')
+  try {
+    ctx = new Ctor({ latencyHint: 'interactive' })
+  } catch {
+    ctx = new Ctor()
+  }
   return ctx
+}
+
+/** Um sample em silêncio, no mesmo gesto, é o que o iOS aceita como desbloqueio. */
+function poke(context: AudioContext) {
+  const buffer = context.createBuffer(1, 1, context.sampleRate)
+  const source = context.createBufferSource()
+  source.buffer = buffer
+  source.connect(context.destination)
+  source.start()
+}
+
+/** Toca mesmo com o telemóvel em silêncio, como um leitor de média. */
+function unlockPlayback() {
+  const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession
+  if (!session || session.type === 'playback') return
+  try {
+    session.type = 'playback'
+  } catch {
+    // Fora de um gesto, alguns browsers recusam a troca.
+  }
 }
 
 function noiseBuffer(context: BaseAudioContext, seconds: number) {
@@ -139,11 +167,8 @@ function prepareBirds(rate: number) {
   }))
 }
 
-/** Começa o fundo de rio e pássaros. Pode chamar-se em cada gesto: só arranca uma vez. */
-export function ensureAmbience() {
-  const context = audio()
-  if (context.state === 'suspended') void context.resume()
-  if (started) return
+function begin(context: AudioContext) {
+  if (started || ctx !== context || context.state !== 'running') return
   started = true
 
   master = context.createGain()
@@ -201,6 +226,34 @@ export function ensureAmbience() {
       if (token !== era || ctx !== context) return
       startMusicLive(context)
     })
+}
+
+let arming = false
+
+/** Começa o fundo de rio e pássaros. Pode chamar-se em cada gesto: só arranca uma vez. */
+export function ensureAmbience() {
+  try {
+    unlockPlayback()
+    const context = audio()
+    if (context.state === 'running') {
+      begin(context)
+      return
+    }
+    poke(context)
+    const attempt = () => {
+      if (ctx !== context || context.state !== 'running') return
+      context.removeEventListener('statechange', attempt)
+      arming = false
+      begin(context)
+    }
+    if (!arming) {
+      arming = true
+      context.addEventListener('statechange', attempt)
+    }
+    void context.resume().then(attempt).catch(() => {})
+  } catch {
+    // Sem áudio, o trilho continua na mesma.
+  }
 }
 
 function woof(context: AudioContext, when: number, pitch: number) {
@@ -441,7 +494,118 @@ export function cakePlace(done = false) {
   osc.stop(t + 0.26)
 }
 
+type Motor = {
+  noise: AudioBufferSourceNode
+  tone: OscillatorNode
+  buzz: OscillatorNode
+  lfo: OscillatorNode
+  level: GainNode
+  filter: BiquadFilterNode
+}
+
+let motor: Motor | null = null
+let motorLevel = 0
+
+/** Motor de trotinete: um cilindro a pulsar, mais agudo quanto mais depressa se anda. */
+function startMotor(context: AudioContext, out: AudioNode): Motor {
+  const level = context.createGain()
+  level.gain.value = 0.0001
+
+  const pulse = context.createGain()
+  pulse.gain.value = 0.78
+  pulse.connect(level).connect(out)
+
+  const lfo = context.createOscillator()
+  lfo.type = 'square'
+  lfo.frequency.value = 14
+  const depth = context.createGain()
+  depth.gain.value = 0.24
+  lfo.connect(depth).connect(pulse.gain)
+  lfo.start()
+
+  const noise = loopNoise(context, 2, 'brown')
+  const filter = context.createBiquadFilter()
+  filter.type = 'bandpass'
+  filter.frequency.value = 340
+  filter.Q.value = 1.15
+  const noiseGain = context.createGain()
+  noiseGain.gain.value = 0.72
+  noise.connect(filter).connect(noiseGain).connect(pulse)
+  noise.start()
+
+  const tone = context.createOscillator()
+  tone.type = 'sawtooth'
+  tone.frequency.value = 54
+  const toneFilter = context.createBiquadFilter()
+  toneFilter.type = 'lowpass'
+  toneFilter.frequency.value = 540
+  const toneGain = context.createGain()
+  toneGain.gain.value = 0.3
+  tone.connect(toneFilter).connect(toneGain).connect(pulse)
+  tone.start()
+
+  const buzz = context.createOscillator()
+  buzz.type = 'square'
+  buzz.frequency.value = 108
+  const buzzFilter = context.createBiquadFilter()
+  buzzFilter.type = 'lowpass'
+  buzzFilter.frequency.value = 780
+  const buzzGain = context.createGain()
+  buzzGain.gain.value = 0.05
+  buzz.connect(buzzFilter).connect(buzzGain).connect(pulse)
+  buzz.start()
+
+  return { noise, tone, buzz, lfo, level, filter }
+}
+
+function silenceMotor(current: Motor, context: AudioContext) {
+  const t = context.currentTime
+  current.level.gain.cancelScheduledValues(t)
+  current.level.gain.setTargetAtTime(0.0001, t, 0.04)
+  const stopAt = t + 0.22
+  try {
+    current.noise.stop(stopAt)
+    current.tone.stop(stopAt)
+    current.buzz.stop(stopAt)
+    current.lfo.stop(stopAt)
+  } catch {
+    // O motor já tinha parado.
+  }
+}
+
+/** Acerta o ralenti ou a aceleração. Chamar enquanto se conduz. */
+export function scooterDrive(speed: number) {
+  const context = ctx
+  const out = speakers()
+  if (!context || !started || !out || context.state !== 'running') return
+  if (!motor) {
+    motor = startMotor(context, out)
+    motorLevel = 0.14
+  }
+  const norm = Math.min(1, Math.max(0, speed / 16))
+  const glide = (from: number, to: number) => from + (to - from) * 0.18
+  motor.lfo.frequency.value = glide(motor.lfo.frequency.value, 13 + norm * 26)
+  motor.tone.frequency.value = glide(motor.tone.frequency.value, 52 + norm * 86)
+  motor.buzz.frequency.value = glide(motor.buzz.frequency.value, 104 + norm * 120)
+  motor.filter.frequency.value = glide(motor.filter.frequency.value, 280 + norm * 1400)
+  motorLevel = glide(motorLevel, 0.1 + norm * 0.2)
+  motor.level.gain.value = motorLevel
+}
+
+export function scooterStop() {
+  if (!motor || !ctx) {
+    motor = null
+    return
+  }
+  silenceMotor(motor, ctx)
+  motor = null
+  motorLevel = 0
+}
+
 export function stopAmbience() {
+  if (motor && ctx) silenceMotor(motor, ctx)
+  motor = null
+  motorLevel = 0
   era += 1
   window.clearTimeout(birdTimer)
   window.clearTimeout(musicTimer)
@@ -451,6 +615,7 @@ export function stopAmbience() {
   wingClips = []
   master = null
   started = false
+  arming = false
   if (!ctx) return
   const closing = ctx
   ctx = null
