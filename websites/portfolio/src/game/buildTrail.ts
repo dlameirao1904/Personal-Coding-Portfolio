@@ -30,6 +30,7 @@ import {
   WADE_SINK,
   WATER_EDGE,
 } from '@/game/cavado'
+import { createObstacleIndex, trackObstacles } from '@/game/obstacles'
 import { addPitch, pitchBlocksTree } from '@/game/pitch'
 
 const PATH_WIDTH = 6.6
@@ -365,8 +366,6 @@ export function buildTrail() {
       )
   }
   const trunkMat = paint('#5c4032')
-  const leafA = paint('#2d5a34')
-  const leafB = paint('#3e6e40')
   const cairnMat = paint('#8d8474')
   const ringMat = paint('#b8893f')
 
@@ -513,8 +512,8 @@ export function buildTrail() {
         color = mix(color, crest, foam * 0.72 + streak * across * 0.22);
         float alpha = mix(0.34, 0.58, across);
         alpha = mix(alpha, 0.3, foam);
-        float fog = smoothstep(70.0, 340.0, vViewZ);
-        color = mix(color, vec3(0.718, 0.769, 0.737), fog);
+        float fog = smoothstep(120.0, 390.0, vViewZ);
+        color = mix(color, vec3(0.663, 0.831, 0.961), fog);
         gl_FragColor = vec4(color, mix(alpha, 0.0, fog));
       }
     `,
@@ -729,20 +728,23 @@ export function buildTrail() {
 
   const treeCone = track(new ConeGeometry(1.15, 2.8, 5))
   const oakCrown = track(new DodecahedronGeometry(1.05, 0))
-  const leafOakA = paint('#3f6a34')
-  const leafOakB = paint('#547a3c')
+  const leafMat = paint('#ffffff')
   const TREE_REACH = 32
-  const TREE_CAPACITY = (TREE_REACH * 2 + 1) * (TREE_REACH * 2 + 1)
-  const blockers: Array<{ x: number; z: number; r: number }> = []
+  const VIEW_NEAR = 48
+  const VIEW_NEAR2 = VIEW_NEAR * VIEW_NEAR
+  const treeIndex = createObstacleIndex()
+  const solidIndex = createObstacleIndex()
   const dummy = new Object3D()
-  const trunks = new InstancedMesh(unitCyl, trunkMat, TREE_CAPACITY)
-  const crownsA = new InstancedMesh(treeCone, leafA, TREE_CAPACITY)
-  const crownsB = new InstancedMesh(treeCone, leafB, TREE_CAPACITY)
-  const oaksA = new InstancedMesh(oakCrown, leafOakA, TREE_CAPACITY)
-  const oaksB = new InstancedMesh(oakCrown, leafOakB, TREE_CAPACITY)
-  for (const mesh of [trunks, crownsA, crownsB, oaksA, oaksB]) {
-    mesh.frustumCulled = false
+  const leafTint = new Color()
+  const capacity = (TREE_REACH * 2 + 1) * (TREE_REACH * 2 + 1)
+  const trunks = new InstancedMesh(unitCyl, trunkMat, capacity)
+  const crowns = new InstancedMesh(treeCone, leafMat, capacity)
+  const oakTops = new InstancedMesh(oakCrown, leafMat, capacity)
+  for (const mesh of [trunks, crowns, oakTops]) {
     mesh.count = 0
+    // A malha rodeia a câmara, por isso o frustum da malha inteira não corta nada.
+    // O que fica atrás sai da lista, em paintView.
+    mesh.frustumCulled = false
     scenery.add(mesh)
   }
 
@@ -764,97 +766,135 @@ export function buildTrail() {
     mesh.setMatrixAt(index, dummy.matrix)
   }
 
-  let forestCellX = Number.NaN
-  let forestCellZ = Number.NaN
+  const treeByCell = new Map<number, ForestTree | null>()
+  let around: ForestTree[] = []
+  let aroundX = Number.NaN
+  let aroundZ = Number.NaN
+  let viewToken = ''
 
-  const refreshForest = (x: number, z: number) => {
-    const cellX = Math.floor(x / TREE_SPACING)
-    const cellZ = Math.floor(z / TREE_SPACING)
-    if (cellX === forestCellX && cellZ === forestCellZ) return
-    forestCellX = cellX
-    forestCellZ = cellZ
-    blockers.length = 0
-    let trunkCount = 0
-    let countA = 0
-    let countB = 0
-    let countOakA = 0
-    let countOakB = 0
-    for (let iz = cellZ - TREE_REACH; iz <= cellZ + TREE_REACH; iz++) {
-      for (let ix = cellX - TREE_REACH; ix <= cellX + TREE_REACH; ix++) {
-        const tree = forestTree(ix, iz)
-        if (!tree || trunkCount >= TREE_CAPACITY) continue
-        const { x: tx, z: tz, scale, rot, broad, oak } = tree
-        if (oak) {
-          writeTree(
-            trunks,
-            trunkCount,
-            tx,
-            VALLEY_Y + 0.42 * scale,
-            tz,
-            0.34 * scale,
-            0.84 * scale,
-            0.34 * scale,
-            rot,
-          )
-          const crown = broad ? oaksB : oaksA
-          const crownIndex = broad ? countOakB : countOakA
-          writeTree(
-            crown,
-            crownIndex,
-            tx,
-            VALLEY_Y + 1.32 * scale,
-            tz,
-            1.28 * scale,
-            0.95 * scale,
-            1.28 * scale,
-            rot,
-          )
-          if (broad) countOakB++
-          else countOakA++
-        } else {
-          writeTree(
-            trunks,
-            trunkCount,
-            tx,
-            VALLEY_Y + 0.7 * scale,
-            tz,
-            0.22 * scale,
-            1.4 * scale,
-            0.22 * scale,
-            rot,
-          )
-          if (broad) {
-            writeTree(crownsB, countB, tx, VALLEY_Y + 2.35 * scale, tz, scale, scale, scale, rot)
-            countB++
-          } else {
-            writeTree(crownsA, countA, tx, VALLEY_Y + 2.35 * scale, tz, scale, scale, scale, rot)
-            countA++
-          }
-        }
-        blockers.push({ x: tx, z: tz, r: tree.radius })
-        trunkCount++
-      }
-    }
-    trunks.count = trunkCount
-    crownsA.count = countA
-    crownsB.count = countB
-    oaksA.count = countOakA
-    oaksB.count = countOakB
-    trunks.instanceMatrix.needsUpdate = true
-    crownsA.instanceMatrix.needsUpdate = true
-    crownsB.instanceMatrix.needsUpdate = true
-    oaksA.instanceMatrix.needsUpdate = true
-    oaksB.instanceMatrix.needsUpdate = true
+  const treeAt = (ix: number, iz: number) => {
+    const id = (ix + 4096) * 8192 + (iz + 4096)
+    const cached = treeByCell.get(id)
+    if (cached !== undefined) return cached
+    const tree = forestTree(ix, iz)
+    treeByCell.set(id, tree)
+    if (tree) treeIndex.insert({ x: tree.x, z: tree.z, r: tree.radius })
+    return tree
   }
 
-  const follow = (x: number, z: number) => {
+  const gather = (cellX: number, cellZ: number) => {
+    if (cellX === aroundX && cellZ === aroundZ) return
+    aroundX = cellX
+    aroundZ = cellZ
+    around = []
+    for (let iz = cellZ - TREE_REACH; iz <= cellZ + TREE_REACH; iz++) {
+      for (let ix = cellX - TREE_REACH; ix <= cellX + TREE_REACH; ix++) {
+        const tree = treeAt(ix, iz)
+        if (tree) around.push(tree)
+      }
+    }
+  }
+
+  const paintView = (x: number, z: number, yaw: number) => {
+    const fx = Math.sin(yaw)
+    const fz = Math.cos(yaw)
+    let trunkCount = 0
+    let crownCount = 0
+    let oakCount = 0
+    for (const tree of around) {
+      const dx = tree.x - x
+      const dz = tree.z - z
+      const dist2 = dx * dx + dz * dz
+      if (dist2 > VIEW_NEAR2) {
+        const facing = dx * fx + dz * fz
+        if (facing < 0 && facing * facing > dist2 * 0.04) continue
+      }
+      const { scale, rot, oak, broad } = tree
+      if (oak) {
+        writeTree(
+          trunks,
+          trunkCount,
+          tree.x,
+          VALLEY_Y + 0.42 * scale,
+          tree.z,
+          0.34 * scale,
+          0.84 * scale,
+          0.34 * scale,
+          rot,
+        )
+        writeTree(
+          oakTops,
+          oakCount,
+          tree.x,
+          VALLEY_Y + 1.32 * scale,
+          tree.z,
+          1.28 * scale,
+          0.95 * scale,
+          1.28 * scale,
+          rot,
+        )
+        leafTint.set(broad ? '#547a3c' : '#3f6a34')
+        oakTops.setColorAt(oakCount, leafTint)
+        oakCount++
+      } else {
+        writeTree(
+          trunks,
+          trunkCount,
+          tree.x,
+          VALLEY_Y + 0.7 * scale,
+          tree.z,
+          0.22 * scale,
+          1.4 * scale,
+          0.22 * scale,
+          rot,
+        )
+        writeTree(
+          crowns,
+          crownCount,
+          tree.x,
+          VALLEY_Y + 2.35 * scale,
+          tree.z,
+          scale,
+          scale,
+          scale,
+          rot,
+        )
+        leafTint.set(broad ? '#3e6e40' : '#2d5a34')
+        crowns.setColorAt(crownCount, leafTint)
+        crownCount++
+      }
+      trunkCount++
+    }
+    trunks.count = trunkCount
+    crowns.count = crownCount
+    oakTops.count = oakCount
+    trunks.instanceMatrix.needsUpdate = true
+    crowns.instanceMatrix.needsUpdate = true
+    oakTops.instanceMatrix.needsUpdate = true
+    if (crowns.instanceColor) crowns.instanceColor.needsUpdate = true
+    if (oakTops.instanceColor) oakTops.instanceColor.needsUpdate = true
+  }
+
+  const refreshForest = (x: number, z: number, yaw: number) => {
+    const cellX = Math.floor(x / TREE_SPACING)
+    const cellZ = Math.floor(z / TREE_SPACING)
+    const bucket = Math.round(yaw / (Math.PI / 8))
+    const token = `${cellX},${cellZ},${bucket}`
+    if (token === viewToken) return
+    viewToken = token
+    gather(cellX, cellZ)
+    paintView(x, z, yaw)
+  }
+
+  const follow = (x: number, z: number, yaw = Math.PI) => {
     valley.position.x = x
     valley.position.z = z
     walkable.updateMatrixWorld(true)
-    refreshForest(x, z)
+    refreshForest(x, z, yaw)
   }
-  walkable.userData.trees = blockers
-  walkable.userData.solids = [] as { x: number; z: number; r: number }[]
+  walkable.userData.solids = trackObstacles([] as { x: number; z: number; r: number }[], solidIndex)
+  walkable.userData.blocked = (x: number, z: number, inset = 0) =>
+    treeIndex.hits(x, z, inset) || solidIndex.hits(x, z, inset)
   addRomanBridge(walkable, scenery)
   addPitch(walkable, scenery)
   walkable.userData.follow = follow

@@ -39,3 +39,27 @@ export function atelierPad() {
   return { ...atelierPoint(0, -3.1), radius: 5 }
 }
 
+/** Ponto do mundo passado para o referencial da sala. */
+export function atelierLocal(x: number, z: number) {
+  const dx = x - ATELIER.x
+  const dz = z - ATELIER.z
+  const { yaw } = ATELIER
+  return {
+    x: Math.cos(yaw) * dx - Math.sin(yaw) * dz,
+    z: Math.sin(yaw) * dx + Math.cos(yaw) * dz,
+  }
+}
+
+/** Olhos dentro da sala, a olhar para o bolo na mesa. */
+export function atelierGaze() {
+  const eye = atelierPoint(0.12, -1.45)
+  const cake = atelierPoint(0.1, -2.7)
+  return {
+    x: eye.x,
+    y: ATELIER.y + 1.5,
+    z: eye.z,
+    lookX: cake.x,
+    lookY: ATELIER.y + 0.9,
+    lookZ: cake.z,
+  }
+}

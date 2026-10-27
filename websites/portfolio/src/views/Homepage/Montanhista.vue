@@ -1,116 +1,119 @@
 <template>
   <TresGroup ref="playerRef">
-    <TresMesh :position="[0, 1.2, 0]" cast-shadow>
-      <TresBoxGeometry :args="[0.5, 0.7, 0.3]" />
-      <TresMeshStandardMaterial color="#d97706" :flatShading="true" />
-    </TresMesh>
-
-    <TresGroup :position="[0, 1.75, 0]">
-      <TresMesh cast-shadow>
-        <TresIcosahedronGeometry :args="[0.2, 1]" />
-        <TresMeshStandardMaterial color="#ffdbac" :flatShading="true" />
-      </TresMesh>
-
-      <TresMesh :position="[-0.08, 0.05, 0.17]">
-        <TresBoxGeometry :args="[0.04, 0.04, 0.02]" />
-        <TresMeshStandardMaterial color="#111827" />
-      </TresMesh>
-
-      <TresMesh :position="[0.08, 0.05, 0.17]">
-        <TresBoxGeometry :args="[0.04, 0.04, 0.02]" />
-        <TresMeshStandardMaterial color="#111827" />
-      </TresMesh>
-
-      <TresMesh :position="[0, -0.02, 0.19]">
-        <TresBoxGeometry :args="[0.05, 0.08, 0.05]" />
-        <TresMeshStandardMaterial color="#ffdbac" />
-      </TresMesh>
-
-      <TresMesh :position="[0, 0.15, 0]" cast-shadow>
-        <TresCylinderGeometry :args="[0.17, 0.21, 0.15, 8]" />
-        <TresMeshStandardMaterial color="#b91c1c" :flatShading="true" />
-      </TresMesh>
-
-      <TresMesh :position="[0, 0.12, 0.16]" :rotation="[-0.1, 0, 0]" cast-shadow>
-        <TresBoxGeometry :args="[0.35, 0.02, 0.25]" />
-        <TresMeshStandardMaterial color="#b91c1c" />
-      </TresMesh>
-    </TresGroup>
-
-    <TresMesh :position="[0, 0.8, 0]" cast-shadow>
-      <TresBoxGeometry :args="[0.48, 0.22, 0.32]" />
-      <TresMeshStandardMaterial color="#1e3a8a" :flatShading="true" />
-    </TresMesh>
-    <TresMesh :position="[0, 0.9, 0]" cast-shadow>
-      <TresBoxGeometry :args="[0.54, 0.1, 0.36]" />
-      <TresMeshStandardMaterial color="#78350f" :flatShading="true" />
-    </TresMesh>
-    <TresMesh :position="[0, 0.9, 0.16]">
-      <TresBoxGeometry :args="[0.08, 0.08, 0.04]" />
-      <TresMeshStandardMaterial color="#e7c7a4" :flatShading="true" />
-    </TresMesh>
-
-    <TresGroup ref="leftArm" :position="[-0.35, 1.45, 0]">
-      <TresMesh :position="[0, -0.2, 0]" cast-shadow>
-        <TresBoxGeometry :args="[0.15, 0.4, 0.15]" />
+    <!-- As solas ficam 0.23 acima da origem, e a origem é que pousa no chão. -->
+    <TresGroup :position="[0, -0.23, 0]">
+      <TresMesh :position="[0, 1.2, 0]" cast-shadow>
+        <TresBoxGeometry :args="[0.5, 0.7, 0.3]" />
         <TresMeshStandardMaterial color="#d97706" :flatShading="true" />
       </TresMesh>
-      <TresMesh :position="[0, -0.44, 0.02]" cast-shadow>
-        <TresBoxGeometry :args="[0.16, 0.12, 0.14]" />
-        <TresMeshStandardMaterial color="#ffdbac" :flatShading="true" />
-      </TresMesh>
-    </TresGroup>
 
-    <TresGroup ref="rightArm" :position="[0.35, 1.45, 0]">
-      <TresMesh :position="[0, -0.2, 0]" cast-shadow>
-        <TresBoxGeometry :args="[0.15, 0.4, 0.15]" />
-        <TresMeshStandardMaterial color="#d97706" :flatShading="true" />
-      </TresMesh>
-      <TresMesh :position="[0, -0.42, 0.06]" cast-shadow>
-        <TresBoxGeometry :args="[0.16, 0.12, 0.16]" />
-        <TresMeshStandardMaterial color="#ffdbac" :flatShading="true" />
-      </TresMesh>
-      <TresGroup :position="[0, -0.42, 0.12]" :rotation="[1.5, 0, 0]">
+      <TresGroup :position="[0, 1.75, 0]">
         <TresMesh cast-shadow>
-          <TresBoxGeometry :args="[0.04, 0.7, 0.04]" />
-          <TresMeshStandardMaterial color="#4b5563" :flatShading="true" />
+          <TresIcosahedronGeometry :args="[0.2, 1]" />
+          <TresMeshStandardMaterial color="#ffdbac" :flatShading="true" />
+        </TresMesh>
+
+        <TresMesh :position="[-0.08, 0.05, 0.17]">
+          <TresBoxGeometry :args="[0.04, 0.04, 0.02]" />
+          <TresMeshStandardMaterial color="#111827" />
+        </TresMesh>
+
+        <TresMesh :position="[0.08, 0.05, 0.17]">
+          <TresBoxGeometry :args="[0.04, 0.04, 0.02]" />
+          <TresMeshStandardMaterial color="#111827" />
+        </TresMesh>
+
+        <TresMesh :position="[0, -0.02, 0.19]">
+          <TresBoxGeometry :args="[0.05, 0.08, 0.05]" />
+          <TresMeshStandardMaterial color="#ffdbac" />
+        </TresMesh>
+
+        <TresMesh :position="[0, 0.15, 0]" cast-shadow>
+          <TresCylinderGeometry :args="[0.17, 0.21, 0.15, 8]" />
+          <TresMeshStandardMaterial color="#b91c1c" :flatShading="true" />
+        </TresMesh>
+
+        <TresMesh :position="[0, 0.12, 0.16]" :rotation="[-0.1, 0, 0]" cast-shadow>
+          <TresBoxGeometry :args="[0.35, 0.02, 0.25]" />
+          <TresMeshStandardMaterial color="#b91c1c" />
         </TresMesh>
       </TresGroup>
-    </TresGroup>
 
-    <TresGroup ref="leftLeg" :position="[-0.15, 0.85, 0]">
-      <TresMesh :position="[0, -0.3, 0]" cast-shadow>
-        <TresBoxGeometry :args="[0.2, 0.5, 0.25]" />
+      <TresMesh :position="[0, 0.8, 0]" cast-shadow>
+        <TresBoxGeometry :args="[0.48, 0.22, 0.32]" />
         <TresMeshStandardMaterial color="#1e3a8a" :flatShading="true" />
       </TresMesh>
-      <TresMesh :position="[0, -0.56, 0.08]" cast-shadow>
-        <TresBoxGeometry :args="[0.22, 0.12, 0.36]" />
-        <TresMeshStandardMaterial color="#3f2e24" :flatShading="true" />
+      <TresMesh :position="[0, 0.9, 0]" cast-shadow>
+        <TresBoxGeometry :args="[0.54, 0.1, 0.36]" />
+        <TresMeshStandardMaterial color="#78350f" :flatShading="true" />
       </TresMesh>
-    </TresGroup>
+      <TresMesh :position="[0, 0.9, 0.16]">
+        <TresBoxGeometry :args="[0.08, 0.08, 0.04]" />
+        <TresMeshStandardMaterial color="#e7c7a4" :flatShading="true" />
+      </TresMesh>
 
-    <TresGroup ref="rightLeg" :position="[0.15, 0.85, 0]">
-      <TresMesh :position="[0, -0.3, 0]" cast-shadow>
-        <TresBoxGeometry :args="[0.2, 0.5, 0.25]" />
-        <TresMeshStandardMaterial color="#1e3a8a" :flatShading="true" />
-      </TresMesh>
-      <TresMesh :position="[0, -0.56, 0.08]" cast-shadow>
-        <TresBoxGeometry :args="[0.22, 0.12, 0.36]" />
-        <TresMeshStandardMaterial color="#3f2e24" :flatShading="true" />
-      </TresMesh>
-    </TresGroup>
+      <TresGroup ref="leftArm" :position="[-0.35, 1.45, 0]">
+        <TresMesh :position="[0, -0.2, 0]" cast-shadow>
+          <TresBoxGeometry :args="[0.15, 0.4, 0.15]" />
+          <TresMeshStandardMaterial color="#d97706" :flatShading="true" />
+        </TresMesh>
+        <TresMesh :position="[0, -0.44, 0.02]" cast-shadow>
+          <TresBoxGeometry :args="[0.16, 0.12, 0.14]" />
+          <TresMeshStandardMaterial color="#ffdbac" :flatShading="true" />
+        </TresMesh>
+      </TresGroup>
 
-    <TresGroup :position="[0, 1.25, -0.25]">
-      <!-- Corpo da Mochila -->
-      <TresMesh cast-shadow>
-        <TresBoxGeometry :args="[0.45, 0.6, 0.25]" />
-        <TresMeshStandardMaterial color="#365314" :roughness="0.9" />
-      </TresMesh>
-      <!-- Saco de Cama (Rolo) -->
-      <TresMesh :position="[0, 0.38, 0]" :rotation="[0, 0, Math.PI / 2]" cast-shadow>
-        <TresCylinderGeometry :args="[0.12, 0.12, 0.45, 8]" />
-        <TresMeshStandardMaterial color="#fbbf24" :flatShading="true" :roughness="1" />
-      </TresMesh>
+      <TresGroup ref="rightArm" :position="[0.35, 1.45, 0]">
+        <TresMesh :position="[0, -0.2, 0]" cast-shadow>
+          <TresBoxGeometry :args="[0.15, 0.4, 0.15]" />
+          <TresMeshStandardMaterial color="#d97706" :flatShading="true" />
+        </TresMesh>
+        <TresMesh :position="[0, -0.42, 0.06]" cast-shadow>
+          <TresBoxGeometry :args="[0.16, 0.12, 0.16]" />
+          <TresMeshStandardMaterial color="#ffdbac" :flatShading="true" />
+        </TresMesh>
+        <TresGroup :position="[0, -0.42, 0.12]" :rotation="[1.5, 0, 0]">
+          <TresMesh cast-shadow>
+            <TresBoxGeometry :args="[0.04, 0.7, 0.04]" />
+            <TresMeshStandardMaterial color="#4b5563" :flatShading="true" />
+          </TresMesh>
+        </TresGroup>
+      </TresGroup>
+
+      <TresGroup ref="leftLeg" :position="[-0.15, 0.85, 0]">
+        <TresMesh :position="[0, -0.3, 0]" cast-shadow>
+          <TresBoxGeometry :args="[0.2, 0.5, 0.25]" />
+          <TresMeshStandardMaterial color="#1e3a8a" :flatShading="true" />
+        </TresMesh>
+        <TresMesh :position="[0, -0.56, 0.08]" cast-shadow>
+          <TresBoxGeometry :args="[0.22, 0.12, 0.36]" />
+          <TresMeshStandardMaterial color="#3f2e24" :flatShading="true" />
+        </TresMesh>
+      </TresGroup>
+
+      <TresGroup ref="rightLeg" :position="[0.15, 0.85, 0]">
+        <TresMesh :position="[0, -0.3, 0]" cast-shadow>
+          <TresBoxGeometry :args="[0.2, 0.5, 0.25]" />
+          <TresMeshStandardMaterial color="#1e3a8a" :flatShading="true" />
+        </TresMesh>
+        <TresMesh :position="[0, -0.56, 0.08]" cast-shadow>
+          <TresBoxGeometry :args="[0.22, 0.12, 0.36]" />
+          <TresMeshStandardMaterial color="#3f2e24" :flatShading="true" />
+        </TresMesh>
+      </TresGroup>
+
+      <TresGroup :position="[0, 1.25, -0.25]">
+        <!-- Corpo da Mochila -->
+        <TresMesh cast-shadow>
+          <TresBoxGeometry :args="[0.45, 0.6, 0.25]" />
+          <TresMeshStandardMaterial color="#365314" :roughness="0.9" />
+        </TresMesh>
+        <!-- Saco de Cama (Rolo) -->
+        <TresMesh :position="[0, 0.38, 0]" :rotation="[0, 0, Math.PI / 2]" cast-shadow>
+          <TresCylinderGeometry :args="[0.12, 0.12, 0.45, 8]" />
+          <TresMeshStandardMaterial color="#fbbf24" :flatShading="true" :roughness="1" />
+        </TresMesh>
+      </TresGroup>
     </TresGroup>
   </TresGroup>
 </template>
@@ -128,6 +131,9 @@ import {
   type Object3D,
 } from 'three'
 import { SPAWN, passageById, passages } from '@/data/journey'
+import { footstep } from '@/game/ambience'
+import { atelierGaze } from '@/game/atelier'
+import { baking } from '@/game/cake'
 import { onBridge } from '@/game/bridge'
 import { WADE_SINK, cavadoSample, waterSurfaceY } from '@/game/cavado'
 import { disposeComputer, makeComputer, paintComputer } from '@/game/computer'
@@ -164,6 +170,8 @@ const look = new Vector3(SPAWN[0], 1.4, SPAWN[2] - 6)
 const lookTarget = new Vector3()
 const deskCam = new Vector3()
 const deskLook = new Vector3()
+const bakeCam = new Vector3()
+const bakeLook = new Vector3()
 const camGoal = new Vector3()
 const lookGoal = new Vector3()
 const computer = makeComputer()
@@ -177,6 +185,9 @@ const drops = Array.from({ length: 8 }, () => {
 })
 splash.visible = false
 let deskWeight = 0
+let bakeWeight = 0
+let bakeYaw = 0
+let bakePitch = 0
 let waterTime = 0
 
 const SPEED = 6.6
@@ -197,6 +208,7 @@ let jumpBuffer = 0
 let spaceWasDown = false
 let jumpHeld = false
 let walkPhase = 0
+let prevStride = 0
 let announcedStart = false
 let currentPassage: string | null = null
 let lastEmitted: string | null | undefined
@@ -271,9 +283,30 @@ function onLookMove(event: PointerEvent) {
   const { x: dx, y: dy } = toStageDelta(event.clientX - lookX, event.clientY - lookY)
   lookX = event.clientX
   lookY = event.clientY
+  if (baking.value) {
+    bakeYaw = clamp(bakeYaw - dx * 0.0032, -0.7, 0.7)
+    bakePitch = clamp(bakePitch - dy * 0.0026, -0.38, 0.42)
+    return
+  }
   orbitYaw -= dx * 0.0045
   orbitPitch = clamp(orbitPitch + dy * 0.0032, 0.08, 1.05)
 }
+
+function fillBakeAim() {
+  const gaze = atelierGaze()
+  bakeCam.set(gaze.x, gaze.y, gaze.z)
+  const dx = gaze.lookX - gaze.x
+  const dz = gaze.lookZ - gaze.z
+  const dist = Math.hypot(dx, dz) || 1
+  const yaw = Math.atan2(dx, dz) + bakeYaw
+  bakeLook.set(gaze.x + Math.sin(yaw) * dist, gaze.lookY + bakePitch, gaze.z + Math.cos(yaw) * dist)
+}
+
+watch(baking, (inside) => {
+  if (!inside) return
+  bakeYaw = 0
+  bakePitch = 0
+})
 
 function onLookUp() {
   if (!draggingLook) return
@@ -350,25 +383,19 @@ function approach(current: number, target: number, rate: number, dt: number) {
 }
 
 function treeBlocks(x: number, z: number) {
-  const data = scene.value?.getObjectByName('walkable')?.userData
-  const lists = [data?.trees, data?.solids] as ({ x: number; z: number; r: number }[] | undefined)[]
-  for (const list of lists) {
-    if (!list) continue
-    for (let i = 0; i < list.length; i++) {
-      const item = list[i]
-      const dx = x - item.x
-      const dz = z - item.z
-      if (dx * dx + dz * dz < item.r * item.r) return true
-    }
-  }
-  return false
+  const blocked = scene.value?.getObjectByName('walkable')?.userData.blocked as
+    | ((px: number, pz: number, inset?: number) => boolean)
+    | undefined
+  return blocked?.(x, z, 0) ?? false
 }
 
 function sample(x: number, z: number) {
   const root = scene.value?.getObjectByName('walkable')
   if (!root) return null
-  const follow = root.userData.follow as ((px: number, pz: number) => void) | undefined
-  follow?.(x, z)
+  const follow = root.userData.follow as
+    | ((px: number, pz: number, yaw?: number) => void)
+    | undefined
+  follow?.(x, z, orbitYaw)
   rayOrigin.set(x, 160, z)
   raycaster.set(rayOrigin, down)
   raycaster.far = 220
@@ -452,7 +479,7 @@ function publishPose(player: Group) {
   hikerPose.z = player.position.z
   hikerPose.yaw = player.rotation.y
   hikerPose.look = orbitPitch
-  hikerPose.visible = player.visible
+  hikerPose.visible = deskWeight < 0.25
   hikerPose.ready = true
 }
 
@@ -489,12 +516,20 @@ onBeforeRender(({ delta }) => {
   if (!player || !player.userData.placed) return
   const dt = Math.min(delta, 0.05)
   const reading = Boolean(props.readingId)
+  const inside = baking.value && !reading
+  const held = reading || inside
   deskWeight = approach(deskWeight, reading ? 1 : 0, 2.4, dt)
+  bakeWeight = approach(bakeWeight, inside ? 1 : 0, 2.1, dt)
   if (!reading && deskWeight < 0.01) {
     deskWeight = 0
     computer.visible = false
   }
-  player.visible = deskWeight < 0.25
+  if (!inside && bakeWeight < 0.01) {
+    bakeWeight = 0
+    bakeYaw = 0
+    bakePitch = 0
+  }
+  player.visible = deskWeight < 0.25 && bakeWeight < 0.28
 
   const activeCamera = camera.activeCamera.value
   if (activeCamera) {
@@ -545,7 +580,7 @@ onBeforeRender(({ delta }) => {
     player.rotation.y = scooter.yaw
     velocity.set(0, 0, 0)
   }
-  const pushing = !reading && wishLen > 0.01 && hasLanded
+  const pushing = !held && wishLen > 0.01 && hasLanded
   const running = pushing && hikeKeys.Shift
   const rate = pushing
     ? grounded
@@ -561,7 +596,7 @@ onBeforeRender(({ delta }) => {
   velocity.x = approach(velocity.x, (pushing ? wishX * pace : 0) + wadeNow.flowX * drift, rate, dt)
   velocity.z = approach(velocity.z, (pushing ? wishZ * pace : 0) + wadeNow.flowZ * drift, rate, dt)
 
-  if (!reading && hasLanded && (Math.abs(velocity.x) > 0.001 || Math.abs(velocity.z) > 0.001)) {
+  if (!held && hasLanded && (Math.abs(velocity.x) > 0.001 || Math.abs(velocity.z) > 0.001)) {
     const nextX = player.position.x + velocity.x * dt
     const nextZ = player.position.z + velocity.z * dt
     if (canStand(nextX, nextZ, player.position.y)) {
@@ -576,19 +611,19 @@ onBeforeRender(({ delta }) => {
     }
   }
 
-  if (!reading && wishLen > 0.2 && hasLanded) {
+  if (!held && wishLen > 0.2 && hasLanded) {
     player.rotation.y = easeAngle(player.rotation.y, Math.atan2(wishX, wishZ), dt)
   }
 
-  if (!reading && hikeKeys[' '] && !spaceWasDown) jumpBuffer = 0.12
+  if (!held && hikeKeys[' '] && !spaceWasDown) jumpBuffer = 0.12
   spaceWasDown = hikeKeys[' ']
   if (!hikeKeys[' ']) jumpBuffer = Math.max(0, jumpBuffer - dt)
   if (grounded) coyote = 0.14
   else coyote = Math.max(0, coyote - dt)
 
-  if (reading) velocity.set(0, 0, 0)
+  if (held) velocity.set(0, 0, 0)
 
-  if (!reading && jumpBuffer > 0 && coyote > 0 && hasLanded) {
+  if (!held && jumpBuffer > 0 && coyote > 0 && hasLanded) {
     velocity.y = JUMP
     jumpBuffer = 0
     coyote = 0
@@ -600,8 +635,8 @@ onBeforeRender(({ delta }) => {
     jumpHeld = false
   }
 
-  if (!reading) velocity.y -= GRAVITY * dt
-  const nextY = reading ? player.position.y : player.position.y + velocity.y * dt
+  if (!held) velocity.y -= GRAVITY * dt
+  const nextY = held ? player.position.y : player.position.y + velocity.y * dt
   const wade = onBridge(player.position.x, player.position.z)
     ? { depth: 0, flowX: 0, flowZ: 0 }
     : cavadoSample(player.position.x, player.position.z)
@@ -659,7 +694,11 @@ onBeforeRender(({ delta }) => {
 
   const stride = riding ? 0.06 : running && moving ? 0.78 : wade.depth > 0.2 ? 0.28 : 0.55
   if (moving) walkPhase += dt * (running ? 11 + speed : 8 + speed) * (wade.depth > 0.2 ? 0.72 : 1)
-  const swing = moving ? Math.sin(walkPhase) * stride : 0
+  const strideNow = moving ? Math.sin(walkPhase) : 0
+  if (moving && grounded && !riding && prevStride * strideNow < 0)
+    footstep(running, wade.depth > 0.15)
+  prevStride = moving ? strideNow : 0
+  const swing = strideNow * stride
   const wet = grounded && wade.depth > 0.05
   splash.visible = wet
   if (wet) {
@@ -686,7 +725,7 @@ onBeforeRender(({ delta }) => {
 
   updatePassage(player.position.x, player.position.z)
 
-  if (!draggingLook && deskWeight < 0.05 && wishLen > 0.2) {
+  if (!draggingLook && !inside && deskWeight < 0.05 && wishLen > 0.2) {
     orbitYaw = easeAngle(orbitYaw, player.rotation.y, dt)
     if (orbitPitch < 0.5) orbitPitch = approach(orbitPitch, 0.5, 0.55, dt)
   }
@@ -707,16 +746,23 @@ onBeforeRender(({ delta }) => {
     player.position.y + 1.35 + (0.48 - orbitPitch) * 9,
     player.position.z + gazeZ * 7,
   )
+  fillBakeAim()
   camGoal.copy(desiredCam).lerp(deskCam, deskWeight)
   lookGoal.copy(lookTarget).lerp(deskLook, deskWeight)
-  const follow = 1 - Math.exp(-dt * (draggingLook ? 16 : deskWeight > 0.05 ? 3.2 : 5.5))
+  if (bakeWeight > 0.001) {
+    camGoal.lerp(bakeCam, bakeWeight)
+    lookGoal.lerp(bakeLook, bakeWeight)
+  }
+  const seated = deskWeight > 0.05 || bakeWeight > 0.05
+  const follow = 1 - Math.exp(-dt * (draggingLook && !inside ? 16 : seated ? 3.2 : 5.5))
   if (!cameraReady) {
     activeCamera.position.copy(camGoal)
     look.copy(lookGoal)
     cameraReady = true
   } else {
     activeCamera.position.lerp(camGoal, follow)
-    look.lerp(lookGoal, 1 - Math.exp(-dt * (deskWeight > 0.05 ? 4 : 8)))
+    const lookRate = inside && draggingLook ? 18 : seated ? 4 : 8
+    look.lerp(lookGoal, 1 - Math.exp(-dt * lookRate))
   }
   activeCamera.lookAt(look)
 })

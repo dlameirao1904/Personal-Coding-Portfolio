@@ -58,6 +58,7 @@ import {
   PITCH_TOP,
   PITCH_X,
   SPOT,
+  markPenalty,
   penalty,
   penaltyKick,
 } from '@/game/pitch'
@@ -139,6 +140,7 @@ function shoot(yaw: number, look: number) {
   mode = 'flight'
   penalty.call = ''
   penalty.near = false
+  penalty.engaged = true
 }
 
 function resolve(x: number, height: number) {
@@ -146,7 +148,7 @@ function resolve(x: number, height: number) {
   const onPost = Math.abs(insideX - GOAL_HALF) < 0.2 && height < GOAL_HEIGHT + 0.12 && height > 0
   const onBar = Math.abs(height - GOAL_HEIGHT) < 0.16 && insideX < GOAL_HALF + 0.08
   if (onPost || onBar) {
-    penalty.call = 'trave'
+    markPenalty('trave')
     ball.vz = -Math.abs(ball.vz) * 0.45
     ball.vy = Math.abs(ball.vy) * 0.35 + 2.2
     ball.vx *= 0.55
@@ -154,22 +156,20 @@ function resolve(x: number, height: number) {
   }
   const inGoal = insideX < GOAL_HALF - 0.1 && height > 0.05 && height < GOAL_HEIGHT - 0.06
   if (!inGoal) {
-    penalty.call = 'fora'
+    markPenalty('fora')
     return
   }
   const reachX = 1
   const reachY = keeperJump > 0.6 ? 2.22 : 1.25
   const saved = Math.abs(x - keeper.x) < reachX && height < reachY
   if (saved) {
-    penalty.call = 'defesa'
-    penalty.saves += 1
+    markPenalty('defesa')
     ball.vz = -Math.abs(ball.vz) * 0.5
     ball.vx *= 0.35
     ball.vy = 3.2
     return
   }
-  penalty.call = 'golo'
-  penalty.goals += 1
+  markPenalty('golo')
   ball.vz *= 0.45
   ball.vx *= 0.5
   ball.vy *= 0.4
@@ -192,6 +192,7 @@ onBeforeRender(({ delta }) => {
   if (mode === 'ready') {
     const dist = Math.hypot(hikerPose.x - SPOT.x, hikerPose.z - SPOT.z)
     penalty.near = dist < 1.85
+    penalty.engaged = dist < 16
     keeper.x +=
       (PITCH_X + Math.sin(performance.now() * 0.0011) * 0.35 - keeper.x) * Math.min(1, dt * 3)
     keeper.lean += (0 - keeper.lean) * Math.min(1, dt * 4)
@@ -236,7 +237,7 @@ onBeforeRender(({ delta }) => {
         ball.vx = 0
         ball.vz = 0
         if (mode === 'flight') {
-          penalty.call = 'fora'
+          markPenalty('fora')
           mode = 'done'
           hold = 2.4
         }

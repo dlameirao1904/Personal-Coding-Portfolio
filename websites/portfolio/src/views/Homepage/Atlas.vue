@@ -31,7 +31,12 @@
           <TresBoxGeometry :args="[0.1, 0.08, 0.08]" />
           <TresMeshStandardMaterial color="#1a1a1a" :flatShading="true" :roughness="0.7" />
         </TresMesh>
-        <TresMesh :visible="atlasGreeting" :position="[0, -0.12, 0.46]" :rotation="[0.4, 0, 0]">
+        <TresMesh
+          ref="tongueRef"
+          :visible="atlasGreeting"
+          :position="[0, -0.12, 0.46]"
+          :rotation="[0.4, 0, 0]"
+        >
           <TresBoxGeometry :args="[0.08, 0.035, 0.14]" />
           <TresMeshStandardMaterial color="#e07a86" :flatShading="true" :roughness="0.45" />
         </TresMesh>
@@ -99,15 +104,24 @@
 <script setup lang="ts">
 import { shallowRef } from 'vue'
 import { useLoop, useTresContext } from '@tresjs/core'
-import { Group, Raycaster, Vector3 } from 'three'
+import { Group, Raycaster, Vector3, type Object3D } from 'three'
+import { bark } from '@/game/ambience'
 import { WADE_SINK, cavadoSample } from '@/game/cavado'
-import { atlasGreeting, atlasPlaying, greetAtlas, hikerPose, marinaSpot, ridingScooter } from '@/game/spot'
+import {
+  atlasGreeting,
+  atlasPlaying,
+  greetAtlas,
+  hikerPose,
+  marinaSpot,
+  ridingScooter,
+} from '@/game/spot'
 
-const { scene, camera } = useTresContext()
+const { scene } = useTresContext()
 const dogRef = shallowRef<Group | null>(null)
 const bodyRef = shallowRef<Group | null>(null)
 const headRef = shallowRef<Group | null>(null)
 const tailRef = shallowRef<Group | null>(null)
+const tongueRef = shallowRef<Object3D | null>(null)
 const frontLeft = shallowRef<Group | null>(null)
 const frontRight = shallowRef<Group | null>(null)
 const backLeft = shallowRef<Group | null>(null)
@@ -149,19 +163,10 @@ function easeAngle(current: number, target: number, dt: number) {
 }
 
 function blocked(x: number, z: number) {
-  const data = scene.value?.getObjectByName('walkable')?.userData
-  const lists = [data?.trees, data?.solids] as ({ x: number; z: number; r: number }[] | undefined)[]
-  for (const list of lists) {
-    if (!list) continue
-    for (let i = 0; i < list.length; i++) {
-      const item = list[i]
-      const dx = x - item.x
-      const dz = z - item.z
-      const reach = Math.max(0.35, item.r - 0.35)
-      if (dx * dx + dz * dz < reach * reach) return true
-    }
-  }
-  return false
+  const hit = scene.value?.getObjectByName('walkable')?.userData.blocked as
+    | ((px: number, pz: number, inset?: number) => boolean)
+    | undefined
+  return hit?.(x, z, 0.35) ?? false
 }
 
 function floorAt(x: number, z: number) {
@@ -177,6 +182,7 @@ function floorAt(x: number, z: number) {
 
 function onGreet() {
   greetAtlas()
+  bark()
 }
 
 function open(x: number, z: number, fromY: number) {
@@ -198,12 +204,17 @@ function poseLimb(
   standSwing: number,
   lieSwing: number,
   sitSwing: number,
+  bowY: number,
+  bowZ: number,
+  bowSwing: number,
 ) {
   if (!limb) return
-  const groundedPose = mix(standY, lieY, rest)
-  limb.position.y = mix(groundedPose, sitY, sit)
-  limb.position.z = mix(mix(standZ, lieZ, rest), sitZ, sit)
-  limb.rotation.x = mix(mix(standSwing, lieSwing, rest), sitSwing, sit)
+  const groundedY = mix(standY, lieY, rest)
+  const groundedZ = mix(standZ, lieZ, rest)
+  const groundedSwing = mix(standSwing, lieSwing, rest)
+  limb.position.y = mix(mix(groundedY, sitY, sit), bowY, bite)
+  limb.position.z = mix(mix(groundedZ, sitZ, sit), bowZ, bite)
+  limb.rotation.x = mix(mix(groundedSwing, sitSwing, sit), bowSwing, bite)
 }
 
 const { onBeforeRender } = useLoop()
@@ -223,30 +234,35 @@ onBeforeRender(({ delta }) => {
   const rightX = Math.cos(yaw)
   const rightZ = -Math.sin(yaw)
   const feetDist = Math.hypot(marinaSpot.x - dog.position.x, marinaSpot.z - dog.position.z)
-  const playing = !riding && !greeting && marinaSpot.ready && feetDist < 14
+  const playing =
+    !riding && !greeting && marinaSpot.ready && feetDist < (atlasPlaying.value ? 18 : 14)
   atlasPlaying.value = playing
   const play = playing ? marinaSpot.mode : 'bake'
   const fxM = Math.sin(marinaSpot.yaw)
   const fzM = Math.cos(marinaSpot.yaw)
+  const sideX = Math.cos(marinaSpot.yaw)
+  const sideZ = -Math.sin(marinaSpot.yaw)
+  const weave = play === 'run' ? Math.sin(phase * 0.55) * 0.55 : 0
+  const nip = play === 'bite' ? 0.58 + Math.sin(phase * 3.1) * 0.1 : 0
   const goalX = riding
     ? hikerPose.x + rightX * 0.62
     : play === 'run'
-      ? marinaSpot.x - fxM * 0.85
+      ? marinaSpot.x - fxM * 1.15 + sideX * weave
       : play === 'pet'
-        ? marinaSpot.x + fxM * 0.75
+        ? marinaSpot.x + fxM * 0.95
         : play === 'bite'
-          ? marinaSpot.x + fxM * 0.4
+          ? marinaSpot.x + fxM * nip + sideX * 0.28
           : greeting
             ? dog.position.x
             : hikerPose.x - fx * BEHIND - fz * SIDE
   const goalZ = riding
     ? hikerPose.z + rightZ * 0.62
     : play === 'run'
-      ? marinaSpot.z - fzM * 0.85
+      ? marinaSpot.z - fzM * 1.15 + sideZ * weave
       : play === 'pet'
-        ? marinaSpot.z + fzM * 0.75
+        ? marinaSpot.z + fzM * 0.95
         : play === 'bite'
-          ? marinaSpot.z + fzM * 0.4
+          ? marinaSpot.z + fzM * nip + sideZ * 0.28
           : greeting
             ? dog.position.z
             : hikerPose.z - fz * BEHIND + fx * SIDE
@@ -308,53 +324,111 @@ onBeforeRender(({ delta }) => {
 
   const catching = !greeting && !riding && !playing && (dist > 0.55 || moved > 0.004)
   idle = catching ? 0 : idle + dt
-  const biting = play === 'bite' && dist < 0.9
-  const petting = play === 'pet' && dist < 1.3
-  bite = approach(bite, biting ? 1 : 0, biting ? 3.2 : 3.6, dt)
-  const sitTarget = greeting || riding || biting || petting ? 1 : 0
-  sit = approach(sit, sitTarget, sitTarget ? 2.8 : 3.4, dt)
-  const restTarget = sitTarget === 0 && idle > 0.65 ? 1 : 0
+  const biting = play === 'bite' && dist < 1.15
+  const petting = play === 'pet' && dist < 1.45
+  bite = approach(bite, biting ? 1 : 0, biting ? 3.4 : 3.6, dt)
+  const sitTarget = greeting || riding || petting ? 1 : 0
+  sit = approach(sit, sitTarget, sitTarget ? 2.6 : 3.2, dt)
+  const restTarget = sitTarget === 0 && bite < 0.05 && idle > 0.65 ? 1 : 0
   rest = approach(rest, restTarget, restTarget ? 1.5 : 3.2, dt)
 
   const traveling = moved > 0.004
-  if (traveling || playing) phase += dt * (playing ? 14 : dist > 2 ? 13 : 9)
-  wag += dt * (greeting || biting ? 12 : traveling ? 8 : 3.2)
+  if (traveling || playing)
+    phase += dt * (play === 'run' ? 14 : play === 'bite' ? 8 : dist > 2 ? 13 : 9)
+  wag += dt * (greeting || petting ? 14 : biting ? 11 : traveling ? 8 : 3.2)
 
-  const cam = camera.value
-  const face =
-    greeting && cam
-      ? Math.atan2(cam.position.x - dog.position.x, cam.position.z - dog.position.z)
-      : playing
-        ? Math.atan2(marinaSpot.x - dog.position.x, marinaSpot.z - dog.position.z)
-        : riding
-          ? yaw
-          : traveling
-            ? Math.atan2(dx, dz)
-            : Math.atan2(hikerPose.x - dog.position.x, hikerPose.z - dog.position.z)
+  const faceHiker = Math.atan2(hikerPose.x - dog.position.x, hikerPose.z - dog.position.z)
+  const face = greeting
+    ? faceHiker
+    : playing
+      ? Math.atan2(marinaSpot.x - dog.position.x, marinaSpot.z - dog.position.z)
+      : riding
+        ? yaw
+        : traveling
+          ? Math.atan2(dx, dz)
+          : faceHiker
   dog.rotation.y = easeAngle(dog.rotation.y, face, dt)
 
-  const swing = traveling ? Math.sin(phase) * mix(0.65, 0, rest) : 0
+  const ahead = Math.max(
+    0.65,
+    Math.hypot(hikerPose.x - dog.position.x, hikerPose.z - dog.position.z),
+  )
+  const above = hikerPose.y + 1.25 - (dog.position.y + 0.55)
+  const greetPitch = Math.max(-0.75, Math.min(-0.18, -Math.atan2(Math.max(0, above), ahead)))
+  const attentive = greeting || petting ? sit : 0
+  const swing = traveling ? Math.sin(phase) * mix(play === 'run' ? 0.9 : 0.65, 0, rest) : 0
   const body = bodyRef.value
   if (body) {
-    const bob = traveling ? Math.abs(Math.sin(phase * 2)) * 0.035 : 0
-    body.position.y = mix(mix(mix(0.5, 0.2, rest), 0.4, sit), 0.16, bite) + bob * (1 - sit)
+    const bob = traveling ? Math.abs(Math.sin(phase * 2)) * (play === 'run' ? 0.07 : 0.035) : 0
+    const hop = bite * Math.max(0, Math.sin(phase * 3.1)) * 0.1
+    const seated = mix(mix(0.5, 0.2, rest), greeting || petting ? 0.34 : 0.36, sit)
+    body.position.y = mix(seated, 0.34, bite) + bob * (1 - sit) * (1 - bite) + hop
+    body.rotation.x = attentive * -0.12 + bite * 0.7
+    body.rotation.z = attentive * Math.sin(wag * 0.65) * 0.055
   }
   const head = headRef.value
   if (head) {
-    const chomp = bite * (0.95 + Math.sin(wag * 5) * 0.42)
-    const look = petting ? -0.45 : greeting ? -0.38 : 0.08
-    head.rotation.x = mix(mix(mix(0, 0.42, rest), look, sit), chomp, bite)
-    head.position.z = mix(mix(mix(0.5, 0.58, rest), 0.52, sit), 0.7, bite)
+    const chomp = 0.22 + Math.sin(wag * 6) * 0.16
+    const look = petting ? -0.62 : greeting ? greetPitch : riding ? 0.02 : 0.08
+    head.rotation.x = mix(mix(mix(0, 0.42, rest), look, sit), chomp, bite) - bite * 0.42
+    head.rotation.z = attentive * Math.sin(wag * 0.45) * 0.14
+    head.position.y = 0.16 + (petting ? Math.sin(wag * 2.4) * 0.028 : 0)
+    head.position.z = mix(mix(mix(0.5, 0.58, rest), 0.5, sit), 0.62, bite)
   }
+  const tongue = tongueRef.value
+  if (tongue) tongue.scale.y = greeting ? 1 + Math.sin(wag * 8) * 0.22 : 1
   const tail = tailRef.value
   if (tail) {
-    tail.rotation.x = mix(mix(-0.35, 0.2, rest), greeting ? -0.9 : -0.45, sit)
-    tail.rotation.y = Math.sin(wag) * mix(mix(0.5, 0.15, rest), greeting ? 0.7 : 0.25, sit)
+    const happy = Math.max(attentive, bite)
+    tail.rotation.x = mix(mix(mix(-0.35, 0.2, rest), -1.05, attentive), -1.2, bite)
+    tail.rotation.y = Math.sin(wag) * mix(mix(0.5, 0.15, rest), 0.85, happy)
   }
 
-  poseLimb(frontLeft.value, 0.42, 0.16, 0.34, 0.24, 0.58, 0.3, swing, -1.15, 0.25)
-  poseLimb(frontRight.value, 0.42, 0.16, 0.34, 0.24, 0.58, 0.3, -swing, -1.15, 0.25)
-  poseLimb(backLeft.value, 0.42, 0.15, 0.3, -0.26, -0.46, -0.12, -swing, 0.95, 1.15)
-  poseLimb(backRight.value, 0.42, 0.15, 0.3, -0.26, -0.46, -0.12, swing, 0.95, 1.15)
+  poseLimb(frontLeft.value, 0.42, 0.16, 0.34, 0.24, 0.58, 0.2, swing, -1.15, 0.04, 0.26, 0.34, -0.7)
+  poseLimb(
+    frontRight.value,
+    0.42,
+    0.16,
+    0.34,
+    0.24,
+    0.58,
+    0.2,
+    -swing,
+    -1.15,
+    0.04,
+    0.26,
+    0.34,
+    -0.7,
+  )
+  poseLimb(
+    backLeft.value,
+    0.42,
+    0.15,
+    0.22,
+    -0.26,
+    -0.46,
+    -0.1,
+    -swing,
+    0.95,
+    0.95,
+    0.46,
+    -0.16,
+    0.35,
+  )
+  poseLimb(
+    backRight.value,
+    0.42,
+    0.15,
+    0.22,
+    -0.26,
+    -0.46,
+    -0.1,
+    swing,
+    0.95,
+    0.95,
+    0.46,
+    -0.16,
+    0.35,
+  )
 })
 </script>

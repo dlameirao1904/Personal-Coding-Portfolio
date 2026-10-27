@@ -1,13 +1,22 @@
 <template>
   <div
-    class="tw-fixed tw-overflow-hidden tw-bg-[#b7c4bc] tw-font-[Outfit,Lato,sans-serif] tw-text-[#17211c] [&_canvas]:tw-block [&_canvas]:tw-h-full [&_canvas]:tw-w-full [&_canvas]:tw-cursor-grab"
+    class="tw-fixed tw-overflow-hidden tw-bg-[#6eafeb] tw-font-[Outfit,Lato,sans-serif] tw-text-[#17211c] [&_canvas]:tw-block [&_canvas]:tw-h-full [&_canvas]:tw-w-full [&_canvas]:tw-cursor-grab"
     :class="journeyTurned ? 'journey-turned' : 'tw-inset-0'"
   >
-    <TresCanvas clear-color="#b7c4bc" shadows>
+    <TresCanvas clear-color="#6eafeb" shadows>
       <TresPerspectiveCamera :fov="46" :near="0.1" :far="420" />
-      <TresFog :args="['#b7c4bc', 70, 340]" />
-      <TresHemisphereLight :args="['#d7e4ec', '#5c7346', 0.92]" />
-      <TresDirectionalLight :position="[32, 58, 22]" :intensity="1.75" cast-shadow />
+      <TresFog :args="['#a9d4f5', 120, 390]" />
+      <TresHemisphereLight :args="['#d7ecff', '#6d9444', 0.7]" />
+      <TresDirectionalLight
+        :position="[40, 64, -3]"
+        :intensity="2.65"
+        color="#fff1cc"
+        cast-shadow
+      />
+      <TresMesh :position="[72, 110, 18]">
+        <TresSphereGeometry :args="[4.6, 24, 16]" />
+        <TresMeshBasicMaterial color="#fff4c2" :fog="false" />
+      </TresMesh>
 
       <Montanha :active-id="activeId" />
       <Montanhista
@@ -88,17 +97,18 @@
       <p class="tw-mt-3 tw-leading-[1.45]">«Só a Natureza é divina, e ela não é divina...»</p>
       <p class="tw-mt-3 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#5c675f] max-md:tw-hidden">
         WASD ou setas para andar. Shift para correr. Espaço para saltar. Arrasta o rato para olhar.
-        Clica no Atlas. No menu há um Prompt.
+        Clica no Atlas. No menu há um Prompt. À porta do atelier, E entra para montar um bolo.
       </p>
       <p
         class="tw-mt-3 tw-hidden tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#5c675f] max-md:tw-block"
       >
-        Joystick para andar. Segura em Correr. Botão para saltar. Arrasta para olhar.
+        Joystick para andar. Segura em Correr. Botão para saltar. Arrasta para olhar. No atelier,
+        entra para montar um bolo.
       </p>
     </article>
 
     <article
-      v-else-if="passage && passage.kind !== 'project'"
+      v-else-if="passage && passage.kind !== 'project' && !baking"
       class="journey-card tw-absolute tw-right-[18px] tw-top-[9.6rem] tw-z-[2] tw-max-h-[min(62vh,560px)] tw-w-[min(380px,calc(100vw-36px))] tw-overflow-auto tw-rounded-[22px] tw-bg-[#f7f3eaf0] tw-p-5 tw-shadow-[0_16px_40px_#17211c1f] max-md:tw-bottom-auto max-md:tw-left-auto max-md:tw-right-3 max-md:tw-top-[9.6rem] max-md:tw-max-h-[38vh] max-md:tw-w-[min(17.5rem,calc(100vw-6.5rem))] max-md:tw-rounded-2xl max-md:tw-p-3.5 max-md:tw-shadow-[0_10px_28px_#17211c33]"
     >
       <p class="tw-mb-2 tw-text-[0.72rem] tw-uppercase tw-tracking-[0.12em] tw-text-[#8a4632]">
@@ -178,7 +188,7 @@
     </div>
 
     <div
-      v-else-if="scooterNear && !readingId"
+      v-else-if="scooterNear && !readingId && !atelierNear"
       class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
     >
       <p
@@ -197,23 +207,58 @@
     </div>
 
     <div
-      v-else-if="penalty.call"
-      class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-2"
+      v-if="penalty.engaged || penalty.call"
+      class="tw-pointer-events-none tw-absolute tw-left-1/2 tw-top-[4.7rem] tw-z-[4] tw-flex tw--translate-x-1/2 tw-items-stretch tw-overflow-hidden tw-rounded-2xl tw-bg-[#10241cf2] tw-text-[#f7f3ea] tw-shadow-[0_14px_32px_#17211c55]"
     >
-      <p
-        class="tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
-      >
-        {{ penaltyText }}
-      </p>
-      <p
-        class="tw-m-0 tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-3 tw-py-1 tw-text-[0.82rem] tw-text-[#3d4943]"
-      >
-        Golos {{ penalty.goals }} · Defesas {{ penalty.saves }}
-      </p>
+      <div class="tw-flex tw-min-w-[8.5rem] tw-flex-col tw-items-center tw-gap-1 tw-px-4 tw-py-2.5">
+        <span class="tw-text-[0.68rem] tw-uppercase tw-tracking-[0.16em] tw-text-[#d7e4c8]"
+          >Tu</span
+        >
+        <span
+          class="tw-font-[Fraunces,Georgia,serif] tw-text-[2.15rem] tw-font-semibold tw-leading-none"
+        >
+          {{ penalty.goals }}
+        </span>
+        <span class="tw-mt-1 tw-flex tw-gap-1.5">
+          <span
+            v-for="(shot, index) in shootout"
+            :key="'tu-' + index"
+            class="tw-h-2.5 tw-w-2.5 tw-rounded-full tw-border tw-border-[#d7e4c8]"
+            :class="
+              shot === 'golo'
+                ? 'tw-border-[#7dce6a] tw-bg-[#7dce6a]'
+                : shot === 'fora' || shot === 'trave'
+                  ? 'tw-border-[#e07a6a] tw-bg-[#e07a6a]'
+                  : 'tw-bg-transparent'
+            "
+          />
+        </span>
+      </div>
+      <div class="tw-w-px tw-self-stretch tw-bg-[#f7f3ea33]" />
+      <div class="tw-flex tw-min-w-[8.5rem] tw-flex-col tw-items-center tw-gap-1 tw-px-4 tw-py-2.5">
+        <span class="tw-text-[0.68rem] tw-uppercase tw-tracking-[0.16em] tw-text-[#e2b15a]">
+          Guarda-redes
+        </span>
+        <span
+          class="tw-font-[Fraunces,Georgia,serif] tw-text-[2.15rem] tw-font-semibold tw-leading-none"
+        >
+          {{ penalty.saves }}
+        </span>
+        <span class="tw-mt-1 tw-flex tw-gap-1.5">
+          <span
+            v-for="(shot, index) in shootout"
+            :key="'gr-' + index"
+            class="tw-h-2.5 tw-w-2.5 tw-rounded-full tw-border tw-border-[#e2b15a]"
+            :class="shot === 'defesa' ? 'tw-bg-[#e2b15a]' : 'tw-bg-transparent'"
+          />
+        </span>
+      </div>
     </div>
 
+    <p v-if="penalty.call" class="penalty-banner">{{ penaltyBanner }}</p>
+
     <div
-      v-else-if="penalty.near && !readingId"
+      v-if="penalty.near && !penalty.call && !readingId"
       class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
     >
       <p
@@ -233,15 +278,19 @@
       >
         Chutar
       </button>
-      <p
-        class="tw-m-0 tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-3 tw-py-1 tw-text-[0.82rem] tw-text-[#3d4943]"
-      >
-        Golos {{ penalty.goals }} · Defesas {{ penalty.saves }}
-      </p>
     </div>
 
     <div
-      v-if="projectPrompt && !scooterNear && !ridingScooter && !penalty.near && !penalty.call"
+      v-if="
+        projectPrompt &&
+        !scooterNear &&
+        !ridingScooter &&
+        !penalty.near &&
+        !penalty.call &&
+        !penalty.engaged &&
+        !atelierNear &&
+        !baking
+      "
       class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
     >
       <p
@@ -265,6 +314,29 @@
         Ver
       </button>
     </div>
+
+    <div
+      v-if="atelierNear && !baking && !readingId && !ridingScooter && !penalty.near"
+      class="tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+    >
+      <p
+        class="tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+      >
+        <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">E para entrar</span>
+        <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">
+          Entra para montar o bolo
+        </span>
+      </p>
+      <button
+        type="button"
+        class="tw-hidden tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#0e3328] tw-px-4 tw-py-2 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#f7f3ea] max-md:tw-inline-block [@media(pointer:coarse)]:tw-inline-block"
+        @click="enterAtelier"
+      >
+        Entrar
+      </button>
+    </div>
+
+    <Bolo v-if="baking" />
 
     <div
       v-if="readingId && passage"
@@ -352,7 +424,7 @@
 
     <div
       class="tw-pointer-events-none tw-absolute tw-inset-0 tw-z-[3] tw-hidden max-md:tw-block [@media(pointer:coarse)]:tw-block"
-      :class="{ 'tw-invisible': readingId }"
+      :class="{ 'tw-invisible': readingId || baking }"
       aria-hidden="true"
     >
       <div
@@ -446,6 +518,8 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { TresCanvas } from '@tresjs/core'
 import { passageById, steps } from '@/data/journey'
+import { ensureAmbience, stopAmbience } from '@/game/ambience'
+import { atelierNear, baking, enterAtelier, leaveAtelier } from '@/game/cake'
 import { releaseHikeKeys, setHikeKey, setHikeStick, type HikeKey } from '@/game/controls'
 import { journeyTurned, toStageDelta } from '@/game/orientation'
 import { askPenalty, penalty } from '@/game/pitch'
@@ -459,6 +533,7 @@ import {
   scooterNear,
   terminalOpen,
 } from '@/game/spot'
+import Bolo from './Bolo.vue'
 import JourneyMap from './JourneyMap.vue'
 import Atlas from './Atlas.vue'
 import Atelier from './Atelier.vue'
@@ -481,11 +556,18 @@ const seen = ref<string[]>([])
 const hiker = ref<{ reset: () => void } | null>(null)
 
 const passage = computed(() => (activeId.value ? passageById[activeId.value] : null))
-const penaltyText = computed(() => {
-  if (penalty.call === 'golo') return 'Golo.'
-  if (penalty.call === 'defesa') return 'Defendeu.'
-  if (penalty.call === 'trave') return 'Ao poste.'
-  return 'Fora.'
+const penaltyBanner = computed(() => {
+  if (penalty.call === 'golo') return 'GOLO!'
+  if (penalty.call === 'defesa') return 'DEFESA!'
+  if (penalty.call === 'trave') return 'TRAVE!'
+  return 'FORA!'
+})
+const shootout = computed(() => {
+  const slots = ['', '', '', '', '']
+  penalty.shots.forEach((shot, index) => {
+    slots[index] = shot
+  })
+  return slots
 })
 const projectPrompt = computed(
   () => started.value && passage.value?.kind === 'project' && !readingId.value,
@@ -547,6 +629,7 @@ function runCommand() {
 }
 
 function onInspectKey(event: KeyboardEvent) {
+  ensureAmbience()
   if (event.repeat) return
   const typing =
     event.target instanceof HTMLElement && Boolean(event.target.closest('input, textarea'))
@@ -556,17 +639,29 @@ function onInspectKey(event: KeyboardEvent) {
       promptOpen.value = false
       return
     }
+    if (baking.value) {
+      leaveAtelier()
+      return
+    }
     readingId.value = null
     return
   }
   if (typing) return
   if (key !== 'e') return
+  if (baking.value) {
+    leaveAtelier()
+    return
+  }
   if (readingId.value) {
     readingId.value = null
     return
   }
   if (ridingScooter.value) {
     ridingScooter.value = false
+    return
+  }
+  if (atelierNear.value && !promptOpen.value) {
+    enterAtelier()
     return
   }
   if (scooterNear.value) {
@@ -596,6 +691,7 @@ function railClass(id: string) {
 
 function backToStart() {
   readingId.value = null
+  leaveAtelier()
   hiker.value?.reset()
 }
 
@@ -815,9 +911,11 @@ onMounted(() => {
   screen.orientation?.addEventListener('change', onMediaChange)
   window.visualViewport?.addEventListener('resize', onMediaChange)
   window.addEventListener('pointerdown', onLandscapeGesture, true)
+  window.addEventListener('pointerdown', ensureAmbience)
 })
 
 onUnmounted(() => {
+  stopAmbience()
   terminalOpen.value = false
   document.body.style.overflow = ''
   window.removeEventListener('blur', onBlur)
@@ -831,6 +929,7 @@ onUnmounted(() => {
   screen.orientation?.removeEventListener('change', onMediaChange)
   window.visualViewport?.removeEventListener('resize', onMediaChange)
   window.removeEventListener('pointerdown', onLandscapeGesture, true)
+  window.removeEventListener('pointerdown', ensureAmbience)
   onBlur()
   releaseOrientation()
 })
@@ -849,6 +948,27 @@ onUnmounted(() => {
   height: 100dvw;
   transform: rotate(90deg);
   transform-origin: top left;
+}
+
+.penalty-banner {
+  pointer-events: none;
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  z-index: 5;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  font-family: Fraunces, Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: clamp(3.4rem, 11vw, 7.2rem);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  color: #f7f7f4;
+  -webkit-text-stroke: 8px #143d28;
+  paint-order: stroke fill;
+  text-shadow: 0 7px 0 #0c2418;
 }
 
 .journey-turned .journey-card {

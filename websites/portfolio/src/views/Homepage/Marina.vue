@@ -158,6 +158,7 @@
 import { shallowRef } from 'vue'
 import { useLoop } from '@tresjs/core'
 import { Vector3, type Group } from 'three'
+import { marinaVoice } from '@/game/ambience'
 import {
   atlasPlaying,
   greetMarina,
@@ -177,13 +178,19 @@ const legLeft = shallowRef<Group | null>(null)
 const shinRight = shallowRef<Group | null>(null)
 const shinLeft = shallowRef<Group | null>(null)
 const world = new Vector3()
-const PLAY: MarinaPlay[] = ['run', 'pet', 'bite']
+const BEATS: Array<{ mode: MarinaPlay; t: number }> = [
+  { mode: 'run', t: 8 },
+  { mode: 'pet', t: 5.5 },
+  { mode: 'bite', t: 5 },
+]
 let time = 0
 let modeTime = 0
+let beat = 0
 let runAngle = 0
 
 function onGreet() {
   greetMarina()
+  marinaVoice()
 }
 
 function approach(current: number, target: number, rate: number, dt: number) {
@@ -200,6 +207,17 @@ function easeAngle(current: number, target: number, dt: number) {
   return current + delta * (1 - Math.exp(-dt * 8))
 }
 
+function glide(current: number, target: number, dt: number, rate = 9) {
+  return current + (target - current) * (1 - Math.exp(-dt * rate))
+}
+
+function easeRot(group: Group | null, x: number, y: number, z: number, dt: number, rate = 8) {
+  if (!group) return
+  group.rotation.x = glide(group.rotation.x, x, dt, rate)
+  group.rotation.y = glide(group.rotation.y, y, dt, rate)
+  group.rotation.z = glide(group.rotation.z, z, dt, rate)
+}
+
 const { onBeforeRender } = useLoop()
 
 onBeforeRender(({ delta }) => {
@@ -213,14 +231,36 @@ onBeforeRender(({ delta }) => {
   let mode: MarinaPlay = 'bake'
   if (playing) {
     modeTime += dt
-    mode = PLAY[Math.floor(modeTime / 6.5) % PLAY.length]
+    if (modeTime > BEATS[beat].t) {
+      modeTime = 0
+      beat = (beat + 1) % BEATS.length
+    }
+    mode = BEATS[beat].mode
   } else {
     modeTime = 0
+    beat = 0
   }
 
+  const stride = Math.sin(time * 10.5)
+  const kick = Math.sin(time * 6.2)
   let tx = 0
+  let ty = 0
   let tz = -3.25
   let tyaw = 0
+  let rightX = 1.15
+  let rightY = 0.15
+  let rightZ = 0.35
+  let leftX = 1.05
+  let leftY = -0.2
+  let leftZ = -0.4
+  let thighR = 1.25
+  let thighL = 1.25
+  let shinR = -1.35
+  let shinL = -1.35
+  let headX = 0.28 + Math.sin(time * 2.2) * 0.06
+  let headY = 0
+  let lean = 0
+
   if (waving) {
     root.getWorldPosition(world)
     let parentYaw = 0
@@ -233,20 +273,88 @@ onBeforeRender(({ delta }) => {
     tyaw = Math.atan2(hikerPose.x - world.x, hikerPose.z - world.z) - parentYaw
     tx = root.position.x
     tz = root.position.z
+    rightX = 0.35
+    rightY = 0
+    rightZ = 0.15
+    leftX = -1.15
+    leftY = 0
+    leftZ = Math.sin(time * 9) * 0.55
+    thighR = 0.08
+    thighL = 0.08
+    shinR = -0.12
+    shinL = -0.12
+    headX = -0.12
+    headY = Math.sin(time * 2) * 0.12
   } else if (mode === 'run') {
-    runAngle += dt * 1.35
-    tx = Math.sin(runAngle) * 2.2
-    tz = 2.3 + Math.cos(runAngle) * 1.5
+    runAngle += dt * 1.2
+    const radius = 2.15 + Math.sin(runAngle * 2) * 0.35
+    tx = Math.sin(runAngle) * radius
+    tz = 2.05 + Math.cos(runAngle) * (radius * 0.72)
+    ty = Math.abs(stride) * 0.055
     tyaw = runAngle + Math.PI / 2
-  } else if (mode === 'pet' || mode === 'bite') {
+    lean = Math.cos(runAngle) * 0.12
+    const knee = (step: number) => Math.max(0, -step) * 1.05
+    thighR = stride * 0.95
+    thighL = -stride * 0.95
+    shinR = -knee(stride)
+    shinL = -knee(-stride)
+    rightX = -stride * 0.85
+    rightY = 0
+    rightZ = 0.12
+    leftX = stride * 0.85
+    leftY = 0
+    leftZ = -0.12
+    headX = 0.06
+  } else if (mode === 'pet') {
     tx = 0.15
+    ty = -0.18
     tz = 1.7
-    tyaw = 0.2
+    tyaw = 0.15
+    thighR = 1.05
+    thighL = 1.05
+    shinR = -1.25
+    shinL = -1.25
+    rightX = 0.15
+    rightY = 0.25
+    rightZ = 0.55
+    leftX = 1.82 + Math.sin(time * 5.2) * 0.28
+    leftY = 0.2
+    leftZ = -0.06
+    headX = 0.78
+    headY = Math.sin(time * 1.6) * 0.08
+  } else if (mode === 'bite') {
+    tx = 0.15
+    ty = Math.max(0, kick) * 0.045
+    tz = 1.7
+    tyaw = 0.15
+    thighR = -0.35 - kick * 0.28
+    thighL = 0.18
+    shinR = -0.95 - kick * 0.2
+    shinL = -0.22
+    rightX = -0.35
+    rightY = 0.1
+    rightZ = 0.85
+    leftX = 0.25
+    leftY = -0.15
+    leftZ = -0.85
+    headX = 0.58 + kick * 0.06
+    headY = Math.sin(time * 3) * 0.16
+  } else {
+    const sweep = (Math.sin(time * 2.2) + 1) * 0.5
+    rightX = 0.85 + sweep * 0.7
+    rightY = 0.15 + Math.sin(time * 2.2) * 0.45
+    rightZ = 0.35 + (1 - sweep) * 0.25
+    if (greeting) {
+      headX = -0.42
+      headY = Math.sin(time * 2) * 0.14
+    }
   }
 
-  root.position.x = approach(root.position.x, tx, 2.4, dt)
-  root.position.z = approach(root.position.z, tz, 2.4, dt)
+  root.position.x = approach(root.position.x, tx, mode === 'run' ? 3.1 : 2.4, dt)
+  root.position.y = glide(root.position.y, ty, dt, 6)
+  root.position.z = approach(root.position.z, tz, mode === 'run' ? 3.1 : 2.4, dt)
   root.rotation.y = easeAngle(root.rotation.y, tyaw, dt)
+  root.rotation.z = glide(root.rotation.z, lean, dt, 4)
   root.getWorldPosition(world)
   let yaw = root.rotation.y
   let parent = root.parent
@@ -261,72 +369,13 @@ onBeforeRender(({ delta }) => {
   marinaSpot.mode = mode
   marinaSpot.ready = true
 
-  const sweep = (Math.sin(time * 2.2) + 1) * 0.5
-  const stride = mode === 'run' ? Math.sin(time * 11) : 0
-  const standing = mode === 'bake' && !waving ? 0 : 1
-  const leg = footBitten.value
-  if (leg) {
-    const lift = mode === 'bite' ? 0.7 + Math.sin(time * 7) * 0.2 : 0
-    leg.rotation.x = (1 - standing) * 1.25 + standing * (stride * 0.85 - lift)
-  }
-  if (legLeft.value) legLeft.value.rotation.x = (1 - standing) * 1.25 + standing * -stride * 0.85
-  if (shinRight.value) shinRight.value.rotation.x = (1 - standing) * -1.35
-  if (shinLeft.value) shinLeft.value.rotation.x = (1 - standing) * -1.35
-
-  const arm = armRight.value
-  if (arm) {
-    if (waving) {
-      arm.rotation.x = 0.35
-      arm.rotation.y = 0
-      arm.rotation.z = 0.15
-    } else if (mode === 'bake') {
-      arm.rotation.x = 0.85 + sweep * 0.7
-      arm.rotation.y = 0.15 + Math.sin(time * 2.2) * 0.45
-      arm.rotation.z = 0.35 + (1 - sweep) * 0.25
-    } else if (mode === 'run') {
-      arm.rotation.x = -stride * 0.7
-      arm.rotation.y = 0
-      arm.rotation.z = 0.15
-    } else {
-      arm.rotation.x = 0.4
-      arm.rotation.y = 0.1
-      arm.rotation.z = 0.2
-    }
-  }
-  const pet = armLeft.value
-  if (pet) {
-    if (waving) {
-      pet.rotation.x = -1.15
-      pet.rotation.y = 0
-      pet.rotation.z = Math.sin(time * 9) * 0.55
-    } else if (mode === 'pet') {
-      pet.rotation.x = 1.55 + Math.sin(time * 6) * 0.18
-      pet.rotation.z = -0.15
-    } else if (mode === 'run') {
-      pet.rotation.x = stride * 0.7
-      pet.rotation.z = -0.2
-    } else if (mode === 'bake') {
-      pet.rotation.x = 1.05
-      pet.rotation.z = -0.4
-    } else {
-      pet.rotation.x = 0.35
-      pet.rotation.z = -0.2
-    }
-  }
-  const head = headRef.value
-  if (head) {
-    head.rotation.y = greeting ? Math.sin(time * 2) * 0.12 : 0
-    head.rotation.x = waving
-      ? -0.12
-      : greeting
-        ? -0.42
-        : mode === 'pet'
-          ? 0.7
-          : mode === 'bite'
-            ? 0.45
-            : mode === 'run'
-              ? 0.05
-              : 0.28 + Math.sin(time * 2.2) * 0.06
-  }
+  const lively = mode === 'run' || mode === 'bite' || waving ? 16 : 7
+  easeRot(footBitten.value, thighR, footBitten.value?.rotation.y ?? 0.08, 0.05, dt, lively)
+  easeRot(legLeft.value, thighL, legLeft.value?.rotation.y ?? -0.08, -0.05, dt, lively)
+  easeRot(shinRight.value, shinR, 0, 0, dt, lively)
+  easeRot(shinLeft.value, shinL, 0, 0, dt, lively)
+  easeRot(armRight.value, rightX, rightY, rightZ, dt, waving ? 14 : lively)
+  easeRot(armLeft.value, leftX, leftY, leftZ, dt, waving ? 14 : lively)
+  easeRot(headRef.value, headX, headY, 0, dt, 10)
 })
 </script>

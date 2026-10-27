@@ -72,6 +72,7 @@
             <a
               class="tw-flex tw-h-full tw-flex-col tw-gap-2 tw-rounded-[18px] tw-border tw-border-[#17211c14] tw-bg-[#ffffff73] tw-p-4 tw-text-[inherit] tw-no-underline hover:tw-border-[#0e3328] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-[3px] focus-visible:tw-outline-[#0e3328]"
               :href="item.href"
+              @click="scrollTo(item.href)"
             >
               <span class="tw-text-[0.72rem] tw-uppercase tw-tracking-[0.14em] tw-text-[#8a4632]">
                 {{ item.index }}
@@ -124,8 +125,7 @@
               <p
                 class="tw-mt-3 tw-max-w-[38rem] tw-text-[1.05rem] tw-leading-normal tw-text-[#3e4a43]"
               >
-                Educação e trabalho, pela ordem em que cada passo começou. Os trabalhos de cada ano
-                estão na secção da universidade.
+                A minha formação, percurso profissional e também um pouco de mim.
               </p>
             </div>
           </header>

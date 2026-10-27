@@ -298,8 +298,7 @@ export const steps: JourneyStep[] = [
     organization: 'Universidade do Minho',
     period: 'Set 2019 — Jan 2024',
     place: 'Braga',
-    summary:
-      'Licenciatura em Ciências da Computação na Universidade do Minho. Os trabalhos de cada ano estão neste patamar, dos dois lados do trilho.',
+    summary: 'Aqui começa a minha jornada na programção.',
     stack: [],
     sceneNote:
       'Da entrada para a saída: primeiro ano, depois o segundo, e o terceiro mais à frente.',
@@ -393,7 +392,7 @@ export const steps: JourneyStep[] = [
     period: 'Set 2025 — atual',
     place: 'Braga',
     summary:
-      'Mestrado em curso, no perfil de Criptografia. Há dois trabalhos: uma aplicação sobre criptografia, da cifra de César ao McEliece, e o Vertice, que planeia produção.',
+      'Agora num perfi mais matemático, tento explorar todo o sistema de segurança criptográfica de um dispositivo.',
     stack: ['Criptografia'],
     relation: 'Em paralelo com a IOTech',
     sceneNote:

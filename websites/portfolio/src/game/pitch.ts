@@ -2,10 +2,13 @@ import { reactive, ref } from 'vue'
 import {
   BoxGeometry,
   CanvasTexture,
+  ConeGeometry,
   CylinderGeometry,
   Group,
+  InstancedMesh,
   Mesh,
   MeshStandardMaterial,
+  Object3D,
   SRGBColorSpace,
   TorusGeometry,
 } from 'three'
@@ -27,10 +30,22 @@ export type PenaltyCall = '' | 'golo' | 'defesa' | 'fora' | 'trave'
 
 export const penalty = reactive({
   near: false,
+  /** Perto do campo o suficiente para o marcador ficar no ecrã. */
+  engaged: false,
   call: '' as PenaltyCall,
   goals: 0,
   saves: 0,
+  /** Últimos cinco remates, do mais antigo ao mais recente. */
+  shots: [] as PenaltyCall[],
 })
+
+export function markPenalty(call: PenaltyCall) {
+  penalty.call = call
+  if (call === 'golo') penalty.goals += 1
+  if (call === 'defesa') penalty.saves += 1
+  penalty.shots.push(call)
+  if (penalty.shots.length > 5) penalty.shots.shift()
+}
 
 /** Sobe quando se carrega para chutar. O campo é que dispara o remate. */
 export const penaltyKick = ref(0)
@@ -171,4 +186,78 @@ export function addPitch(walkable: Group, scenery: Group) {
     { x: PITCH_X - GOAL_HALF, z: GOAL_Z, r: 0.34 },
     { x: PITCH_X + GOAL_HALF, z: GOAL_Z, r: 0.34 },
   )
+  addGrove(scenery, solids)
+}
+
+function groveNoise(seed: number) {
+  const n = Math.sin(seed * 127.1) * 43758.5453
+  return n - Math.floor(n)
+}
+
+/** Bosque atrás da baliza e nas laterais. O lado norte fica aberto, que é por onde se chega. */
+function addGrove(scenery: Group, solids: { x: number; z: number; r: number }[]) {
+  const spots: Array<{ x: number; z: number; scale: number; rot: number }> = []
+  const plant = (x: number, z: number, seed: number) => {
+    if (Math.abs(x - PITCH_X) < PITCH_HALF_X + 1.4 && z < GOAL_Z + 4) return
+    const n = groveNoise(seed)
+    if (n < 0.08) return
+    const scale = 1.65 + n * 1.45
+    spots.push({
+      x: x + (groveNoise(seed + 1.7) - 0.5) * 1.8,
+      z: z + (groveNoise(seed + 4.2) - 0.5) * 1.8,
+      scale,
+      rot: n * Math.PI * 2,
+    })
+  }
+
+  let seed = 3
+  for (let row = 0; row < 10; row++) {
+    const z = GOAL_Z + 8 + row * 7.4
+    const half = 26 + row * 4.2
+    for (let x = PITCH_X - half; x <= PITCH_X + half; x += 6.4) {
+      plant(x, z, seed)
+      seed += 1
+    }
+  }
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < 8; i++) {
+      plant(PITCH_X + side * (PITCH_HALF_X + 6), PITCH_Z - PITCH_HALF_Z + 8 + i * 6.4, seed)
+      seed += 1
+    }
+  }
+
+  // Blocos com esfera própria: o frustum salta o bosque que ficou fora do ecrã.
+  const trunkGeo = new CylinderGeometry(0.22, 0.28, 1.35, 6)
+  const crownGeo = new ConeGeometry(1.15, 2.7, 5)
+  const trunkMat = new MeshStandardMaterial({ color: '#5c4032', flatShading: true, roughness: 1 })
+  const crownMat = new MeshStandardMaterial({ color: '#2d5a34', flatShading: true, roughness: 1 })
+  const groups = new Map<string, typeof spots>()
+  for (const spot of spots) {
+    const key = `${Math.floor(spot.x / 48)},${Math.floor(spot.z / 48)}`
+    const group = groups.get(key)
+    if (group) group.push(spot)
+    else groups.set(key, [spot])
+  }
+
+  const dummy = new Object3D()
+  for (const group of groups.values()) {
+    const trunks = new InstancedMesh(trunkGeo, trunkMat, group.length)
+    const crowns = new InstancedMesh(crownGeo, crownMat, group.length)
+    group.forEach((spot, index) => {
+      dummy.position.set(spot.x, PITCH_TOP + 0.68 * spot.scale, spot.z)
+      dummy.rotation.set(0, spot.rot, 0)
+      dummy.scale.set(spot.scale, spot.scale, spot.scale)
+      dummy.updateMatrix()
+      trunks.setMatrixAt(index, dummy.matrix)
+      dummy.position.set(spot.x, PITCH_TOP + 2.15 * spot.scale, spot.z)
+      dummy.updateMatrix()
+      crowns.setMatrixAt(index, dummy.matrix)
+      solids.push({ x: spot.x, z: spot.z, r: 0.42 * spot.scale })
+    })
+    trunks.instanceMatrix.needsUpdate = true
+    crowns.instanceMatrix.needsUpdate = true
+    trunks.computeBoundingSphere()
+    crowns.computeBoundingSphere()
+    scenery.add(trunks, crowns)
+  }
 }

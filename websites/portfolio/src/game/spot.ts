@@ -53,7 +53,7 @@ export function dismissScooter() {
   return present ? ('removed' as const) : ('absent' as const)
 }
 
-/** O Atlas senta-se a olhar para a câmara. */
+/** O Atlas senta-se a olhar para o montanhista. */
 export const atlasGreeting = ref(false)
 export const atlasLine = ref<string | null>(null)
 let atlasTimer = 0
