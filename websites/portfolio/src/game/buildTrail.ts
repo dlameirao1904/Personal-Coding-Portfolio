@@ -32,6 +32,8 @@ import {
 } from '@/game/cavado'
 import { createObstacleIndex, trackObstacles } from '@/game/obstacles'
 import { addPitch, pitchBlocksTree } from '@/game/pitch'
+import { addRing, ringBlocksTree } from '@/game/ring'
+import { addVinyl, vinylBlocksTree } from '@/game/vinyl'
 
 const PATH_WIDTH = 6.6
 const PATH_HALF = PATH_WIDTH / 2
@@ -256,7 +258,13 @@ export function forestTree(ix: number, iz: number): ForestTree | null {
   const z = iz * TREE_SPACING + (cellHash(ix + 101, iz - 17) - 0.5) * TREE_SPACING * 0.8
   if (Math.hypot(x - atelierClearing.x, z - atelierClearing.z) < atelierClearing.radius + 1.2)
     return null
-  if (bridgeBlocksTree(x, z) || pitchBlocksTree(x, z)) return null
+  if (
+    bridgeBlocksTree(x, z) ||
+    pitchBlocksTree(x, z) ||
+    ringBlocksTree(x, z) ||
+    vinylBlocksTree(x, z)
+  )
+    return null
   if (onMountain(x, z) || clearance(x, z) < 4.4 || distToCavado(x, z) < CAVADO_HALF + 7) return null
   for (let segment = 0; segment < rampNodes.length - 1; segment++) {
     if (distToSegment(x, z, rampNodes[segment], rampNodes[segment + 1]) < 6) return null
@@ -294,7 +302,7 @@ export function treesAround(x: number, z: number, radius: number) {
 }
 
 export function openValley(x: number, z: number) {
-  if (pitchBlocksTree(x, z)) return false
+  if (pitchBlocksTree(x, z) || ringBlocksTree(x, z) || vinylBlocksTree(x, z)) return false
   if (onMountain(x, z) || clearance(x, z) < 5.5 || distToCavado(x, z) < CAVADO_HALF + 4)
     return false
   for (let segment = 0; segment < rampNodes.length - 1; segment++) {
@@ -897,6 +905,8 @@ export function buildTrail() {
     treeIndex.hits(x, z, inset) || solidIndex.hits(x, z, inset)
   addRomanBridge(walkable, scenery)
   addPitch(walkable, scenery)
+  addRing(walkable, scenery)
+  addVinyl(walkable, scenery)
   walkable.userData.follow = follow
   follow(0, 48)
 

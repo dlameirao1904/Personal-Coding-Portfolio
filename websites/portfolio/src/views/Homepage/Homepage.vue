@@ -29,6 +29,8 @@
       <Atelier />
       <Capela />
       <Campo />
+      <Ringue />
+      <Discos />
       <Trotinete />
     </TresCanvas>
 
@@ -105,20 +107,18 @@
           Aqui, podes ver os meus passos, literalmente. Aproveita a jornada e aprecia a paisagem.
         </p>
         <p class="tw-mt-3 tw-leading-[1.45]">«Só a Natureza é divina, e ela não é divina...»</p>
-        <p v-if="!handheld" class="tw-mt-3 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#5c675f]">
+        <p
+          v-if="!handheld"
+          class="desk-help tw-mt-3 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#5c675f]"
+        >
           WASD ou setas para andar. Shift para correr. Espaço para saltar. Arrasta o rato para
-          olhar. Clica no Atlas. No menu há um Prompt. À porta do atelier, E entra para montar um
-          bolo.
-        </p>
-        <p v-else class="tw-mt-3 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#5c675f]">
-          Joystick para andar. Segura em Correr. Botão para saltar. Arrasta para olhar. No atelier,
-          entra para montar um bolo.
+          olhar.
         </p>
       </div>
     </article>
 
     <article
-      v-else-if="passage && passage.kind !== 'project' && !baking"
+      v-else-if="passage && passage.kind !== 'project' && !baking && !sparring && !listening"
       class="journey-card tw-absolute tw-right-[18px] tw-top-[9.6rem] tw-z-[2] tw-max-h-[min(62vh,560px)] tw-w-[min(380px,calc(100vw-36px))] tw-overflow-auto tw-rounded-[22px] tw-bg-[#f7f3eaf0] tw-p-5 tw-shadow-[0_16px_40px_#17211c1f] max-md:tw-bottom-auto max-md:tw-left-auto max-md:tw-right-3 max-md:tw-top-[9.6rem] max-md:tw-max-h-[38vh] max-md:tw-w-[min(17.5rem,calc(100vw-6.5rem))] max-md:tw-rounded-2xl max-md:tw-p-3.5 max-md:tw-shadow-[0_10px_28px_#17211c33]"
       :class="{ 'journey-card--shut': handheld && !cardOpen }"
     >
@@ -140,52 +140,52 @@
         {{ cardOpen ? 'Fechar' : 'Ler' }}
       </button>
       <div v-show="!handheld || cardOpen">
-      <p class="tw-mt-3 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#4e5a53]">
-        {{ passage.organization }} · {{ passage.period }} · {{ passage.place }}
-      </p>
-      <p
-        v-if="passage.relation"
-        class="tw-mt-1 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#0e3328]"
-      >
-        {{ passage.relation }}
-      </p>
-      <p
-        v-if="passage.parentTitle"
-        class="tw-mt-1 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#0e3328]"
-      >
-        Parte de {{ passage.parentTitle }}
-      </p>
-      <p class="tw-mt-3 tw-leading-[1.45]">{{ passage.summary }}</p>
-      <p v-if="passage.links?.length" class="tw-mb-0 tw-mt-3 tw-flex tw-flex-wrap tw-gap-4">
-        <a
-          v-for="link in passage.links"
-          :key="link.href"
-          class="tw-text-[#0e3328] tw-underline tw-underline-offset-[0.18em] hover:tw-text-[#17211c] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-[3px] focus-visible:tw-outline-[#0e3328]"
-          :href="link.href"
-          target="_blank"
-          rel="noopener noreferrer"
+        <p class="tw-mt-3 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#4e5a53]">
+          {{ passage.organization }} · {{ passage.period }} · {{ passage.place }}
+        </p>
+        <p
+          v-if="passage.relation"
+          class="tw-mt-1 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#0e3328]"
         >
-          {{ link.label }}
-        </a>
-      </p>
-      <p
-        v-if="passage.sceneNote"
-        class="tw-mt-3 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#5c675f]"
-      >
-        {{ passage.sceneNote }}
-      </p>
-      <ul
-        v-if="passage.stack.length"
-        class="tw-m-0 tw-mt-4 tw-flex tw-list-none tw-flex-wrap tw-gap-1.5 tw-p-0"
-      >
-        <li
-          v-for="item in passage.stack"
-          :key="item"
-          class="tw-rounded-full tw-bg-[#0e332814] tw-px-2 tw-py-1 tw-text-[0.78rem]"
+          {{ passage.relation }}
+        </p>
+        <p
+          v-if="passage.parentTitle"
+          class="tw-mt-1 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#0e3328]"
         >
-          {{ item }}
-        </li>
-      </ul>
+          Parte de {{ passage.parentTitle }}
+        </p>
+        <p class="tw-mt-3 tw-leading-[1.45]">{{ passage.summary }}</p>
+        <p v-if="passage.links?.length" class="tw-mb-0 tw-mt-3 tw-flex tw-flex-wrap tw-gap-4">
+          <a
+            v-for="link in passage.links"
+            :key="link.href"
+            class="tw-text-[#0e3328] tw-underline tw-underline-offset-[0.18em] hover:tw-text-[#17211c] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-[3px] focus-visible:tw-outline-[#0e3328]"
+            :href="link.href"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ link.label }}
+          </a>
+        </p>
+        <p
+          v-if="passage.sceneNote"
+          class="tw-mt-3 tw-text-[0.92rem] tw-leading-[1.45] tw-text-[#5c675f]"
+        >
+          {{ passage.sceneNote }}
+        </p>
+        <ul
+          v-if="passage.stack.length"
+          class="tw-m-0 tw-mt-4 tw-flex tw-list-none tw-flex-wrap tw-gap-1.5 tw-p-0"
+        >
+          <li
+            v-for="item in passage.stack"
+            :key="item"
+            class="tw-rounded-full tw-bg-[#0e332814] tw-px-2 tw-py-1 tw-text-[0.78rem]"
+          >
+            {{ item }}
+          </li>
+        </ul>
       </div>
     </article>
 
@@ -209,7 +209,15 @@
     </div>
 
     <div
-      v-else-if="scooterNear && !readingId && !atelierNear"
+      v-else-if="
+        scooterNear &&
+        !readingId &&
+        !atelierNear &&
+        !ringNear &&
+        !vinylNear &&
+        !sparring &&
+        !listening
+      "
       class="play-prompt tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
     >
       <p
@@ -284,7 +292,15 @@
     <p v-if="penalty.call" class="penalty-banner">{{ penaltyBanner }}</p>
 
     <div
-      v-if="penalty.near && !penalty.call && !readingId"
+      v-if="
+        penalty.near &&
+        !penalty.call &&
+        !readingId &&
+        !ringNear &&
+        !vinylNear &&
+        !sparring &&
+        !listening
+      "
       class="play-prompt tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
     >
       <p
@@ -294,7 +310,7 @@
           E para chutar. Vira-te para mirar e arrasta o olhar para a altura.
         </span>
         <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">
-          Arrasta para mirar.
+          Arrasta para mirar e chuta.
         </span>
       </p>
       <button
@@ -315,7 +331,11 @@
         !penalty.call &&
         !penalty.engaged &&
         !atelierNear &&
-        !baking
+        !baking &&
+        !ringNear &&
+        !vinylNear &&
+        !sparring &&
+        !listening
       "
       class="play-prompt tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
     >
@@ -342,7 +362,17 @@
     </div>
 
     <div
-      v-if="atelierNear && !baking && !readingId && !ridingScooter && !penalty.near"
+      v-if="
+        atelierNear &&
+        !baking &&
+        !readingId &&
+        !ridingScooter &&
+        !penalty.near &&
+        !ringNear &&
+        !vinylNear &&
+        !sparring &&
+        !listening
+      "
       class="play-prompt tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
     >
       <p
@@ -362,7 +392,85 @@
       </button>
     </div>
 
+    <div
+      v-if="ringNear && !sparring && !listening && !readingId && !ridingScooter"
+      class="play-prompt tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+    >
+      <p
+        class="play-prompt__label tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+      >
+        <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">E para entrar</span>
+        <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">Ringue</span>
+      </p>
+      <button
+        type="button"
+        class="tw-hidden tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#0e3328] tw-px-4 tw-py-2 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#f7f3ea] max-md:tw-inline-block [@media(pointer:coarse)]:tw-inline-block"
+        @click="enterRing"
+      >
+        Entrar
+      </button>
+    </div>
+
+    <div
+      v-if="vinylNear && !listening && !sparring && !readingId && !ridingScooter"
+      class="play-prompt tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+    >
+      <p
+        class="play-prompt__label tw-m-0 tw-whitespace-nowrap tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+      >
+        <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">E para entrar</span>
+        <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline">Discos</span>
+      </p>
+      <button
+        type="button"
+        class="tw-hidden tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#0e3328] tw-px-4 tw-py-2 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#f7f3ea] max-md:tw-inline-block [@media(pointer:coarse)]:tw-inline-block"
+        @click="enterVinyl"
+      >
+        Entrar
+      </button>
+    </div>
+
+    <div
+      v-if="sparring"
+      class="play-prompt play-prompt--wide tw-absolute tw-bottom-24 tw-left-1/2 tw-z-[4] tw-flex tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+    >
+      <p
+        class="play-prompt__label play-prompt__keep tw-m-0 tw-max-w-[18rem] tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-text-center tw-text-[0.95rem] tw-text-[#17211c] tw-shadow-[0_8px_20px_#17211c24]"
+      >
+        <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">
+          "Real freedom is having nothing. I was freer when I had nothing."
+        </span>
+        <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline"
+          >Toca em cada lado</span
+        >
+      </p>
+      <div class="tw-hidden tw-gap-2 max-md:tw-flex [@media(pointer:coarse)]:tw-flex">
+        <button
+          type="button"
+          class="tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#0e3328] tw-px-4 tw-py-2 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#f7f3ea]"
+          @click="askPunch('left')"
+        >
+          Esquerdo
+        </button>
+        <button
+          type="button"
+          class="tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#0e3328] tw-px-4 tw-py-2 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#f7f3ea]"
+          @click="askPunch('right')"
+        >
+          Direito
+        </button>
+      </div>
+      <button
+        type="button"
+        class="tw-hidden tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#17211c] max-md:tw-inline-block [@media(pointer:coarse)]:tw-inline-block"
+        @click="leaveRing"
+      >
+        Sair
+      </button>
+    </div>
+
     <Bolo v-if="baking" />
+    <GiraDiscos v-if="listening" />
 
     <div
       v-if="readingId && passage"
@@ -450,7 +558,7 @@
 
     <div
       class="touch-controls tw-pointer-events-none tw-absolute tw-inset-0 tw-z-[3] tw-hidden max-md:tw-block [@media(pointer:coarse)]:tw-block"
-      :class="{ 'tw-invisible': readingId || baking }"
+      :class="{ 'touch-controls--off': readingId || baking || sparring || listening }"
       aria-hidden="true"
     >
       <div
@@ -549,6 +657,10 @@ import { atelierNear, baking, enterAtelier, leaveAtelier } from '@/game/cake'
 import { releaseHikeKeys, setHikeKey, setHikeStick, type HikeKey } from '@/game/controls'
 import { journeyTurned, toStageDelta } from '@/game/orientation'
 import { askPenalty, penalty } from '@/game/pitch'
+import { askPunch, enterRing, leaveRing, ringNear, sparring } from '@/game/ring'
+import { enterVinyl, leaveVinyl, listening, vinylNear } from '@/game/vinyl'
+import Discos from './Discos.vue'
+import GiraDiscos from './GiraDiscos.vue'
 import {
   atlasLine,
   callScooter,
@@ -567,6 +679,7 @@ import Campo from './Campo.vue'
 import Capela from './Capela.vue'
 import Montanha from './Montanha.vue'
 import Montanhista from './Montanhista.vue'
+import Ringue from './Ringue.vue'
 import Trotinete from './Trotinete.vue'
 
 const menuOpen = ref(false)
@@ -670,6 +783,14 @@ function onInspectKey(event: KeyboardEvent) {
       leaveAtelier()
       return
     }
+    if (sparring.value) {
+      leaveRing()
+      return
+    }
+    if (listening.value) {
+      leaveVinyl()
+      return
+    }
     readingId.value = null
     return
   }
@@ -679,12 +800,28 @@ function onInspectKey(event: KeyboardEvent) {
     leaveAtelier()
     return
   }
+  if (sparring.value) {
+    leaveRing()
+    return
+  }
+  if (listening.value) {
+    leaveVinyl()
+    return
+  }
   if (readingId.value) {
     readingId.value = null
     return
   }
   if (ridingScooter.value) {
     ridingScooter.value = false
+    return
+  }
+  if (ringNear.value && !promptOpen.value) {
+    enterRing()
+    return
+  }
+  if (vinylNear.value && !promptOpen.value) {
+    enterVinyl()
     return
   }
   if (atelierNear.value && !promptOpen.value) {
@@ -719,6 +856,8 @@ function railClass(id: string) {
 function backToStart() {
   readingId.value = null
   leaveAtelier()
+  leaveRing()
+  leaveVinyl()
   hiker.value?.reset()
 }
 
@@ -1117,9 +1256,27 @@ onUnmounted(() => {
 }
 
 .journey-handheld :deep(.map-panel) {
-  max-height: min(88%, 760px) !important;
-  width: min(440px, calc(100% - 1.25rem)) !important;
+  max-height: min(92%, 820px) !important;
+  width: min(680px, calc(100% - 0.8rem)) !important;
   padding: 0.75rem !important;
+}
+
+.journey-handheld :deep(.map-sheet) {
+  height: min(58vh, 480px) !important;
+}
+
+.journey-handheld .play-prompt--wide {
+  max-width: calc(100% - 1.2rem) !important;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.touch-controls--off {
+  visibility: hidden;
+}
+
+.touch-controls--off * {
+  pointer-events: none !important;
 }
 
 .journey-handheld .touch-controls {

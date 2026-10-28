@@ -102,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { shallowRef } from 'vue'
+import { shallowRef, watch } from 'vue'
 import { useLoop, useTresContext } from '@tresjs/core'
 import { Group, Raycaster, Vector3, type Object3D } from 'three'
 import { bark } from '@/game/ambience'
@@ -118,6 +118,9 @@ import {
 
 const { scene } = useTresContext()
 const dogRef = shallowRef<Group | null>(null)
+watch(dogRef, (dog) => {
+  if (dog) dog.userData.greet = 'atlas'
+})
 const bodyRef = shallowRef<Group | null>(null)
 const headRef = shallowRef<Group | null>(null)
 const tailRef = shallowRef<Group | null>(null)
@@ -181,8 +184,7 @@ function floorAt(x: number, z: number) {
 }
 
 function onGreet() {
-  greetAtlas()
-  bark()
+  if (greetAtlas()) bark()
 }
 
 function open(x: number, z: number, fromY: number) {

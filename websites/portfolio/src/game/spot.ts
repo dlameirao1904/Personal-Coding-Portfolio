@@ -58,7 +58,12 @@ export const atlasGreeting = ref(false)
 export const atlasLine = ref<string | null>(null)
 let atlasTimer = 0
 
+let atlasStamp = 0
+
 export function greetAtlas() {
+  const now = performance.now()
+  if (now - atlasStamp < 450) return false
+  atlasStamp = now
   atlasGreeting.value = true
   atlasLine.value = 'Olá! Eu sou o Atlas, e adoro andar contigo 🐾💛'
   window.clearTimeout(atlasTimer)
@@ -66,6 +71,7 @@ export function greetAtlas() {
     atlasGreeting.value = false
     atlasLine.value = null
   }, 4600)
+  return true
 }
 
 /** A Marina olha para quem clicou. Com o Atlas, sai dos bolos para brincar. */
@@ -85,7 +91,12 @@ export const marinaSpot = {
 }
 let marinaTimer = 0
 
+let marinaStamp = 0
+
 export function greetMarina() {
+  const now = performance.now()
+  if (now - marinaStamp < 450) return false
+  marinaStamp = now
   const playing = atlasPlaying.value
   marinaWave.value = playing
   marinaGreeting.value = true
@@ -98,4 +109,5 @@ export function greetMarina() {
     marinaWave.value = false
     marinaLine.value = null
   }, 4600)
+  return true
 }

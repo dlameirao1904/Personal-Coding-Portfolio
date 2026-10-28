@@ -1,11 +1,4 @@
-import {
-  BoxGeometry,
-  BufferGeometry,
-  ConeGeometry,
-  Group,
-  Mesh,
-  MeshStandardMaterial,
-} from 'three'
+import { BoxGeometry, BufferGeometry, ConeGeometry, Group, Mesh, MeshStandardMaterial } from 'three'
 import { CAVADO_HALF, cavado } from '@/game/cavado'
 
 /** A rampa do vale acaba aqui. A ponte segue em frente e atravessa o Cávado. */
@@ -145,7 +138,15 @@ export function addRomanBridge(walkable: Group, scenery: Group) {
     const nose = new Mesh(new ConeGeometry(1.05, 3.2, 4), wet)
     geos.push(nose.geometry)
     const withFlow = river.fx * DIR_Z - river.fz * DIR_X
-    place(nose, -Math.sign(withFlow || 1) * (DECK_WIDTH / 2 + 1.05), -7.15, s, scenery, 0, -Math.PI / 2)
+    place(
+      nose,
+      -Math.sign(withFlow || 1) * (DECK_WIDTH / 2 + 1.05),
+      -7.15,
+      s,
+      scenery,
+      0,
+      -Math.PI / 2,
+    )
   }
 
   const opening = bay - 2.15
@@ -186,3 +187,9 @@ export function addRomanBridge(walkable: Group, scenery: Group) {
 
   return geos
 }
+
+/** Boca norte e boca sul, para o caminho do mapa atravessar a ponte. */
+export const BRIDGE_MOUTHS: Array<[number, number]> = [
+  [toWorld(0, 1.2).x, toWorld(0, 1.2).z],
+  [toWorld(0, LENGTH - 1.2).x, toWorld(0, LENGTH - 1.2).z],
+]

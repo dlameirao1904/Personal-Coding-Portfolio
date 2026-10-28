@@ -476,6 +476,37 @@ export function footstep(running: boolean, wet: boolean) {
   noise.stop(t + 0.06)
 }
 
+/** Soco no saco. No ar, só um sopro. No couro, um baque. */
+export function bagHit(solid: boolean) {
+  const context = ctx
+  const out = speakers()
+  if (!context || !started || !out) return
+  const t = context.currentTime
+  const osc = context.createOscillator()
+  osc.type = 'sine'
+  osc.frequency.setValueAtTime(solid ? 130 : 240, t)
+  osc.frequency.exponentialRampToValueAtTime(solid ? 42 : 110, t + (solid ? 0.09 : 0.05))
+  const body = context.createGain()
+  body.gain.setValueAtTime(solid ? 0.2 : 0.045, t)
+  body.gain.exponentialRampToValueAtTime(0.0001, t + (solid ? 0.14 : 0.06))
+  osc.connect(body).connect(out)
+  osc.start(t)
+  osc.stop(t + 0.16)
+
+  const noise = context.createBufferSource()
+  noise.buffer = noiseBuffer(context, 0.08)
+  const filter = context.createBiquadFilter()
+  filter.type = solid ? 'lowpass' : 'bandpass'
+  filter.frequency.value = solid ? 420 : 1400
+  filter.Q.value = solid ? 0.7 : 0.8
+  const grit = context.createGain()
+  grit.gain.setValueAtTime(solid ? 0.28 : 0.06, t)
+  grit.gain.exponentialRampToValueAtTime(0.0001, t + 0.07)
+  noise.connect(filter).connect(grit).connect(out)
+  noise.start(t)
+  noise.stop(t + 0.08)
+}
+
 /** Camada a assentar no prato. No fim, um toque mais alto. */
 export function cakePlace(done = false) {
   const context = ctx

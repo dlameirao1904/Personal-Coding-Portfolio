@@ -9,6 +9,12 @@
     >
       <MapSheet :wide="false" />
     </button>
+    <p
+      v-if="cue && !open"
+      class="tw-m-0 tw-mt-2 tw-max-w-[11rem] tw-rounded-xl tw-bg-[#f7f3eaf0] tw-px-2.5 tw-py-1.5 tw-text-[0.75rem] tw-leading-snug tw-text-[#17211c] tw-shadow-[0_8px_18px_#17211c24]"
+    >
+      {{ cue }}
+    </p>
 
     <div
       v-if="open"
@@ -19,7 +25,7 @@
       @click.self="open = false"
     >
       <div
-        class="map-panel tw-flex tw-max-h-[min(86vh,760px)] tw-w-[min(440px,100%)] tw-flex-col tw-gap-3 tw-overflow-auto tw-rounded-[22px] tw-bg-[#f7f3eaf0] tw-p-4 tw-shadow-[0_16px_40px_#17211c1f]"
+        class="map-panel tw-flex tw-max-h-[min(90vh,820px)] tw-w-[min(680px,100%)] tw-flex-col tw-gap-3 tw-overflow-auto tw-rounded-[22px] tw-bg-[#f7f3eaf0] tw-p-4 tw-shadow-[0_16px_40px_#17211c1f]"
       >
         <div class="tw-flex tw-items-center tw-justify-between tw-gap-3">
           <p class="tw-m-0 tw-text-[0.72rem] tw-uppercase tw-tracking-[0.14em] tw-text-[#8a4632]">
@@ -33,7 +39,18 @@
             Fechar
           </button>
         </div>
-        <MapSheet :wide="true" class="tw-h-[min(62vh,520px)] tw-w-full" />
+        <MapSheet :wide="true" class="map-sheet tw-h-[min(64vh,560px)] tw-w-full" @pick="choose" />
+        <p class="tw-m-0 tw-text-[0.92rem] tw-leading-snug tw-text-[#17211c]">
+          {{ cue || 'Escolhe um ponto no mapa.' }}
+        </p>
+        <button
+          v-if="trailGoal"
+          type="button"
+          class="tw-w-fit tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#0e332814] tw-px-3 tw-py-1 tw-font-[inherit] tw-text-[0.85rem] tw-text-[#17211c]"
+          @click="clearTrailGoal"
+        >
+          Limpar caminho
+        </button>
         <ul
           class="tw-m-0 tw-flex tw-list-none tw-flex-wrap tw-gap-x-4 tw-gap-y-1 tw-p-0 tw-text-[0.78rem] tw-text-[#3d4943]"
         >
@@ -60,7 +77,19 @@
             Campo
           </li>
           <li class="tw-flex tw-items-center tw-gap-1.5">
+            <span class="tw-h-2 tw-w-2 tw-rounded-sm tw-bg-[#1e4b73]" />
+            Ringue
+          </li>
+          <li class="tw-flex tw-items-center tw-gap-1.5">
+            <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#6b2430]" />
+            Discos
+          </li>
+          <li class="tw-flex tw-items-center tw-gap-1.5">
             <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#b91c1c]" /> Tu
+          </li>
+          <li class="tw-flex tw-items-center tw-gap-1.5">
+            <span class="tw-h-0.5 tw-w-3 tw-rounded-sm tw-bg-[#b45309]" />
+            Caminho
           </li>
           <li class="tw-flex tw-items-center tw-gap-1.5">
             <span class="tw-h-2 tw-w-3 tw-rounded-sm tw-bg-[#8b7d62]" /> Montanha
@@ -75,8 +104,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { clearTrailGoal, setTrailGoal, trailCue, trailGoal, trailPoints } from '@/game/route'
+import { hikerSpot } from '@/game/spot'
 import MapSheet from './MapSheet.vue'
 
 const open = ref(false)
+
+const cue = computed(() => trailCue(hikerSpot.value.x, hikerSpot.value.z, trailPoints.value))
+
+function choose(point: { x: number; z: number }) {
+  setTrailGoal(point.x, point.z)
+}
+
+let arriving = false
+watch(cue, (value) => {
+  if (value !== 'Chegaste.' || arriving) return
+  arriving = true
+  window.setTimeout(() => {
+    arriving = false
+    if (cue.value === 'Chegaste.') clearTrailGoal()
+  }, 1800)
+})
 </script>

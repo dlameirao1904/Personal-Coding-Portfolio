@@ -127,19 +127,25 @@ import {
   MeshBasicMaterial,
   Raycaster,
   SphereGeometry,
+  Vector2,
   Vector3,
   type Object3D,
 } from 'three'
 import { SPAWN, passageById, passages } from '@/data/journey'
-import { footstep, scooterDrive, scooterStop } from '@/game/ambience'
+import { bark, footstep, marinaVoice, scooterDrive, scooterStop } from '@/game/ambience'
 import { atelierGaze } from '@/game/atelier'
 import { baking } from '@/game/cake'
+import { askPunch, leaveRing, RING_EYE, RING_STANCE, RING_TOP, sparring } from '@/game/ring'
+import { leaveVinyl, listening, VINYL_EYE, VINYL_STANCE, VINYL_TOP } from '@/game/vinyl'
+import { penalty } from '@/game/pitch'
 import { onBridge } from '@/game/bridge'
 import { WADE_SINK, cavadoSample, waterSurfaceY } from '@/game/cavado'
 import { disposeComputer, makeComputer, paintComputer } from '@/game/computer'
 import { hikeKeys, hikeStick, releaseHikeKeys, setHikeKeyFromEvent } from '@/game/controls'
 import { toStageDelta } from '@/game/orientation'
 import {
+  greetAtlas,
+  greetMarina,
   hikerPose,
   hikerSpot,
   ridingScooter,
@@ -159,6 +165,8 @@ const leftArm = shallowRef<Group | null>(null)
 const rightArm = shallowRef<Group | null>(null)
 
 const raycaster = new Raycaster()
+const tapRaycaster = new Raycaster()
+const tapNdc = new Vector2()
 const rayOrigin = new Vector3()
 const down = new Vector3(0, -1, 0)
 const forward = new Vector3()
@@ -172,6 +180,10 @@ const deskCam = new Vector3()
 const deskLook = new Vector3()
 const bakeCam = new Vector3()
 const bakeLook = new Vector3()
+const sparCam = new Vector3()
+const sparLook = new Vector3()
+const listenCam = new Vector3()
+const listenLook = new Vector3()
 const camGoal = new Vector3()
 const lookGoal = new Vector3()
 const computer = makeComputer()
@@ -186,8 +198,14 @@ const drops = Array.from({ length: 8 }, () => {
 splash.visible = false
 let deskWeight = 0
 let bakeWeight = 0
+let sparWeight = 0
+let listenWeight = 0
 let bakeYaw = 0
 let bakePitch = 0
+let sparYaw = 0
+let sparPitch = -0.34
+let listenYaw = 0
+let listenPitch = -0.42
 let waterTime = 0
 
 const SPEED = 6.6
@@ -216,8 +234,10 @@ let cameraReady = false
 let orbitYaw = Math.PI
 let orbitPitch = 0.42
 let draggingLook = false
+let lookTravel = 0
 let lookX = 0
 let lookY = 0
+let tapGreet: 'atlas' | 'marina' | null = null
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
@@ -268,14 +288,40 @@ function setMarkerVisible(id: string, visible: boolean) {
   })
 }
 
+function readTapGreet(clientX: number, clientY: number) {
+  const cam = camera.activeCamera.value
+  const root = scene.value
+  const canvas = document.querySelector('canvas')
+  if (!cam || !root || !(canvas instanceof HTMLCanvasElement)) return null
+  const rect = canvas.getBoundingClientRect()
+  if (rect.width < 1 || rect.height < 1) return null
+  tapNdc.set(
+    ((clientX - rect.left) / rect.width) * 2 - 1,
+    -((clientY - rect.top) / rect.height) * 2 + 1,
+  )
+  tapRaycaster.setFromCamera(tapNdc, cam)
+  const hits = tapRaycaster.intersectObject(root, true)
+  for (const hit of hits) {
+    let node: Object3D | null = hit.object
+    while (node) {
+      if (node.userData.greet === 'atlas') return 'atlas' as const
+      if (node.userData.greet === 'marina') return 'marina' as const
+      node = node.parent
+    }
+  }
+  return null
+}
+
 function onLookDown(event: PointerEvent) {
   if (props.readingId) return
   if (event.button !== 0) return
   const target = event.target as HTMLElement | null
   if (target?.tagName !== 'CANVAS') return
   draggingLook = true
+  lookTravel = 0
   lookX = event.clientX
   lookY = event.clientY
+  tapGreet = readTapGreet(event.clientX, event.clientY)
   const canvas = target?.closest('canvas') as HTMLElement | null
   canvas?.style.setProperty('cursor', 'grabbing')
 }
@@ -285,9 +331,34 @@ function onLookMove(event: PointerEvent) {
   const { x: dx, y: dy } = toStageDelta(event.clientX - lookX, event.clientY - lookY)
   lookX = event.clientX
   lookY = event.clientY
+  lookTravel += Math.hypot(dx, dy)
+  if (lookTravel < 14) return
   if (baking.value) {
     bakeYaw = clamp(bakeYaw - dx * 0.0032, -0.7, 0.7)
     bakePitch = clamp(bakePitch - dy * 0.0026, -0.38, 0.42)
+    return
+  }
+  if (sparring.value) {
+    sparYaw = clamp(sparYaw - dx * 0.0034, -1.15, 1.15)
+    sparPitch = clamp(sparPitch - dy * 0.0028, -0.8, 0.45)
+    return
+  }
+  if (listening.value) {
+    listenYaw = clamp(listenYaw - dx * 0.003, -0.85, 0.85)
+    listenPitch = clamp(listenPitch - dy * 0.0026, -0.9, 0.2)
+    return
+  }
+  const touchAim =
+    window.matchMedia('(pointer: coarse)').matches ||
+    window.matchMedia('(hover: none)').matches ||
+    window.innerWidth < 800
+  if (penalty.near && touchAim) {
+    const player = playerRef.value
+    if (player) {
+      player.rotation.y -= dx * 0.0042
+      orbitYaw = player.rotation.y
+    }
+    orbitPitch = clamp(orbitPitch + dy * 0.0032, 0.08, 1.05)
     return
   }
   orbitYaw -= dx * 0.0045
@@ -309,16 +380,100 @@ function fillBakeAim() {
   )
 }
 
+function fillListenAim() {
+  const eyeX = VINYL_STANCE.x
+  const eyeY = VINYL_TOP + VINYL_EYE
+  const eyeZ = VINYL_STANCE.z
+  listenCam.set(eyeX, eyeY, eyeZ)
+  const yaw = Math.PI + listenYaw
+  const pitch = listenPitch
+  const cosP = Math.cos(pitch)
+  listenLook.set(
+    eyeX + Math.sin(yaw) * cosP * 4,
+    eyeY + Math.sin(pitch) * 4,
+    eyeZ + Math.cos(yaw) * cosP * 4,
+  )
+}
+
+function fillSparAim() {
+  const eyeX = RING_STANCE.x
+  const eyeY = RING_TOP + RING_EYE
+  const eyeZ = RING_STANCE.z
+  sparCam.set(eyeX, eyeY, eyeZ)
+  const yaw = Math.PI + sparYaw
+  const pitch = sparPitch
+  const cosP = Math.cos(pitch)
+  sparLook.set(
+    eyeX + Math.sin(yaw) * cosP * 5,
+    eyeY + Math.sin(pitch) * 5,
+    eyeZ + Math.cos(yaw) * cosP * 5,
+  )
+}
+
 watch(baking, (inside) => {
   if (!inside) return
   bakeYaw = 0
   bakePitch = 0
 })
 
-function onLookUp() {
+watch(sparring, (inside) => {
+  const player = playerRef.value
+  if (inside) {
+    sparYaw = 0
+    sparPitch = -0.34
+    if (!player) return
+    player.position.set(RING_STANCE.x, RING_TOP, RING_STANCE.z)
+    player.rotation.y = Math.PI
+    velocity.set(0, 0, 0)
+    return
+  }
+  const far =
+    !player || Math.hypot(player.position.x - RING_STANCE.x, player.position.z - RING_STANCE.z) > 4
+  if (far) sparWeight = 0
+  orbitYaw = player?.rotation.y ?? Math.PI
+  orbitPitch = 0.46
+})
+
+watch(listening, (inside) => {
+  const player = playerRef.value
+  if (inside) {
+    listenYaw = 0
+    listenPitch = -0.42
+    if (!player) return
+    player.position.set(VINYL_STANCE.x, VINYL_TOP, VINYL_STANCE.z)
+    player.rotation.y = Math.PI
+    velocity.set(0, 0, 0)
+    return
+  }
+  const far =
+    !player ||
+    Math.hypot(player.position.x - VINYL_STANCE.x, player.position.z - VINYL_STANCE.z) > 4
+  if (far) listenWeight = 0
+  orbitYaw = player?.rotation.y ?? Math.PI
+  orbitPitch = 0.46
+})
+
+function finishLook(event: PointerEvent, allowPunch: boolean) {
   if (!draggingLook) return
+  const punch = allowPunch && sparring.value && lookTravel < 14
+  const greet = allowPunch && !sparring.value && lookTravel < 28 ? tapGreet : null
   draggingLook = false
+  tapGreet = null
   document.querySelector('canvas')?.style.removeProperty('cursor')
+  if (punch) {
+    askPunch(event.clientX < window.innerWidth / 2 ? 'left' : 'right')
+    return
+  }
+  if (greet === 'atlas' && greetAtlas()) bark()
+  if (greet === 'marina' && greetMarina()) marinaVoice()
+}
+
+function onLookUp(event: PointerEvent) {
+  finishLook(event, true)
+}
+
+function onLookCancel(event: PointerEvent) {
+  finishLook(event, false)
 }
 
 watch(playerRef, (player) => {
@@ -363,7 +518,7 @@ onMounted(() => {
   window.addEventListener('pointerdown', onLookDown)
   window.addEventListener('pointermove', onLookMove)
   window.addEventListener('pointerup', onLookUp)
-  window.addEventListener('pointercancel', onLookUp)
+  window.addEventListener('pointercancel', onLookCancel)
 })
 
 onUnmounted(() => {
@@ -373,7 +528,7 @@ onUnmounted(() => {
   window.removeEventListener('pointerdown', onLookDown)
   window.removeEventListener('pointermove', onLookMove)
   window.removeEventListener('pointerup', onLookUp)
-  window.removeEventListener('pointercancel', onLookUp)
+  window.removeEventListener('pointercancel', onLookCancel)
   releaseHikeKeys()
   scene.value?.remove(computer)
   scene.value?.remove(splash)
@@ -486,7 +641,7 @@ function publishPose(player: Group) {
   hikerPose.z = player.position.z
   hikerPose.yaw = player.rotation.y
   hikerPose.look = orbitPitch
-  hikerPose.visible = deskWeight < 0.25
+  hikerPose.visible = deskWeight < 0.25 && sparWeight < 0.22 && listenWeight < 0.22
   hikerPose.ready = true
 }
 
@@ -501,6 +656,8 @@ function reset() {
   player.position.set(SPAWN[0], SPAWN[1], SPAWN[2])
   hikerSpot.value = { x: SPAWN[0], z: SPAWN[2] }
   player.rotation.y = Math.PI
+  leaveRing()
+  leaveVinyl()
   ridingScooter.value = false
   wasRiding = false
   publishPose(player)
@@ -524,9 +681,13 @@ onBeforeRender(({ delta }) => {
   const dt = Math.min(delta, 0.05)
   const reading = Boolean(props.readingId)
   const inside = baking.value && !reading
-  const held = reading || inside
+  const inRing = sparring.value && !reading
+  const inVinyl = listening.value && !reading
+  const held = reading || inside || inRing || inVinyl
   deskWeight = approach(deskWeight, reading ? 1 : 0, 2.4, dt)
   bakeWeight = approach(bakeWeight, inside ? 1 : 0, 2.1, dt)
+  sparWeight = approach(sparWeight, inRing ? 1 : 0, 2.6, dt)
+  listenWeight = approach(listenWeight, inVinyl ? 1 : 0, 2.4, dt)
   if (!reading && deskWeight < 0.01) {
     deskWeight = 0
     computer.visible = false
@@ -536,7 +697,28 @@ onBeforeRender(({ delta }) => {
     bakeYaw = 0
     bakePitch = 0
   }
-  player.visible = deskWeight < 0.25 && bakeWeight < 0.28
+  if (!inRing && sparWeight < 0.01) {
+    sparWeight = 0
+    sparYaw = 0
+    sparPitch = -0.34
+  }
+  if (!inVinyl && listenWeight < 0.01) {
+    listenWeight = 0
+    listenYaw = 0
+    listenPitch = -0.42
+  }
+  player.visible =
+    deskWeight < 0.25 && bakeWeight < 0.28 && sparWeight < 0.28 && listenWeight < 0.28
+  if (inRing) {
+    player.position.x = RING_STANCE.x
+    player.position.z = RING_STANCE.z
+    player.rotation.y = Math.PI
+  }
+  if (inVinyl) {
+    player.position.x = VINYL_STANCE.x
+    player.position.z = VINYL_STANCE.z
+    player.rotation.y = Math.PI
+  }
 
   const activeCamera = camera.activeCamera.value
   if (activeCamera) {
@@ -734,7 +916,7 @@ onBeforeRender(({ delta }) => {
 
   updatePassage(player.position.x, player.position.z)
 
-  if (!draggingLook && !inside && deskWeight < 0.05 && wishLen > 0.2) {
+  if (!draggingLook && !inside && !inRing && !inVinyl && deskWeight < 0.05 && wishLen > 0.2) {
     orbitYaw = easeAngle(orbitYaw, player.rotation.y, dt)
     if (orbitPitch < 0.5) orbitPitch = approach(orbitPitch, 0.5, 0.55, dt)
   }
@@ -757,21 +939,33 @@ onBeforeRender(({ delta }) => {
     player.position.z + gazeZ * 7,
   )
   fillBakeAim()
+  if (inRing || sparWeight > 0) fillSparAim()
+  if (inVinyl || listenWeight > 0) fillListenAim()
   camGoal.copy(desiredCam).lerp(deskCam, deskWeight)
   lookGoal.copy(lookTarget).lerp(deskLook, deskWeight)
   if (bakeWeight > 0.001) {
     camGoal.lerp(bakeCam, bakeWeight)
     lookGoal.lerp(bakeLook, bakeWeight)
   }
-  const seated = deskWeight > 0.05 || bakeWeight > 0.05
-  const follow = 1 - Math.exp(-dt * (draggingLook && !inside ? 16 : seated ? 3.2 : 5.5))
+  if (sparWeight > 0.001) {
+    camGoal.lerp(sparCam, sparWeight)
+    lookGoal.lerp(sparLook, sparWeight)
+  }
+  if (listenWeight > 0.001) {
+    camGoal.lerp(listenCam, listenWeight)
+    lookGoal.lerp(listenLook, listenWeight)
+  }
+  const seated = deskWeight > 0.05 || bakeWeight > 0.05 || sparWeight > 0.05 || listenWeight > 0.05
+  const follow =
+    1 -
+    Math.exp(-dt * (inRing ? 9 : inVinyl ? 8 : draggingLook && !inside ? 16 : seated ? 3.2 : 5.5))
   if (!cameraReady) {
     activeCamera.position.copy(camGoal)
     look.copy(lookGoal)
     cameraReady = true
   } else {
     activeCamera.position.lerp(camGoal, follow)
-    const lookRate = inside && draggingLook ? 18 : seated ? 4 : 8
+    const lookRate = (inside || inRing) && draggingLook ? 18 : inRing ? 12 : seated ? 4 : 8
     look.lerp(lookGoal, 1 - Math.exp(-dt * lookRate))
   }
   activeCamera.lookAt(look)

@@ -5,7 +5,9 @@
     preserveAspectRatio="xMidYMid meet"
     overflow="hidden"
     role="img"
-    :aria-label="wide ? 'Mapa do vale' : 'Minimapa'"
+    :aria-label="wide ? 'Mapa do vale. Toca para marcar um ponto.' : 'Minimapa'"
+    :class="wide ? 'tw-cursor-crosshair' : ''"
+    @click="onPick"
   >
     <rect :width="viewW" :height="viewH" fill="#d7e3cf" rx="12" />
     <polygon :points="mountain" fill="#8b7d62" />
@@ -55,6 +57,15 @@
       stroke="#f4efe4"
       :stroke-width="wide ? 0.7 : 1.1"
     />
+    <rect
+      :x="ring.x"
+      :y="ring.y"
+      :width="ring.w"
+      :height="ring.h"
+      fill="#1e4b73"
+      stroke="#f4efe4"
+      :stroke-width="wide ? 0.6 : 1"
+    />
     <circle
       :cx="chapel.x"
       :cy="chapel.y"
@@ -63,23 +74,63 @@
       stroke="#8d7b66"
       stroke-width="0.6"
     />
+    <polyline
+      v-if="routeLine"
+      :points="routeLine"
+      fill="none"
+      stroke="#b45309"
+      stroke-dasharray="5 3.5"
+      :stroke-width="wide ? 2.6 : 3.2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <circle
+      :cx="vinyl.x"
+      :cy="vinyl.y"
+      :r="wide ? 4.2 : 5.2"
+      fill="#6b2430"
+      stroke="#f4efe4"
+      :stroke-width="wide ? 0.7 : 1.1"
+    />
     <circle :cx="you.x" :cy="you.y" r="4.5" fill="#b91c1c" stroke="#f7f3ea" stroke-width="1.4" />
+    <circle
+      v-if="pin"
+      :cx="pin.x"
+      :cy="pin.y"
+      :r="wide ? 4.2 : 5"
+      fill="#b45309"
+      stroke="#f7f3ea"
+      stroke-width="1.3"
+    />
   </svg>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { pathNodes, steps } from '@/data/journey'
 import { ATELIER } from '@/game/atelier'
 import { summit } from '@/game/buildTrail'
 import { PITCH_HALF_X, PITCH_HALF_Z, PITCH_X, PITCH_Z } from '@/game/pitch'
+import { RING_HALF, RING_X, RING_Z } from '@/game/ring'
+import { VINYL_X, VINYL_Z } from '@/game/vinyl'
+import { trailGoal, trailPoints } from '@/game/route'
 import { CAVADO_HALF, cavado } from '@/game/cavado'
 import { hikerSpot } from '@/game/spot'
 
 const props = defineProps<{ wide: boolean }>()
+const emit = defineEmits<{ pick: [point: { x: number; z: number }] }>()
 
 /** Janela do minimapa, em metros, centrada no montanhista. */
 const MINI_SPAN = 108
+/** O minimapa só recentra ao fim destes metros, para não redesenhar o vale a cada passo. */
+const RECENTER = 8
+const anchor = ref({ x: hikerSpot.value.x, z: hikerSpot.value.z })
+watch(hikerSpot, (spot) => {
+  const dx = spot.x - anchor.value.x
+  const dz = spot.z - anchor.value.z
+  if (dx * dx + dz * dz < RECENTER * RECENTER) return
+  anchor.value = { x: spot.x, z: spot.z }
+})
 const viewW = 260
 const pad = 12
 
@@ -128,6 +179,10 @@ const world = computed(() => {
   mark(summit.x, summit.z)
   mark(PITCH_X - PITCH_HALF_X, PITCH_Z - PITCH_HALF_Z)
   mark(PITCH_X + PITCH_HALF_X, PITCH_Z + PITCH_HALF_Z)
+  mark(RING_X - RING_HALF, RING_Z - RING_HALF)
+  mark(RING_X + RING_HALF, RING_Z + RING_HALF)
+  mark(VINYL_X - 4, VINYL_Z - 4)
+  mark(VINYL_X + 4, VINYL_Z + 4)
   mark(0, -340)
   mark(0, 240)
   const margin = 20
@@ -143,10 +198,10 @@ const frame = computed(() => {
   if (props.wide) return world.value
   const half = MINI_SPAN / 2
   return {
-    minX: hikerSpot.value.x - half,
-    maxX: hikerSpot.value.x + half,
-    minZ: hikerSpot.value.z - half,
-    maxZ: hikerSpot.value.z + half,
+    minX: anchor.value.x - half,
+    maxX: anchor.value.x + half,
+    minZ: anchor.value.z - half,
+    maxZ: anchor.value.z + half,
   }
 })
 
@@ -199,6 +254,57 @@ const pitch = computed(() => {
     h: Math.abs(y1 - y0),
   }
 })
+
+const ring = computed(() => {
+  const x0 = X(RING_X - RING_HALF)
+  const x1 = X(RING_X + RING_HALF)
+  const y0 = Y(RING_Z - RING_HALF)
+  const y1 = Y(RING_Z + RING_HALF)
+  const w = Math.max(Math.abs(x1 - x0), props.wide ? 5 : 6)
+  const h = Math.max(Math.abs(y1 - y0), props.wide ? 5 : 6)
+  return {
+    x: (x0 + x1) / 2 - w / 2,
+    y: (y0 + y1) / 2 - h / 2,
+    w,
+    h,
+  }
+})
+
+function worldX(svgX: number) {
+  return frame.value.minX + ((svgX - pad) / (viewW - pad * 2)) * spanX.value
+}
+
+function worldZ(svgY: number) {
+  return frame.value.minZ + ((svgY - pad) / (viewH.value - pad * 2)) * spanZ.value
+}
+
+function onPick(event: MouseEvent) {
+  if (!props.wide) return
+  const svg = event.currentTarget
+  if (!(svg instanceof SVGSVGElement)) return
+  const point = svg.createSVGPoint()
+  point.x = event.clientX
+  point.y = event.clientY
+  const ctm = svg.getScreenCTM()
+  if (!ctm) return
+  const local = point.matrixTransform(ctm.inverse())
+  emit('pick', { x: worldX(local.x), z: worldZ(local.y) })
+}
+
+const routeLine = computed(() => {
+  const points = trailPoints.value
+  if (!points.length) return ''
+  const from: [number, number] = [hikerSpot.value.x, hikerSpot.value.z]
+  return [from, ...points].map(([x, z]) => `${X(x)},${Y(z)}`).join(' ')
+})
+
+const pin = computed(() => {
+  const goal = trailGoal.value
+  if (!goal) return null
+  return { x: X(goal.x), y: Y(goal.z) }
+})
+
+const vinyl = computed(() => ({ x: X(VINYL_X), y: Y(VINYL_Z) }))
 
 const you = computed(() => {
   const x = X(hikerSpot.value.x)

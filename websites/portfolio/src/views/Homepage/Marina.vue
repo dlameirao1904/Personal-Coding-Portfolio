@@ -155,7 +155,7 @@
 </template>
 
 <script setup lang="ts">
-import { shallowRef } from 'vue'
+import { shallowRef, watch } from 'vue'
 import { useLoop } from '@tresjs/core'
 import { Vector3, type Group } from 'three'
 import { marinaVoice } from '@/game/ambience'
@@ -170,6 +170,9 @@ import {
 } from '@/game/spot'
 
 const rootRef = shallowRef<Group | null>(null)
+watch(rootRef, (root) => {
+  if (root) root.userData.greet = 'marina'
+})
 const armRight = shallowRef<Group | null>(null)
 const armLeft = shallowRef<Group | null>(null)
 const headRef = shallowRef<Group | null>(null)
@@ -189,8 +192,7 @@ let beat = 0
 let runAngle = 0
 
 function onGreet() {
-  greetMarina()
-  marinaVoice()
+  if (greetMarina()) marinaVoice()
 }
 
 function approach(current: number, target: number, rate: number, dt: number) {
