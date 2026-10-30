@@ -430,8 +430,8 @@
         <p class="tw-m-0 tw-font-[Fraunces,Georgia,serif] tw-text-[1.35rem] tw-font-[560]">
           Diogo Aires
         </p>
-        <p class="tw-mt-2 tw-max-w-[28rem] tw-leading-normal tw-text-[#3e4a43]">
-          Portefólio em Braga. A jornada é outra forma de ler o mesmo percurso.
+        <p class="tw-mt-2 tw-max-w-[28rem] tw-italic tw-leading-normal tw-text-[#3e4a43]">
+          E pluribus unum.
         </p>
       </div>
       <div>
