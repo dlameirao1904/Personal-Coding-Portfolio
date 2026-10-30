@@ -389,7 +389,6 @@ export function buildTrail() {
     mesh.scale.set(PATH_WIDTH, SLAB, length)
     mesh.position.set((ax + bx) / 2, top - SLAB / 2, (az + bz) / 2)
     mesh.rotation.y = Math.atan2(dx, dz)
-    mesh.castShadow = true
     mesh.receiveShadow = true
     walkable.add(mesh)
   }
@@ -407,7 +406,6 @@ export function buildTrail() {
     const height = 1.2
     mesh.scale.set(radius, height, radius)
     mesh.position.set(x, top - height / 2, z)
-    mesh.castShadow = true
     mesh.receiveShadow = true
     walkable.add(mesh)
   }

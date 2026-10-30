@@ -44,14 +44,14 @@ function tuneSun() {
     | DirectionalLight
     | undefined
   if (!light) return false
-  light.shadow.mapSize.set(2048, 2048)
+  light.shadow.mapSize.set(1024, 1024)
   light.shadow.bias = -0.0006
   light.shadow.normalBias = 0.04
   const shadowCam = light.shadow.camera as OrthographicCamera
-  shadowCam.left = -110
-  shadowCam.right = 110
-  shadowCam.top = 110
-  shadowCam.bottom = -110
+  shadowCam.left = -36
+  shadowCam.right = 36
+  shadowCam.top = 36
+  shadowCam.bottom = -36
   shadowCam.near = 1
   shadowCam.far = 200
   shadowCam.updateProjectionMatrix()

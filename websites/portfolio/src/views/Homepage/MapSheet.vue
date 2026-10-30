@@ -47,6 +47,16 @@
     <g v-for="place in places" :key="place.id">
       <circle :cx="place.x" :cy="place.y" :r="wide ? 3.4 : 4.2" :fill="place.color" />
     </g>
+    <g v-if="wide">
+      <circle
+        v-for="project in projects"
+        :key="project.id"
+        :cx="project.x"
+        :cy="project.y"
+        r="2.1"
+        fill="#1f6b4a"
+      />
+    </g>
     <circle :cx="atelier.x" :cy="atelier.y" :r="wide ? 3.6 : 4.4" fill="#8d5a45" />
     <rect
       :x="pitch.x"
@@ -107,7 +117,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { pathNodes, steps } from '@/data/journey'
+import { passages, pathNodes, steps } from '@/data/journey'
 import { ATELIER } from '@/game/atelier'
 import { summit } from '@/game/buildTrail'
 import { PITCH_HALF_X, PITCH_HALF_Z, PITCH_X, PITCH_Z } from '@/game/pitch'
@@ -238,6 +248,16 @@ const places = computed(() =>
     y: Y(step.position[2]),
     color: step.kind === 'work' ? '#8a4632' : step.kind === 'personal' ? '#8a6a32' : '#0e3328',
   })),
+)
+
+const projects = computed(() =>
+  passages
+    .filter((passage) => passage.kind === 'project')
+    .map((passage) => ({
+      id: passage.id,
+      x: X(passage.position[0]),
+      y: Y(passage.position[2]),
+    })),
 )
 
 const atelier = computed(() => ({ x: X(ATELIER.x), y: Y(ATELIER.z) }))

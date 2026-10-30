@@ -51,53 +51,65 @@
         >
           Limpar caminho
         </button>
-        <ul
-          class="tw-m-0 tw-flex tw-list-none tw-flex-wrap tw-gap-x-4 tw-gap-y-1 tw-p-0 tw-text-[0.78rem] tw-text-[#3d4943]"
-        >
-          <li class="tw-flex tw-items-center tw-gap-1.5">
-            <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#0e3328]" /> Educação
-          </li>
-          <li class="tw-flex tw-items-center tw-gap-1.5">
-            <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#8a4632]" /> Trabalho
-          </li>
-          <li class="tw-flex tw-items-center tw-gap-1.5">
-            <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#8a6a32]" /> Pessoal
-          </li>
-          <li class="tw-flex tw-items-center tw-gap-1.5">
-            <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#8d5a45]" /> Atelier
-          </li>
-          <li class="tw-flex tw-items-center tw-gap-1.5">
-            <span
-              class="tw-h-2 tw-w-2 tw-rounded-full tw-border tw-border-[#8d7b66] tw-bg-[#f4efe4]"
-            />
-            Capela
-          </li>
-          <li class="tw-flex tw-items-center tw-gap-1.5">
-            <span class="tw-h-2 tw-w-3 tw-rounded-sm tw-bg-[#2f7a3e]" />
-            Campo
-          </li>
-          <li class="tw-flex tw-items-center tw-gap-1.5">
-            <span class="tw-h-2 tw-w-2 tw-rounded-sm tw-bg-[#1e4b73]" />
-            Ringue
-          </li>
-          <li class="tw-flex tw-items-center tw-gap-1.5">
-            <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#6b2430]" />
-            Discos
-          </li>
-          <li class="tw-flex tw-items-center tw-gap-1.5">
-            <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#b91c1c]" /> Tu
-          </li>
-          <li class="tw-flex tw-items-center tw-gap-1.5">
-            <span class="tw-h-0.5 tw-w-3 tw-rounded-sm tw-bg-[#b45309]" />
-            Caminho
-          </li>
-          <li class="tw-flex tw-items-center tw-gap-1.5">
-            <span class="tw-h-2 tw-w-3 tw-rounded-sm tw-bg-[#8b7d62]" /> Montanha
-          </li>
-          <li class="tw-flex tw-items-center tw-gap-1.5">
-            <span class="tw-h-2 tw-w-3 tw-rounded-sm tw-bg-[#3d7f9a]" /> Cávado
-          </li>
-        </ul>
+        <div class="tw-flex tw-flex-col tw-gap-2 tw-text-[0.78rem] tw-text-[#3d4943]">
+          <p class="tw-m-0 tw-text-[0.72rem] tw-uppercase tw-tracking-[0.12em] tw-text-[#8a4632]">
+            No trilho
+          </p>
+          <ul class="tw-m-0 tw-flex tw-list-none tw-flex-wrap tw-gap-x-4 tw-gap-y-1 tw-p-0">
+            <li class="tw-flex tw-items-center tw-gap-1.5">
+              <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#0e3328]" /> Educação
+            </li>
+            <li class="tw-flex tw-items-center tw-gap-1.5">
+              <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#8a4632]" /> Trabalho
+            </li>
+            <li class="tw-flex tw-items-center tw-gap-1.5">
+              <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#8a6a32]" /> Pessoal
+            </li>
+            <li class="tw-flex tw-items-center tw-gap-1.5">
+              <span class="tw-h-1.5 tw-w-1.5 tw-rounded-full tw-bg-[#1f6b4a]" /> Projetos
+            </li>
+          </ul>
+          <p class="tw-m-0 tw-mt-1 tw-text-[0.72rem] tw-uppercase tw-tracking-[0.12em] tw-text-[#8a4632]">
+            Paragens
+          </p>
+          <ul class="tw-m-0 tw-flex tw-list-none tw-flex-wrap tw-gap-x-4 tw-gap-y-1 tw-p-0">
+            <li class="tw-flex tw-items-center tw-gap-1.5">
+              <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#8d5a45]" /> Atelier
+            </li>
+            <li class="tw-flex tw-items-center tw-gap-1.5">
+              <span
+                class="tw-h-2 tw-w-2 tw-rounded-full tw-border tw-border-[#8d7b66] tw-bg-[#f4efe4]"
+              />
+              Capela
+            </li>
+            <li class="tw-flex tw-items-center tw-gap-1.5">
+              <span class="tw-h-2 tw-w-3 tw-rounded-sm tw-bg-[#2f7a3e]" /> Campo
+            </li>
+            <li class="tw-flex tw-items-center tw-gap-1.5">
+              <span class="tw-h-2 tw-w-2 tw-rounded-sm tw-bg-[#1e4b73]" /> Ringue
+            </li>
+            <li class="tw-flex tw-items-center tw-gap-1.5">
+              <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#6b2430]" /> Discos
+            </li>
+            <li class="tw-flex tw-items-center tw-gap-1.5">
+              <span class="tw-h-2 tw-w-3 tw-rounded-sm tw-bg-[#8b7d62]" /> Montanha
+            </li>
+            <li class="tw-flex tw-items-center tw-gap-1.5">
+              <span class="tw-h-2 tw-w-3 tw-rounded-sm tw-bg-[#3d7f9a]" /> Cávado
+            </li>
+          </ul>
+          <ul class="tw-m-0 tw-flex tw-list-none tw-flex-wrap tw-gap-x-4 tw-gap-y-1 tw-p-0">
+            <li class="tw-flex tw-items-center tw-gap-1.5">
+              <span class="tw-h-2 tw-w-2 tw-rounded-full tw-bg-[#b91c1c]" /> Tu
+            </li>
+            <li class="tw-flex tw-items-center tw-gap-1.5">
+              <span class="tw-h-0.5 tw-w-3 tw-rounded-sm tw-bg-[#b45309]" /> Caminho
+            </li>
+          </ul>
+          <p class="tw-m-0 tw-leading-snug">
+            O trilho é o percurso. As paragens ficam à margem: bolo, ringue, discos, capela.
+          </p>
+        </div>
       </div>
     </div>
   </div>
