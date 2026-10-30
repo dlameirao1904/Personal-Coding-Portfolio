@@ -229,9 +229,25 @@ function begin(context: AudioContext) {
 }
 
 let arming = false
+let wantMute = false
+
+export function ambienceMuted() {
+  return wantMute
+}
+
+/** Cala o vale inteiro, ou volta a abri-lo. O clique no botão chega como gesto. */
+export function setAmbienceMuted(muted: boolean) {
+  wantMute = muted
+  if (muted) {
+    if (ctx && ctx.state === 'running') void ctx.suspend()
+    return
+  }
+  ensureAmbience()
+}
 
 /** Começa o fundo de rio e pássaros. Pode chamar-se em cada gesto: só arranca uma vez. */
 export function ensureAmbience() {
+  if (wantMute) return
   try {
     unlockPlayback()
     const context = audio()
@@ -289,6 +305,7 @@ function woof(context: AudioContext, when: number, pitch: number) {
 }
 
 function whenReady(run: (context: AudioContext) => void) {
+  if (wantMute) return
   ensureAmbience()
   const context = audio()
   if (context.state === 'suspended') void context.resume().then(() => run(context))

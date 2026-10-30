@@ -1,68 +1,71 @@
-import {
-  BoxGeometry,
-  CanvasTexture,
-  Group,
-  Mesh,
-  MeshStandardMaterial,
-  SRGBColorSpace,
-} from 'three'
+import { reactive } from 'vue'
+import { BoxGeometry, CanvasTexture, Group, Mesh, MeshStandardMaterial, SRGBColorSpace } from 'three'
 import type { Passage } from '@/data/journey'
 
-function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
+export const screenFrame = reactive({
+  visible: false,
+  left: 0,
+  top: 0,
+  width: 0,
+  height: 0,
+})
+
+const W = 1280
+const H = 800
+
+function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, limit: number) {
   const lines: string[] = []
   let line = ''
   for (const word of text.split(/\s+/)) {
+    if (!word) continue
     const next = line ? `${line} ${word}` : word
     if (line && ctx.measureText(next).width > maxWidth) {
       lines.push(line)
       line = word
+      if (lines.length === limit) return lines
     } else {
       line = next
     }
   }
-  if (line) lines.push(line)
+  if (line && lines.length < limit) lines.push(line)
   return lines
 }
 
 function paint(texture: CanvasTexture, passage: Passage) {
   const canvas = texture.image as HTMLCanvasElement
-  const ctx = canvas.getContext('2d')
+  const ctx = canvas.getContext('2d', { alpha: false })
   if (!ctx) return
-
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
   ctx.fillStyle = '#10241c'
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.fillRect(0, 0, W, H)
   ctx.fillStyle = '#8a4632'
-  ctx.fillRect(0, 0, canvas.width, 28)
+  ctx.fillRect(0, 0, W, 16)
 
   ctx.textAlign = 'left'
   ctx.textBaseline = 'top'
   ctx.fillStyle = '#e7c7a4'
-  ctx.font = '600 52px Outfit, sans-serif'
-  ctx.fillText(passage.kicker.toUpperCase(), 96, 72)
+  ctx.font = '600 28px Outfit, sans-serif'
+  ctx.fillText(passage.kicker.toUpperCase(), 64, 48)
 
   ctx.fillStyle = '#f7f3ea'
-  ctx.font = '600 92px Fraunces, Georgia, serif'
-  const title = wrap(ctx, passage.title, 1860).slice(0, 2)
-  title.forEach((line, index) => ctx.fillText(line, 96, 160 + index * 104))
+  ctx.font = '600 58px Fraunces, Georgia, serif'
+  const title = wrap(ctx, passage.title, W - 128, 2)
+  title.forEach((line, index) => ctx.fillText(line, 64, 104 + index * 68))
 
   ctx.fillStyle = '#b7c4bc'
-  ctx.font = '500 44px Outfit, sans-serif'
-  const meta = `${passage.period} · ${passage.place}`
-  ctx.fillText(meta, 96, 160 + title.length * 104 + 16)
+  ctx.font = '500 28px Outfit, sans-serif'
+  const metaTop = 112 + title.length * 68
+  ctx.fillText(`${passage.period}  ·  ${passage.place}`, 64, metaTop)
 
   ctx.fillStyle = '#f7f3ea'
-  ctx.font = '500 48px Outfit, sans-serif'
-  const bodyTop = 300 + title.length * 104
-  const body = wrap(ctx, passage.summary, 1860).slice(0, 8)
-  body.forEach((line, index) => ctx.fillText(line, 96, bodyTop + index * 64))
+  ctx.font = '500 32px Outfit, sans-serif'
+  const body = wrap(ctx, passage.summary, W - 128, 6)
+  const bodyTop = metaTop + 64
+  body.forEach((line, index) => ctx.fillText(line, 64, bodyTop + index * 46))
 
-  if (passage.stack.length) {
-    ctx.fillStyle = '#e7c7a4'
-    ctx.font = '500 40px Outfit, sans-serif'
-    const stackTop = Math.min(1120, bodyTop + body.length * 64 + 36)
-    const stack = wrap(ctx, passage.stack.join('  ·  '), 1860).slice(0, 2)
-    stack.forEach((line, index) => ctx.fillText(line, 96, stackTop + index * 52))
-  }
+  ctx.fillStyle = '#e7c7a4'
+  ctx.font = '500 26px Outfit, sans-serif'
+  ctx.fillText('As notas abrem neste ecrã.', 64, H - 72)
 
   texture.needsUpdate = true
 }
@@ -105,11 +108,10 @@ export function makeComputer() {
   group.add(bezel)
 
   const canvas = document.createElement('canvas')
-  canvas.width = 2048
-  canvas.height = 1280
+  canvas.width = W
+  canvas.height = H
   const texture = new CanvasTexture(canvas)
   texture.colorSpace = SRGBColorSpace
-  texture.anisotropy = 8
   texture.generateMipmaps = false
   const screen = new Mesh(
     new BoxGeometry(0.8, 0.48, 0.02),
@@ -135,13 +137,20 @@ export function makeComputer() {
 }
 
 export function paintComputer(group: Group, passage: Passage) {
+  if (group.userData.pageId === passage.id) return
   const texture = group.userData.texture as CanvasTexture | undefined
   if (!texture) return
+  group.userData.pageId = passage.id
   paint(texture, passage)
 }
 
 export function disposeComputer(group: Group) {
   const texture = group.userData.texture as CanvasTexture | undefined
+  const canvas = texture?.image as HTMLCanvasElement | undefined
+  if (canvas) {
+    canvas.width = 0
+    canvas.height = 0
+  }
   texture?.dispose()
   group.traverse((child) => {
     const mesh = child as Mesh

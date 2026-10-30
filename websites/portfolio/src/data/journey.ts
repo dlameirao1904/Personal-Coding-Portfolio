@@ -254,6 +254,10 @@ const markerSpots: Record<string, MarkerSpot> = {
   'SIEM local': { id: 'siem', short: 'SIEM', position: [-8, 18, -109.5], radius: 1.9 },
 }
 
+export function noteIdForTitle(title: string) {
+  return markerSpots[title]?.id ?? null
+}
+
 const yearPeriod: Record<string, string> = {
   'ano-1': '1.º ano',
   'ano-2': '2.º ano',

@@ -336,8 +336,6 @@ export function mountWildlife(scenery: Group, walkable: Group) {
   const place = (root: Object3D, x: number, y: number, z: number, yaw: number) => {
     root.position.set(x, y, z)
     root.rotation.y = yaw
-    root.updateMatrix()
-    root.updateMatrixWorld(true)
   }
 
   const moveToward = (animal: Walker, tx: number, tz: number, speed: number, dt: number) => {
@@ -508,7 +506,6 @@ export function mountWildlife(scenery: Group, walkable: Group) {
     bird.root.position.set(bird.x, bird.y, bird.z)
     bird.root.rotation.y = bird.yaw
     bird.root.rotation.z = Math.max(-0.4, Math.min(0.4, -bird.vx * 0.04))
-    bird.root.updateMatrixWorld(true)
   }
 
   updateWildlife = (dt, px, _py, pz) => {
@@ -556,7 +553,6 @@ export function mountWildlife(scenery: Group, walkable: Group) {
         a.z + (b.z - a.z) * blend + tx * side,
       )
       swimmer.root.rotation.y = Math.atan2(tx, tz)
-      swimmer.root.updateMatrixWorld(true)
       swimmer.tail.rotation.y = Math.sin(time * 3.2 + swimmer.phase) * 0.45
     }
   }

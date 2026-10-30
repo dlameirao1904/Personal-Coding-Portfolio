@@ -122,6 +122,7 @@
 import { onMounted, onUnmounted, shallowRef, watch } from 'vue'
 import { useLoop, useTresContext } from '@tresjs/core'
 import {
+  DirectionalLight,
   Group,
   Mesh,
   MeshBasicMaterial,
@@ -129,6 +130,7 @@ import {
   SphereGeometry,
   Vector2,
   Vector3,
+  type Camera,
   type Object3D,
 } from 'three'
 import { SPAWN, passageById, passages } from '@/data/journey'
@@ -140,7 +142,7 @@ import { leaveVinyl, listening, VINYL_EYE, VINYL_STANCE, VINYL_TOP } from '@/gam
 import { penalty } from '@/game/pitch'
 import { onBridge } from '@/game/bridge'
 import { WADE_SINK, cavadoSample, waterSurfaceY } from '@/game/cavado'
-import { disposeComputer, makeComputer, paintComputer } from '@/game/computer'
+import { disposeComputer, makeComputer, paintComputer, screenFrame } from '@/game/computer'
 import { hikeKeys, hikeStick, releaseHikeKeys, setHikeKeyFromEvent } from '@/game/controls'
 import { toStageDelta } from '@/game/orientation'
 import {
@@ -187,6 +189,7 @@ const listenLook = new Vector3()
 const camGoal = new Vector3()
 const lookGoal = new Vector3()
 const computer = makeComputer()
+const screenPoint = new Vector3()
 const splashMat = new MeshBasicMaterial({ color: '#e7f6f8', transparent: true, opacity: 0.82 })
 const splashGeo = new SphereGeometry(0.07, 6, 4)
 const splash = new Group()
@@ -243,6 +246,80 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
 
+function placeScreen(cam: Camera) {
+  if (!props.readingId) {
+    screenFrame.visible = false
+    return
+  }
+  const screen = computer.getObjectByName('screen')
+  const width = sizes.width.value
+  const height = sizes.height.value
+  if (!screen || width < 1 || height < 1) {
+    screenFrame.visible = false
+    return
+  }
+  screen.updateWorldMatrix(true, false)
+  let minX = Infinity
+  let minY = Infinity
+  let maxX = -Infinity
+  let maxY = -Infinity
+  for (const x of [-0.4, 0.4]) {
+    for (const y of [-0.24, 0.24]) {
+      screenPoint.set(x, y, 0.011).applyMatrix4(screen.matrixWorld)
+      screenPoint.project(cam)
+      const px = (screenPoint.x * 0.5 + 0.5) * width
+      const py = (-screenPoint.y * 0.5 + 0.5) * height
+      if (px < minX) minX = px
+      if (px > maxX) maxX = px
+      if (py < minY) minY = py
+      if (py > maxY) maxY = py
+    }
+  }
+  const frameWidth = maxX - minX
+  const frameHeight = maxY - minY
+  const short = sizes.height.value > 0 && sizes.height.value < 620
+  if (frameWidth < (short ? 180 : 48) || frameHeight < (short ? 120 : 32)) {
+    screenFrame.visible = false
+    return
+  }
+  screenFrame.left = minX
+  screenFrame.top = minY
+  screenFrame.width = frameWidth
+  screenFrame.height = frameHeight
+  screenFrame.visible = true
+}
+
+const DESK_SCALE = 1.9
+let deskDx = 0
+let deskDz = 1
+const deskAnchor = new Vector3()
+
+function frameDesk() {
+  const width = sizes.width.value
+  const height = sizes.height.value
+  if (width < 1 || height < 1) return
+  const short = height < 700 && width > height
+  const monitorAspect = 0.8 / 0.48
+  const widen = short ? Math.max(1, width / height / monitorAspect) : 1
+  computer.scale.set(DESK_SCALE * widen, DESK_SCALE, DESK_SCALE)
+  const screenH = 0.48 * computer.scale.y
+  const fov = (46 * Math.PI) / 180
+  const fill = short ? 0.7 : 0.68
+  const gap = screenH / (2 * Math.tan(fov / 2) * fill)
+  const screenY = 1.18 * computer.scale.y
+  const screenForward = 0.08 * computer.scale.z
+  deskLook.set(
+    deskAnchor.x + deskDx * screenForward,
+    deskAnchor.y + screenY,
+    deskAnchor.z + deskDz * screenForward,
+  )
+  deskCam.set(
+    deskAnchor.x + deskDx * (screenForward + gap),
+    deskAnchor.y + screenY,
+    deskAnchor.z + deskDz * (screenForward + gap),
+  )
+}
+
 function placeDesk(id: string) {
   const passage = passageById[id]
   const player = playerRef.value
@@ -261,20 +338,10 @@ function placeDesk(id: string) {
   computer.rotation.y = Math.atan2(dx, dz)
   computer.visible = true
   paintComputer(computer, passage)
-  const screenY = 1.18 * computer.scale.y
-  const screenForward = 0.08 * computer.scale.z
-  deskLook.set(
-    passage.position[0] + dx * screenForward,
-    passage.position[1] + screenY,
-    passage.position[2] + dz * screenForward,
-  )
-  const short = sizes.height.value > 0 && sizes.height.value < 620
-  const gap = short ? 1.16 : 1.65
-  deskCam.set(
-    passage.position[0] + dx * (screenForward + gap),
-    passage.position[1] + screenY,
-    passage.position[2] + dz * (screenForward + gap),
-  )
+  deskAnchor.set(passage.position[0], passage.position[1], passage.position[2])
+  deskDx = dx
+  deskDz = dz
+  frameDesk()
   setMarkerVisible(id, false)
 }
 
@@ -487,6 +554,7 @@ const onKeyDown = (event: KeyboardEvent) => {
   if (terminalOpen.value) return
   const target = event.target
   if (target instanceof HTMLElement && target.closest('input, textarea')) return
+  if (props.readingId) return
   if (setHikeKeyFromEvent(event, true)) event.preventDefault()
 }
 const onKeyUp = (event: KeyboardEvent) => {
@@ -544,25 +612,48 @@ function approach(current: number, target: number, rate: number, dt: number) {
   return current + Math.sign(delta) * max
 }
 
+let groundRoot: Object3D | null = null
+let sun: DirectionalLight | null = null
+
+function walkable() {
+  if (groundRoot?.parent) return groundRoot
+  groundRoot = scene.value?.getObjectByName('walkable') ?? null
+  return groundRoot
+}
+
 function treeBlocks(x: number, z: number) {
-  const blocked = scene.value?.getObjectByName('walkable')?.userData.blocked as
+  const blocked = walkable()?.userData.blocked as
     | ((px: number, pz: number, inset?: number) => boolean)
     | undefined
   return blocked?.(x, z, 0) ?? false
 }
 
 function sample(x: number, z: number) {
-  const root = scene.value?.getObjectByName('walkable')
+  const root = walkable()
   if (!root) return null
-  const follow = root.userData.follow as
-    | ((px: number, pz: number, yaw?: number) => void)
-    | undefined
-  follow?.(x, z, orbitYaw)
   rayOrigin.set(x, 160, z)
   raycaster.set(rayOrigin, down)
   raycaster.far = 220
   const hits = raycaster.intersectObject(root, true)
   return hits.length ? hits[0].point.y : null
+}
+
+function followGround(x: number, z: number) {
+  const follow = walkable()?.userData.follow as
+    | ((px: number, pz: number, yaw?: number) => void)
+    | undefined
+  follow?.(x, z, orbitYaw)
+}
+
+function moveSun(x: number, y: number, z: number) {
+  if (!sun?.parent) {
+    const found = scene.value?.getObjectByProperty('isDirectionalLight', true)
+    sun = found instanceof DirectionalLight ? found : null
+    if (sun && scene.value && !sun.target.parent) scene.value.add(sun.target)
+  }
+  if (!sun) return
+  sun.target.position.set(x, y + 2, z)
+  sun.position.set(x + 40, y + 58, z + 25)
 }
 
 function floorAt(x: number, z: number) {
@@ -691,6 +782,7 @@ onBeforeRender(({ delta }) => {
   if (!reading && deskWeight < 0.01) {
     deskWeight = 0
     computer.visible = false
+    computer.scale.set(DESK_SCALE, DESK_SCALE, DESK_SCALE)
   }
   if (!inside && bakeWeight < 0.01) {
     bakeWeight = 0
@@ -749,15 +841,14 @@ onBeforeRender(({ delta }) => {
     wishZ /= wishLen
   }
 
+  followGround(player.position.x, player.position.z)
   const wadeNow = onBridge(player.position.x, player.position.z)
     ? { depth: 0, flowX: 0, flowZ: 0 }
     : cavadoSample(player.position.x, player.position.z)
   waterTime += dt
-  const tickWater = scene.value?.getObjectByName('walkable')?.userData.tickWater as
-    | ((time: number) => void)
-    | undefined
+  const tickWater = walkable()?.userData.tickWater as ((time: number) => void) | undefined
   tickWater?.(waterTime)
-  const live = scene.value?.getObjectByName('walkable')?.userData.tickWildlife as
+  const live = walkable()?.userData.tickWildlife as
     | ((step: number, x: number, y: number, z: number) => void)
     | undefined
   live?.(dt, player.position.x, player.position.y, player.position.z)
@@ -850,6 +941,7 @@ onBeforeRender(({ delta }) => {
 
   if (player.position.y < -20) reset()
 
+  moveSun(player.position.x, player.position.y, player.position.z)
   publishPose(player)
 
   const movedX = player.position.x - hikerSpot.value.x
@@ -941,6 +1033,7 @@ onBeforeRender(({ delta }) => {
   fillBakeAim()
   if (inRing || sparWeight > 0) fillSparAim()
   if (inVinyl || listenWeight > 0) fillListenAim()
+  if (props.readingId) frameDesk()
   camGoal.copy(desiredCam).lerp(deskCam, deskWeight)
   lookGoal.copy(lookTarget).lerp(deskLook, deskWeight)
   if (bakeWeight > 0.001) {
@@ -969,5 +1062,6 @@ onBeforeRender(({ delta }) => {
     look.lerp(lookGoal, 1 - Math.exp(-dt * lookRate))
   }
   activeCamera.lookAt(look)
+  placeScreen(activeCamera)
 })
 </script>

@@ -72,7 +72,7 @@
             <a
               class="tw-flex tw-h-full tw-flex-col tw-gap-2 tw-rounded-[18px] tw-border tw-border-[#17211c14] tw-bg-[#ffffff73] tw-p-4 tw-text-[inherit] tw-no-underline hover:tw-border-[#0e3328] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-[3px] focus-visible:tw-outline-[#0e3328]"
               :href="item.href"
-              @click="scrollTo(item.href)"
+              @click.prevent="scrollTo(item.href)"
             >
               <span class="tw-text-[0.72rem] tw-uppercase tw-tracking-[0.14em] tw-text-[#8a4632]">
                 {{ item.index }}
@@ -132,8 +132,9 @@
           <ol class="tw-m-0 tw-list-none tw-p-0">
             <li
               v-for="(step, index) in percurso"
+              :id="step.id"
               :key="step.id"
-              class="tw-grid tw-grid-cols-1 tw-gap-4 tw-border-t tw-border-[#17211c1f] tw-py-7 md:tw-grid-cols-[11rem_1fr] md:tw-gap-8"
+              class="tw-grid tw-scroll-mt-24 tw-grid-cols-1 tw-gap-4 tw-border-t tw-border-[#17211c1f] tw-py-7 md:tw-grid-cols-[11rem_1fr] md:tw-gap-8"
             >
               <div class="tw-flex tw-flex-col tw-gap-1.5 tw-text-[0.92rem] tw-text-[#5e6a62]">
                 <span class="tw-text-[0.72rem] tw-uppercase tw-tracking-[0.12em] tw-text-[#8a4632]">
@@ -250,6 +251,10 @@
                         {{ link.label }}
                       </a>
                     </p>
+                    <ProjectNote
+                      v-if="noteIdForTitle(project.title)"
+                      :id="noteIdForTitle(project.title) || ''"
+                    />
                   </li>
                 </ul>
               </div>
@@ -307,6 +312,10 @@
                   {{ link.label }}
                 </a>
               </p>
+              <ProjectNote
+                v-if="noteIdForTitle(project.title)"
+                :id="noteIdForTitle(project.title) || ''"
+              />
             </li>
           </ol>
         </section>
@@ -469,7 +478,8 @@
 
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { learning, personalNotes, profile, skillGroups, steps } from '@/data/journey'
+import { learning, noteIdForTitle, personalNotes, profile, skillGroups, steps } from '@/data/journey'
+import ProjectNote from '@/components/ProjectNote.vue'
 import { marquee, personalProjects, universityYears } from '@/data/projects'
 
 const nav = [
@@ -494,13 +504,13 @@ const beats = [
     index: '01',
     title: 'Educação',
     text: 'Licenciatura no Minho e o mestrado a decorrer.',
-    href: '#percurso',
+    href: '#licenciatura',
   },
   {
     index: '02',
     title: 'Trabalho',
     text: 'Micro-Net, Aurum e, agora, a IOTech.',
-    href: '#percurso',
+    href: '#micronet',
   },
   {
     index: '03',

@@ -37,52 +37,66 @@
     <div
       class="tw-pointer-events-none tw-absolute tw-left-[18px] tw-right-[18px] tw-top-[max(18px,env(safe-area-inset-top,0px))] tw-z-[4] tw-flex tw-items-start tw-justify-between"
     >
-      <div class="tw-pointer-events-auto tw-relative">
+      <div class="tw-pointer-events-auto tw-flex tw-items-start tw-gap-2">
+        <div class="tw-relative">
+          <button
+            type="button"
+            class="tw-flex tw-h-11 tw-w-11 tw-cursor-pointer tw-items-center tw-justify-center tw-rounded-full tw-border-0 tw-bg-[#f7f3eaeb] tw-text-[#17211c] hover:tw-bg-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-[3px] focus-visible:tw-outline-[#0e3328]"
+            :aria-expanded="menuOpen"
+            aria-label="Menu"
+            @click="menuOpen = !menuOpen"
+          >
+            <span class="tw-flex tw-w-4 tw-flex-col tw-gap-1" aria-hidden="true">
+              <span class="tw-block tw-h-0.5 tw-rounded-full tw-bg-current" />
+              <span class="tw-block tw-h-0.5 tw-rounded-full tw-bg-current" />
+              <span class="tw-block tw-h-0.5 tw-rounded-full tw-bg-current" />
+            </span>
+          </button>
+          <div
+            v-if="menuOpen"
+            class="tw-absolute tw-left-0 tw-top-[calc(100%+0.45rem)] tw-flex tw-w-52 tw-flex-col tw-gap-1 tw-rounded-2xl tw-bg-[#f7f3eaf0] tw-p-2 tw-shadow-[0_12px_28px_#17211c24]"
+          >
+            <button
+              type="button"
+              class="tw-cursor-pointer tw-rounded-xl tw-border-0 tw-bg-transparent tw-px-3 tw-py-2 tw-text-left tw-font-[inherit] tw-text-[0.95rem] tw-text-[#17211c] hover:tw-bg-[#0e332814]"
+              @click="chooseStart"
+            >
+              Início do trilho
+            </button>
+            <RouterLink
+              class="tw-rounded-xl tw-px-3 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-no-underline hover:tw-bg-[#0e332814]"
+              to="/"
+              @click="menuOpen = false"
+            >
+              Portefólio
+            </RouterLink>
+            <button
+              type="button"
+              class="tw-cursor-pointer tw-rounded-xl tw-border-0 tw-bg-transparent tw-px-3 tw-py-2 tw-text-left tw-font-[inherit] tw-text-[0.95rem] tw-text-[#17211c] hover:tw-bg-[#0e332814]"
+              @click="openPrompt"
+            >
+              Prompt
+            </button>
+          </div>
+        </div>
         <button
           type="button"
-          class="tw-flex tw-h-11 tw-w-11 tw-cursor-pointer tw-items-center tw-justify-center tw-rounded-full tw-border-0 tw-bg-[#f7f3eaeb] tw-text-[#17211c] hover:tw-bg-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-[3px] focus-visible:tw-outline-[#0e3328]"
-          :aria-expanded="menuOpen"
-          aria-label="Menu"
-          @click="menuOpen = !menuOpen"
+          data-mute
+          class="tw-flex tw-h-11 tw-cursor-pointer tw-items-center tw-rounded-full tw-border-0 tw-bg-[#f7f3eaeb] tw-px-3 tw-font-[inherit] tw-text-[0.85rem] tw-text-[#17211c] hover:tw-bg-white focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-[3px] focus-visible:tw-outline-[#0e3328]"
+          :aria-pressed="soundOn"
+          :aria-label="soundOn ? 'Desativar som' : 'Ativar som'"
+          @click="toggleSound"
         >
-          <span class="tw-flex tw-w-4 tw-flex-col tw-gap-1" aria-hidden="true">
-            <span class="tw-block tw-h-0.5 tw-rounded-full tw-bg-current" />
-            <span class="tw-block tw-h-0.5 tw-rounded-full tw-bg-current" />
-            <span class="tw-block tw-h-0.5 tw-rounded-full tw-bg-current" />
-          </span>
+          <v-icon>
+            {{ soundOn ? 'mdi-volume-high' : 'mdi-volume-off' }}
+          </v-icon>
         </button>
-        <div
-          v-if="menuOpen"
-          class="tw-absolute tw-left-0 tw-top-[calc(100%+0.45rem)] tw-flex tw-w-52 tw-flex-col tw-gap-1 tw-rounded-2xl tw-bg-[#f7f3eaf0] tw-p-2 tw-shadow-[0_12px_28px_#17211c24]"
-        >
-          <button
-            type="button"
-            class="tw-cursor-pointer tw-rounded-xl tw-border-0 tw-bg-transparent tw-px-3 tw-py-2 tw-text-left tw-font-[inherit] tw-text-[0.95rem] tw-text-[#17211c] hover:tw-bg-[#0e332814]"
-            @click="chooseStart"
-          >
-            Início do trilho
-          </button>
-          <RouterLink
-            class="tw-rounded-xl tw-px-3 tw-py-2 tw-text-[0.95rem] tw-text-[#17211c] tw-no-underline hover:tw-bg-[#0e332814]"
-            to="/"
-            @click="menuOpen = false"
-          >
-            Portefólio
-          </RouterLink>
-          <button
-            type="button"
-            class="tw-cursor-pointer tw-rounded-xl tw-border-0 tw-bg-transparent tw-px-3 tw-py-2 tw-text-left tw-font-[inherit] tw-text-[0.95rem] tw-text-[#17211c] hover:tw-bg-[#0e332814]"
-            @click="openPrompt"
-          >
-            Prompt
-          </button>
-        </div>
       </div>
-      <JourneyMap class="tw-pointer-events-auto" />
+      <JourneyMap v-show="!(reading && handheld)" class="tw-pointer-events-auto" />
     </div>
 
     <article
-      v-if="!started"
+      v-if="!started && !reading"
       class="journey-card tw-absolute tw-right-[18px] tw-top-[9.6rem] tw-z-[2] tw-max-h-[min(62vh,560px)] tw-w-[min(380px,calc(100vw-36px))] tw-overflow-auto tw-rounded-[22px] tw-bg-[#f7f3eaf0] tw-p-5 tw-shadow-[0_16px_40px_#17211c1f] max-md:tw-bottom-auto max-md:tw-left-auto max-md:tw-right-3 max-md:tw-top-[9.6rem] max-md:tw-max-h-[38vh] max-md:tw-w-[min(17.5rem,calc(100vw-6.5rem))] max-md:tw-rounded-2xl max-md:tw-p-3.5 max-md:tw-shadow-[0_10px_28px_#17211c33]"
       :class="{ 'journey-card--shut': handheld && !cardOpen }"
     >
@@ -106,6 +120,10 @@
         <p class="tw-mt-3 tw-leading-[1.45]">
           Aqui, podes ver os meus passos, literalmente. Aproveita a jornada e aprecia a paisagem.
         </p>
+        <p class="tw-mt-3 tw-leading-[1.45]">
+          Os empregos, o curso e os projectos estão no trilho. Chega-te e
+          {{ handheld ? 'toca em Ver' : 'carrega em E' }} para abrir a ficha.
+        </p>
         <p class="tw-mt-3 tw-leading-[1.45]">«Só a Natureza é divina, e ela não é divina...»</p>
         <p
           v-if="!handheld"
@@ -118,7 +136,7 @@
     </article>
 
     <article
-      v-else-if="passage && passage.kind !== 'project' && !baking && !sparring && !listening"
+      v-else-if="passage && !reading && passage.kind !== 'project' && !baking && !sparring && !listening"
       class="journey-card tw-absolute tw-right-[18px] tw-top-[9.6rem] tw-z-[2] tw-max-h-[min(62vh,560px)] tw-w-[min(380px,calc(100vw-36px))] tw-overflow-auto tw-rounded-[22px] tw-bg-[#f7f3eaf0] tw-p-5 tw-shadow-[0_16px_40px_#17211c1f] max-md:tw-bottom-auto max-md:tw-left-auto max-md:tw-right-3 max-md:tw-top-[9.6rem] max-md:tw-max-h-[38vh] max-md:tw-w-[min(17.5rem,calc(100vw-6.5rem))] max-md:tw-rounded-2xl max-md:tw-p-3.5 max-md:tw-shadow-[0_10px_28px_#17211c33]"
       :class="{ 'journey-card--shut': handheld && !cardOpen }"
     >
@@ -473,34 +491,84 @@
     <GiraDiscos v-if="listening" />
 
     <div
-      v-if="readingId && passage"
-      class="read-dock tw-absolute tw-bottom-6 tw-left-1/2 tw-z-[4] tw-flex tw-w-[min(640px,calc(100%-2rem))] tw--translate-x-1/2 tw-flex-col tw-items-center tw-gap-3"
+      v-if="reading && screenFrame.visible"
+      class="desk-screen tw-absolute tw-z-[3] tw-flex tw-flex-col tw-overflow-hidden tw-bg-[#10241c] tw-text-[#f7f3ea]"
+      :style="{
+        left: `${screenFrame.left}px`,
+        top: `${screenFrame.top}px`,
+        width: `${screenFrame.width}px`,
+        height: `${screenFrame.height}px`,
+        '--screen-top': `${screenFrame.top}px`,
+      }"
     >
-      <p
-        v-if="passage.links?.length"
-        class="tw-m-0 tw-flex tw-flex-wrap tw-justify-center tw-gap-4"
+      <div
+        class="desk-screen__body tw-flex tw-min-h-0 tw-flex-1 tw-flex-col tw-gap-[0.65em] tw-overflow-auto tw-px-[0.9em] tw-py-[0.75em]"
       >
-        <a
-          v-for="link in passage.links"
-          :key="link.href"
-          class="tw-rounded-full tw-bg-[#f7f3eaf0] tw-px-3 tw-py-2 tw-text-[0.92rem] tw-text-[#0e3328] tw-underline tw-underline-offset-[0.18em]"
-          :href="link.href"
-          target="_blank"
-          rel="noopener noreferrer"
+        <div class="tw-flex tw-items-start tw-justify-between tw-gap-3">
+          <div>
+            <p class="tw-m-0 tw-text-[0.72em] tw-uppercase tw-tracking-[0.12em] tw-text-[#e7c7a4]">
+              {{ reading.kicker }}
+            </p>
+            <h2
+              class="tw-m-0 tw-mt-[0.15em] tw-font-[Fraunces,Georgia,serif] tw-text-[1.45em] tw-font-[560] tw-leading-[1.05] tw-tracking-[-0.03em]"
+            >
+              {{ reading.title }}
+            </h2>
+          </div>
+          <button
+            type="button"
+            class="desk-screen__close tw-shrink-0 tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#f7f3ea] tw-px-[0.7em] tw-py-[0.28em] tw-font-[inherit] tw-text-[0.78em] tw-text-[#10241c]"
+            @click="readingId = null"
+          >
+            Fechar
+          </button>
+        </div>
+        <p class="tw-m-0 tw-text-[0.86em] tw-leading-[1.4] tw-text-[#b7c4bc]">
+          {{ reading.organization }} · {{ reading.period }} · {{ reading.place }}
+        </p>
+        <p class="tw-m-0 tw-leading-[1.45]">{{ reading.summary }}</p>
+        <p v-if="reading.links?.length" class="tw-m-0 tw-flex tw-flex-wrap tw-gap-[0.8em]">
+          <a
+            v-for="link in reading.links"
+            :key="link.href"
+            class="tw-text-[#e7c7a4] tw-underline tw-underline-offset-[0.18em]"
+            :href="link.href"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ link.label }}
+          </a>
+        </p>
+        <ul
+          v-if="reading.stack.length"
+          class="tw-m-0 tw-flex tw-list-none tw-flex-wrap tw-gap-1.5 tw-p-0"
         >
-          {{ link.label }}
-        </a>
-      </p>
-      <button
-        type="button"
-        class="tw-cursor-pointer tw-rounded-full tw-border-0 tw-bg-[#f7f3eaf0] tw-px-4 tw-py-2 tw-font-[inherit] tw-text-[0.95rem] tw-text-[#17211c]"
-        @click="readingId = null"
+          <li
+            v-for="item in reading.stack"
+            :key="item"
+            class="tw-rounded-full tw-bg-[#f7f3ea18] tw-px-[0.55em] tw-py-[0.2em] tw-text-[0.75em]"
+          >
+            {{ item }}
+          </li>
+        </ul>
+        <ProjectNote v-if="notesOpen" bare :id="reading.id" />
+      </div>
+      <div
+        v-if="readingNotes || !handheld"
+        class="desk-screen__bar tw-flex tw-items-center tw-justify-between tw-gap-3 tw-border-t tw-border-[#f7f3ea24] tw-px-[0.9em] tw-py-[0.45em]"
       >
-        <span class="max-md:tw-hidden [@media(pointer:coarse)]:tw-hidden">E para voltar</span>
-        <span class="tw-hidden max-md:tw-inline [@media(pointer:coarse)]:tw-inline"
-          >Voltar ao trilho</span
+        <button
+          v-if="readingNotes"
+          type="button"
+          class="desk-screen__notes tw-cursor-pointer tw-border-0 tw-bg-transparent tw-p-0 tw-text-left tw-font-[inherit] tw-text-[0.92em] tw-leading-snug tw-text-[#e7c7a4] tw-underline tw-underline-offset-[0.18em]"
+          @click="notesOpen = !notesOpen"
         >
-      </button>
+          {{ notesOpen ? 'Fechar as notas' : 'Notas de como está feito' }}
+        </button>
+        <p class="desk-screen__hint tw-m-0 tw-ml-auto tw-text-[0.75em] tw-text-[#b7c4bc]">
+          E para voltar ao trilho
+        </p>
+      </div>
     </div>
 
     <p
@@ -652,7 +720,9 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { TresCanvas } from '@tresjs/core'
 import { passageById, steps } from '@/data/journey'
-import { ensureAmbience, stopAmbience } from '@/game/ambience'
+import { noteBlocks } from '@/data/notes'
+import { screenFrame } from '@/game/computer'
+import { ensureAmbience, setAmbienceMuted, stopAmbience } from '@/game/ambience'
 import { atelierNear, baking, enterAtelier, leaveAtelier } from '@/game/cake'
 import { releaseHikeKeys, setHikeKey, setHikeStick, type HikeKey } from '@/game/controls'
 import { journeyTurned, toStageDelta } from '@/game/orientation'
@@ -671,6 +741,7 @@ import {
   scooterNear,
   terminalOpen,
 } from '@/game/spot'
+import ProjectNote from '@/components/ProjectNote.vue'
 import Bolo from './Bolo.vue'
 import JourneyMap from './JourneyMap.vue'
 import Atlas from './Atlas.vue'
@@ -690,12 +761,31 @@ const promptInput = ref<HTMLInputElement | null>(null)
 const promptLog = ref<HTMLElement | null>(null)
 const activeId = ref<string | null>(null)
 const readingId = ref<string | null>(null)
+const notesOpen = ref(false)
 const started = ref(false)
 const cardOpen = ref(false)
 const seen = ref<string[]>([])
 const hiker = ref<{ reset: () => void } | null>(null)
 
 const passage = computed(() => (activeId.value ? passageById[activeId.value] : null))
+const reading = computed(() => (readingId.value ? passageById[readingId.value] : null))
+const readingNotes = computed(() => (reading.value ? noteBlocks(reading.value.id).length > 0 : false))
+
+watch(readingId, () => {
+  notesOpen.value = false
+})
+const soundOn = ref(true)
+
+function toggleSound() {
+  soundOn.value = !soundOn.value
+  setAmbienceMuted(!soundOn.value)
+}
+
+function onAmbienceGesture(event: Event) {
+  const target = event.target
+  if (target instanceof Element && target.closest('[data-mute]')) return
+  ensureAmbience()
+}
 const penaltyBanner = computed(() => {
   if (penalty.call === 'golo') return 'GOLO!'
   if (penalty.call === 'defesa') return 'DEFESA!'
@@ -1090,8 +1180,8 @@ onMounted(() => {
   screen.orientation?.addEventListener('change', onMediaChange)
   window.visualViewport?.addEventListener('resize', onMediaChange)
   window.addEventListener('pointerdown', onLandscapeGesture, true)
-  window.addEventListener('pointerdown', ensureAmbience, true)
-  window.addEventListener('touchend', ensureAmbience, true)
+  window.addEventListener('pointerdown', onAmbienceGesture, true)
+  window.addEventListener('touchend', onAmbienceGesture, true)
   document.addEventListener('visibilitychange', onForeground)
 })
 
@@ -1110,8 +1200,8 @@ onUnmounted(() => {
   screen.orientation?.removeEventListener('change', onMediaChange)
   window.visualViewport?.removeEventListener('resize', onMediaChange)
   window.removeEventListener('pointerdown', onLandscapeGesture, true)
-  window.removeEventListener('pointerdown', ensureAmbience, true)
-  window.removeEventListener('touchend', ensureAmbience, true)
+  window.removeEventListener('pointerdown', onAmbienceGesture, true)
+  window.removeEventListener('touchend', onAmbienceGesture, true)
   document.removeEventListener('visibilitychange', onForeground)
   onBlur()
   releaseOrientation()
@@ -1218,16 +1308,6 @@ onUnmounted(() => {
   white-space: normal !important;
 }
 
-.journey-handheld .read-dock {
-  top: calc(max(10px, env(safe-area-inset-top, 0px)) + 3.4rem) !important;
-  bottom: auto !important;
-  width: min(18rem, calc(100% - 7.5rem)) !important;
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
-  justify-content: center !important;
-  gap: 0.35rem !important;
-}
-
 .journey-handheld .scoreboard {
   top: max(0.35rem, env(safe-area-inset-top, 0px)) !important;
 }
@@ -1269,6 +1349,48 @@ onUnmounted(() => {
   max-width: calc(100% - 1.2rem) !important;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+.desk-screen {
+  container-type: size;
+  font-size: clamp(0.72rem, 3.6cqh, 1.05rem);
+}
+
+.journey-handheld .desk-screen {
+  font-size: clamp(0.9rem, 4.6cqh, 1.05rem);
+}
+
+.journey-handheld .desk-screen__body {
+  padding-top: max(
+    0.75em,
+    calc(max(12px, env(safe-area-inset-top, 0px)) + 3.4rem - var(--screen-top, 0px))
+  ) !important;
+}
+
+.journey-handheld .desk-screen__close {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.journey-handheld .desk-screen__bar {
+  padding-bottom: max(0.45em, env(safe-area-inset-bottom, 0px));
+}
+
+.journey-handheld .desk-screen__notes {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+}
+
+.journey-handheld .desk-screen__hint {
+  display: none;
+}
+
+.journey-handheld .desk-screen a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 .touch-controls--off {
