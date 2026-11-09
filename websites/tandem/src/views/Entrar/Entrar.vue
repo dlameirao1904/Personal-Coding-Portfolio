@@ -2,10 +2,12 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { usePwaInstall } from '@/composables/usePwaInstall'
 
 const route = useRoute()
 const router = useRouter()
 const { signInWithPassword, signUp, isSupabaseConfigured, authError } = useAuth()
+const { canPromptInstall, iosInstallHint, showInstallBanner, installApp } = usePwaInstall()
 
 const mode = ref<'login' | 'register'>('login')
 const email = ref('')
@@ -59,6 +61,30 @@ async function submit() {
     <div class="tw-flex-1 tw-rounded-t-3xl tw-bg-paper tw-px-4 tw-py-8">
       <div class="tw-mx-auto tw-max-w-md">
         <h1 class="tw-m-0 tw-text-xl tw-font-semibold">{{ mode === 'login' ? 'Entrar' : 'Criar conta' }}</h1>
+
+        <section
+          v-if="showInstallBanner"
+          class="tw-mt-4 tw-flex tw-flex-col tw-gap-3 tw-rounded-2xl tw-border tw-border-teal/25 tw-bg-teal/10 tw-p-4 tw-text-sm sm:tw-flex-row sm:tw-items-center sm:tw-justify-between"
+          aria-label="Instalar aplicação"
+        >
+          <div>
+            <p class="tw-m-0 tw-font-semibold tw-text-ink">Instala o Tandem</p>
+            <p class="tw-m-0 tw-mt-0.5 tw-text-muted">
+              <template v-if="canPromptInstall">Abre como app — mais rápido no telemóvel.</template>
+              <template v-else-if="iosInstallHint">
+                No Safari: Partilhar → «Adicionar ao ecrã inicial».
+              </template>
+            </p>
+          </div>
+          <button
+            v-if="canPromptInstall"
+            type="button"
+            class="tw-shrink-0 tw-rounded-xl tw-bg-teal tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-paper"
+            @click="installApp"
+          >
+            Instalar
+          </button>
+        </section>
 
         <article
           v-if="!isSupabaseConfigured"
