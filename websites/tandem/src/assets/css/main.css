@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: #f6f4ef;
+  color: #0f1419;
+  font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+::selection {
+  background: #1a6b6b;
+  color: #f6f4ef;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #1a6b6b;
+  outline-offset: 2px;
+}
