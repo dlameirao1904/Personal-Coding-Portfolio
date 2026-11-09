@@ -62,6 +62,10 @@ npm run build
 
 Criadas automaticamente ao criar casa: poupança, alimentação, saídas, combustível, carro, saúde, educação, casa, salário, etc.
 
+## Código fonte (GitHub)
+
+Versionado no monorepo pessoal [`dlameirao1904/Personal-Coding-Portfolio`](https://github.com/dlameirao1904/Personal-Coding-Portfolio) → pasta `websites/tandem`.
+
 ## Próximos passos
 
 - Gráfico de peso
