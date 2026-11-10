@@ -238,4 +238,17 @@ export const personalProjects: ShowcaseProject[] = [
       'Base de um SIEM para estudar, só com a biblioteca padrão do Python. O coletor lê o log de autenticação, a API guarda os eventos em SQLite e uma regra avisa quando o mesmo IP falha cinco vezes em cinco minutos.',
     stack: ['Python', 'SQLite'],
   },
+  {
+    title: 'Planilha',
+    summary:
+      'Aplicação que permite criar uma planilha de gastos e ganhos pessoais (assim como gastos e ganhos em conjunto com alguem ou varias pessoas - com a criação de uma casa), permite o tracking de refeições e tambem de treinos (com planeamento e contagem). Qualquer pessoa pode usar.',
+    stack: ['VueJS, TypeScript, TailwindCSS, Supabase'],
+    links: [
+      {
+        href: 'https://github.com/dlameirao1904/Personal-Coding-Portfolio/tree/main/websites/planilha',
+        label: 'Código',
+      },
+      { href: 'https://tandem-omega-eight.vercel.app', label: 'Ver o site' },
+    ],
+  },
 ]

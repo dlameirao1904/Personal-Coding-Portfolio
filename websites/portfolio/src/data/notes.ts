@@ -18,6 +18,7 @@ import redes from '../../MDs/University/Segundo Ano/SCR.md?raw'
 import rover from '../../MDs/Projects/QuanticRover.md?raw'
 import siem from '../../MDs/Projects/cyber.md?raw'
 import vertice from '../../MDs/University/Mestrado/Projeto Integrado.md?raw'
+import tandem from '../../MDs/Projects/Tandem.md?raw'
 
 const notes: Record<string, string> = {
   la1,
@@ -40,6 +41,7 @@ const notes: Record<string, string> = {
   rover,
   reconstrucao,
   siem,
+  tandem,
 }
 
 function plain(value: string) {

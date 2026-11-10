@@ -252,6 +252,7 @@ const markerSpots: Record<string, MarkerSpot> = {
     radius: 1.9,
   },
   'SIEM local': { id: 'siem', short: 'SIEM', position: [-8, 18, -109.5], radius: 1.9 },
+  Planilha: { id: 'tandem', short: 'Planilha', position: [-14, 18, -115], radius: 1.9 },
 }
 
 export function noteIdForTitle(title: string) {
@@ -417,12 +418,12 @@ export const steps: JourneyStep[] = [
     period: 'Em paralelo',
     place: 'Braga',
     summary:
-      'O site da associação de Gralhas, o atelier da Marina e o Martrack, o painel do Quantic Rover, a reconstrução 3D e um SIEM local para estudar.',
+      'O site da associação de Gralhas, o atelier da Marina e o Martrack, o painel do Quantic Rover, a reconstrução 3D, um SIEM local para estudar e a planilha para controlar gastos e ganhos pessoais.',
     stack: [],
-    sceneNote: 'À chegada estão o Atelier e o Martrack. Os outros quatro ficam mais à frente.',
+    sceneNote: 'À chegada estão o Atelier e o Martrack. Os outros cinco ficam mais à frente.',
     position: [-14, 18, -104],
     radius: 6.2,
-    landingRadius: 9.6,
+    landingRadius: 12.2,
     landingColor: '#d7d3c6',
     projects: sideProjects,
   },
