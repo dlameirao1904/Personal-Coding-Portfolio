@@ -3,12 +3,14 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { useAuth } from '@/composables/useAuth'
+import { usePwaInstall } from '@/composables/usePwaInstall'
 
 const router = useRouter()
 const route = useRoute()
 
 const { user, profile, household, signOut, isSupabaseConfigured, displayName, houseLabel, ready } =
   useAuth()
+const { canPromptInstall, installApp } = usePwaInstall()
 
 const drawerOpen = ref(false)
 
@@ -72,6 +74,14 @@ async function onSignOut() {
               {{ link.label }}
             </RouterLink>
             <button
+              v-if="canPromptInstall"
+              type="button"
+              class="tw-rounded-lg tw-px-3 tw-py-1.5 tw-text-sm tw-font-semibold tw-text-teal hover:tw-bg-teal/10"
+              @click="installApp"
+            >
+              Instalar
+            </button>
+            <button
               v-if="isSupabaseConfigured"
               type="button"
               class="tw-rounded-lg tw-px-3 tw-py-1.5 tw-text-sm tw-font-semibold tw-text-danger hover:tw-bg-danger/10"
@@ -129,7 +139,15 @@ async function onSignOut() {
             </RouterLink>
           </nav>
 
-          <div class="tw-border-t tw-border-salt tw-p-3">
+          <div class="tw-space-y-2 tw-border-t tw-border-salt tw-p-3">
+            <button
+              v-if="canPromptInstall"
+              type="button"
+              class="tw-w-full tw-rounded-xl tw-bg-teal tw-py-3 tw-text-sm tw-font-semibold tw-text-paper"
+              @click="installApp"
+            >
+              Instalar aplicação
+            </button>
             <button
               type="button"
               class="tw-w-full tw-rounded-xl tw-bg-danger/10 tw-py-3 tw-text-sm tw-font-semibold tw-text-danger"

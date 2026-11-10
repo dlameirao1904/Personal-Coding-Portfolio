@@ -10,7 +10,7 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['tandem-logo.png', 'favicon.svg'],
+      includeAssets: ['tandem-logo.png', 'favicon.svg', 'pwa-192.png', 'pwa-512.png'],
       manifest: {
         name: 'Tandem',
         short_name: 'Tandem',
@@ -22,13 +22,14 @@ export default defineConfig({
         lang: 'pt-PT',
         start_url: '/',
         icons: [
-          {
-            src: 'tandem-logo.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable',
-          },
+          { src: 'pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
         ],
+      },
+      devOptions: {
+        enabled: true,
+        type: 'module',
+        suppressWarnings: true,
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,svg,png,woff2}'],

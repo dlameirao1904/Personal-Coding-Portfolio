@@ -17,34 +17,57 @@ const {
   copyPageLink,
 } = usePwaInstall()
 
+const EMAIL_KEY = 'tandem.login-email'
+
+function readRememberedEmail() {
+  try {
+    return localStorage.getItem(EMAIL_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+function saveRememberedEmail(value: string) {
+  try {
+    localStorage.setItem(EMAIL_KEY, value)
+  } catch {
+    /* modo privado ou quota */
+  }
+}
+
 const mode = ref<'login' | 'register'>('login')
-const email = ref('')
+const email = ref(readRememberedEmail())
 const password = ref('')
 const displayName = ref('')
 const loading = ref(false)
 const message = ref<string | null>(null)
 
+function redirectPath() {
+  return typeof route.query.redirect === 'string' &&
+    route.query.redirect.startsWith('/') &&
+    !route.query.redirect.startsWith('//')
+    ? route.query.redirect
+    : '/'
+}
+
 async function submit() {
   loading.value = true
   message.value = null
+  const trimmedEmail = email.value.trim()
   try {
     const ok =
       mode.value === 'login'
-        ? await signInWithPassword(email.value.trim(), password.value)
-        : await signUp(email.value.trim(), password.value, displayName.value.trim())
+        ? await signInWithPassword(trimmedEmail, password.value)
+        : await signUp(trimmedEmail, password.value, displayName.value.trim())
 
-    if (ok) {
-      if (mode.value === 'register') {
-        message.value = 'Conta criada. Confirma o email se o projeto Supabase tiver confirmação ativa.'
-      }
-      const redirect =
-        typeof route.query.redirect === 'string' &&
-        route.query.redirect.startsWith('/') &&
-        !route.query.redirect.startsWith('//')
-          ? route.query.redirect
-          : '/'
-      await router.push(redirect)
+    if (!ok) return
+    saveRememberedEmail(trimmedEmail)
+    if (mode.value === 'register') {
+      message.value = 'Conta criada. Confirma o email se o projeto Supabase tiver confirmação ativa.'
+      await router.push(redirectPath())
+      return
     }
+    window.location.assign(redirectPath())
   } finally {
     loading.value = false
   }
@@ -137,7 +160,7 @@ async function submit() {
           Falta configurar o Supabase no <code class="tw-font-mono">.env</code>.
         </article>
 
-        <form v-else class="tw-mt-6 tw-space-y-4" @submit.prevent="submit">
+        <form v-else class="tw-mt-6 tw-space-y-4" method="post" action="/" autocomplete="on" @submit.prevent="submit">
           <div class="tw-flex tw-gap-2">
             <button
               type="button"
@@ -157,33 +180,45 @@ async function submit() {
             </button>
           </div>
 
-          <label v-if="mode === 'register'" class="tw-block tw-space-y-1 tw-text-sm">
+          <label v-if="mode === 'register'" class="tw-block tw-space-y-1 tw-text-sm" for="display-name">
             <span class="tw-font-medium">Nome</span>
             <input
+              id="display-name"
               v-model="displayName"
+              name="name"
               type="text"
               required
+              autocomplete="name"
               class="tw-w-full tw-rounded-xl tw-border tw-border-salt tw-px-3 tw-py-2"
             />
           </label>
 
-          <label class="tw-block tw-space-y-1 tw-text-sm">
+          <label class="tw-block tw-space-y-1 tw-text-sm" for="email">
             <span class="tw-font-medium">Email</span>
             <input
+              id="email"
               v-model="email"
+              name="email"
               type="email"
               required
+              autocomplete="username"
+              inputmode="email"
+              autocapitalize="none"
+              spellcheck="false"
               class="tw-w-full tw-rounded-xl tw-border tw-border-salt tw-px-3 tw-py-2"
             />
           </label>
 
-          <label class="tw-block tw-space-y-1 tw-text-sm">
+          <label class="tw-block tw-space-y-1 tw-text-sm" for="password">
             <span class="tw-font-medium">Palavra-passe</span>
             <input
+              id="password"
               v-model="password"
+              name="password"
               type="password"
               required
               minlength="6"
+              :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
               class="tw-w-full tw-rounded-xl tw-border tw-border-salt tw-px-3 tw-py-2"
             />
           </label>
@@ -196,6 +231,9 @@ async function submit() {
             {{ loading ? 'A aguardar…' : mode === 'login' ? 'Entrar' : 'Criar conta' }}
           </button>
 
+          <p v-if="mode === 'login'" class="tw-m-0 tw-text-xs tw-text-muted">
+            Depois de entrares, a sessão fica neste aparelho. Só voltas a escrever isto se carregares em Sair.
+          </p>
           <p v-if="authError" class="tw-m-0 tw-text-sm tw-text-danger">{{ authError }}</p>
           <p v-if="message" class="tw-m-0 tw-text-sm tw-text-teal">{{ message }}</p>
         </form>

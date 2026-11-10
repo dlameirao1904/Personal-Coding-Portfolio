@@ -2,6 +2,12 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import { weekStartMonday, toISODate } from '@/domain/dates'
+import {
+  estimateConfidenceLabel,
+  estimateMealMacros,
+  formatMacroRange,
+  type MacroEstimate,
+} from '@/domain/nutritionEstimate'
 import { requireSupabase } from '@/lib/supabase'
 import { DAY_LABELS, MEAL_SLOT_LABELS, type MealItem, type MealSlot, type UserNutritionTargets } from '@/types/supabase'
 
@@ -25,7 +31,57 @@ const form = ref({
   protein_g: 0,
 })
 
+const selectedDay = ref(0)
+
 const slots: MealSlot[] = ['pequeno_almoco', 'almoco', 'jantar', 'lanche']
+
+function dayIndexInWeek(weekMondayIso: string, dateIso: string): number | null {
+  const start = new Date(`${weekMondayIso}T12:00:00`)
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start)
+    d.setDate(d.getDate() + i)
+    if (toISODate(d) === dateIso) return i
+  }
+  return null
+}
+
+function syncSelectedDayToToday() {
+  const idx = dayIndexInWeek(weekStart.value, toISODate(new Date()))
+  if (idx !== null) selectedDay.value = idx
+}
+
+watch(selectedDay, (day) => {
+  form.value.day_index = day
+})
+
+const estimateError = ref<string | null>(null)
+const estimatePreview = ref<MacroEstimate | null>(null)
+
+watch(
+  () => form.value.title,
+  () => {
+    estimatePreview.value = null
+    estimateError.value = null
+  },
+)
+
+function runEstimate() {
+  const title = form.value.title.trim()
+  if (!title) {
+    estimateError.value = 'Escreve o prato com alimentos e quantidades.'
+    return
+  }
+  estimateError.value = null
+  try {
+    const result = estimateMealMacros(title)
+    estimatePreview.value = result
+    form.value.calories = result.calories.mid
+    form.value.protein_g = Math.round(result.protein_g.mid * 10) / 10
+  } catch (e) {
+    estimatePreview.value = null
+    estimateError.value = e instanceof Error ? e.message : 'Não foi possível estimar.'
+  }
+}
 
 const caloriesByDay = computed(() => {
   const totals = Array(7).fill(0)
@@ -122,6 +178,8 @@ async function addMeal() {
   form.value.title = ''
   form.value.calories = 0
   form.value.protein_g = 0
+  estimatePreview.value = null
+  estimateError.value = null
   await loadItems()
 }
 
@@ -209,11 +267,14 @@ async function copyWeekMeals() {
 watch(weekStart, async () => {
   weekId.value = null
   items.value = []
+  syncSelectedDayToToday()
   await ensureWeek()
   await loadItems()
 })
 
 onMounted(async () => {
+  syncSelectedDayToToday()
+  form.value.day_index = selectedDay.value
   await loadTargets()
   await ensureWeek()
   await loadItems()
@@ -221,7 +282,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="tw-mx-auto tw-max-w-4xl tw-space-y-6 tw-px-4 tw-py-10">
+  <div class="tw-mx-auto tw-max-w-4xl tw-space-y-5 tw-px-4 tw-pb-10 tw-pt-6 md:tw-space-y-6 md:tw-py-10">
     <header class="tw-flex tw-flex-wrap tw-items-center tw-justify-between tw-gap-4">
       <div>
         <h1 class="tw-m-0 tw-text-2xl tw-font-semibold">Alimentação</h1>
@@ -249,7 +310,7 @@ onMounted(async () => {
       <p v-if="nutritionTargets?.notes" class="tw-m-0 tw-text-xs tw-text-muted">{{ nutritionTargets.notes }}</p>
     </div>
 
-    <section class="tw-rounded-2xl tw-border tw-border-salt tw-bg-white tw-p-4 tw-shadow-card">
+    <section class="tw-hidden tw-rounded-2xl tw-border tw-border-salt tw-bg-white tw-p-4 tw-shadow-card md:tw-block">
       <h2 class="tw-m-0 tw-mb-2 tw-text-base tw-font-semibold">Copiar refeições</h2>
       <p class="tw-m-0 tw-mb-3 tw-text-xs tw-text-muted">
         Destino: semana <strong class="tw-font-mono">{{ weekStart }}</strong> (a que estás a ver). Escolhe um dia da semana
@@ -279,7 +340,188 @@ onMounted(async () => {
       <p v-if="copyError" class="tw-m-0 tw-mt-2 tw-text-sm tw-text-danger">{{ copyError }}</p>
     </section>
 
-    <form class="tw-grid tw-gap-3 tw-rounded-2xl tw-bg-white tw-p-4 tw-shadow-card sm:tw-grid-cols-2" @submit.prevent="addMeal">
+    <!-- Mobile: um dia de cada vez, sem scroll horizontal -->
+    <section class="tw-space-y-4 md:tw-hidden">
+      <div
+        class="tw-sticky tw-top-14 tw-z-20 tw--mx-4 tw-border-b tw-border-salt/80 tw-bg-paper/95 tw-px-4 tw-py-2 tw-backdrop-blur-sm"
+        role="tablist"
+        aria-label="Dia da semana"
+      >
+        <div class="tw-grid tw-grid-cols-7 tw-gap-1">
+          <button
+            v-for="(label, idx) in DAY_LABELS"
+            :key="idx"
+            type="button"
+            role="tab"
+            class="tw-flex tw-flex-col tw-items-center tw-rounded-xl tw-border tw-py-2 tw-text-[11px] tw-leading-tight tw-transition-colors"
+            :class="
+              selectedDay === idx
+                ? 'tw-border-teal tw-bg-teal tw-font-semibold tw-text-paper'
+                : 'tw-border-transparent tw-bg-white tw-text-ink'
+            "
+            :aria-selected="selectedDay === idx"
+            @click="selectedDay = idx"
+          >
+            <span>{{ label }}</span>
+            <span
+              class="tw-mt-0.5 tw-font-mono tw-text-[9px]"
+              :class="selectedDay === idx ? 'tw-text-paper/85' : 'tw-text-muted'"
+            >
+              {{ caloriesByDay[idx] }}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <p class="tw-m-0 tw-text-center tw-text-xs tw-text-muted">
+        <strong class="tw-font-mono tw-text-ink">{{ caloriesByDay[selectedDay] }} kcal</strong>
+        · <strong class="tw-font-mono tw-text-ink">{{ Math.round(proteinByDay[selectedDay]) }} g</strong> proteína
+      </p>
+
+      <form
+        class="tw-space-y-3 tw-rounded-2xl tw-border tw-border-teal/20 tw-bg-white tw-p-4 tw-shadow-card"
+        @submit.prevent="addMeal"
+      >
+        <h2 class="tw-m-0 tw-text-sm tw-font-semibold">
+          Adicionar — {{ DAY_LABELS[selectedDay] }}
+        </h2>
+        <label class="tw-block tw-text-sm">
+          Refeição
+          <select
+            v-model="form.meal_slot"
+            class="tw-mt-1 tw-w-full tw-rounded-lg tw-border tw-border-salt tw-px-2 tw-py-2"
+          >
+            <option v-for="s in slots" :key="s" :value="s">{{ MEAL_SLOT_LABELS[s] }}</option>
+          </select>
+        </label>
+        <input
+          v-model="form.title"
+          type="text"
+          placeholder="Ex.: Frango 130 g, arroz 65 g (cru)"
+          required
+          class="tw-w-full tw-rounded-lg tw-border tw-border-salt tw-px-3 tw-py-2 tw-text-sm"
+        />
+        <div class="tw-flex tw-flex-wrap tw-gap-2">
+          <button
+            type="button"
+            class="tw-rounded-lg tw-border tw-border-teal/40 tw-bg-white tw-px-3 tw-py-1.5 tw-text-sm tw-font-semibold tw-text-teal disabled:tw-opacity-60"
+            :disabled="!form.title.trim()"
+            @click="runEstimate"
+          >
+            Estimar intervalo
+          </button>
+        </div>
+        <p
+          v-if="estimatePreview"
+          class="tw-m-0 tw-rounded-xl tw-border tw-border-salt tw-bg-salt/40 tw-p-3 tw-text-xs tw-text-muted"
+        >
+          <span class="tw-font-semibold tw-text-ink">Intervalo estimado:</span>
+          {{ formatMacroRange(estimatePreview.calories, 'kcal') }} ·
+          {{ formatMacroRange(estimatePreview.protein_g, 'g P') }}.
+          Valores gravados: {{ estimatePreview.calories.mid }} kcal,
+          {{ estimatePreview.protein_g.mid }} g P (meio do intervalo).
+          <span class="tw-mt-1 tw-block">{{ estimateConfidenceLabel(estimatePreview) }}.</span>
+        </p>
+        <p v-if="estimateError" class="tw-m-0 tw-text-xs tw-text-danger">{{ estimateError }}</p>
+        <div class="tw-grid tw-grid-cols-2 tw-gap-2">
+          <input
+            v-model.number="form.calories"
+            type="number"
+            min="0"
+            placeholder="kcal"
+            class="tw-rounded-lg tw-border tw-border-salt tw-px-3 tw-py-2 tw-text-sm"
+          />
+          <input
+            v-model.number="form.protein_g"
+            type="number"
+            min="0"
+            step="0.1"
+            placeholder="Proteína (g)"
+            class="tw-rounded-lg tw-border tw-border-salt tw-px-3 tw-py-2 tw-text-sm"
+          />
+        </div>
+        <button
+          type="submit"
+          class="tw-w-full tw-rounded-xl tw-bg-teal tw-py-2.5 tw-text-sm tw-font-semibold tw-text-paper"
+        >
+          Adicionar
+        </button>
+      </form>
+
+      <div class="tw-space-y-3">
+        <article
+          v-for="slot in slots"
+          :key="slot"
+          class="tw-rounded-2xl tw-border tw-border-salt tw-bg-white tw-p-3"
+        >
+          <h3 class="tw-m-0 tw-text-sm tw-font-semibold">{{ MEAL_SLOT_LABELS[slot] }}</h3>
+          <ul v-if="itemsFor(selectedDay, slot).length" class="tw-m-0 tw-mt-2 tw-list-none tw-space-y-2 tw-p-0">
+            <li
+              v-for="meal in itemsFor(selectedDay, slot)"
+              :key="meal.id"
+              class="tw-flex tw-items-start tw-justify-between tw-gap-2 tw-rounded-xl tw-bg-salt/50 tw-p-3"
+            >
+              <div class="tw-min-w-0">
+                <p class="tw-m-0 tw-font-medium">{{ meal.title }}</p>
+                <p class="tw-m-0 tw-mt-0.5 tw-font-mono tw-text-xs tw-text-muted">
+                  {{ meal.calories }} kcal
+                  <span v-if="meal.protein_g"> · {{ meal.protein_g }} g P</span>
+                </p>
+                <p v-if="meal.notes" class="tw-m-0 tw-mt-0.5 tw-text-xs tw-text-muted">{{ meal.notes }}</p>
+              </div>
+              <button
+                type="button"
+                class="tw-shrink-0 tw-rounded-lg tw-px-2 tw-py-1 tw-text-sm tw-text-danger"
+                title="Apagar refeição"
+                @click="removeMeal(meal.id, meal.title)"
+              >
+                Apagar
+              </button>
+            </li>
+          </ul>
+          <p v-else class="tw-m-0 tw-mt-2 tw-text-xs tw-text-muted">Sem refeições.</p>
+        </article>
+      </div>
+    </section>
+
+    <details class="tw-group tw-rounded-2xl tw-border tw-border-salt tw-bg-white tw-shadow-card md:tw-hidden">
+      <summary class="tw-cursor-pointer tw-list-none tw-p-4 tw-text-base tw-font-semibold [&::-webkit-details-marker]:tw-hidden">
+        Copiar refeições
+        <span class="tw-ml-1 tw-text-sm tw-font-normal tw-text-muted">(opcional)</span>
+      </summary>
+      <div class="tw-border-t tw-border-salt tw-p-4 tw-pt-3">
+        <p class="tw-m-0 tw-mb-3 tw-text-xs tw-text-muted">
+          Destino: <strong class="tw-font-mono">{{ weekStart }}</strong>. Escolhe um dia da semana de origem.
+        </p>
+        <div class="tw-space-y-3">
+          <label class="tw-block tw-text-sm">
+            Semana de origem
+            <input
+              v-model="copyFromDate"
+              type="date"
+              class="tw-mt-1 tw-block tw-w-full tw-rounded-lg tw-border tw-border-salt tw-px-3 tw-py-2"
+            />
+          </label>
+          <p class="tw-m-0 tw-text-xs tw-text-muted">
+            Segunda-feira: <span class="tw-font-mono">{{ copySourceWeekStart }}</span>
+          </p>
+          <button
+            type="button"
+            class="tw-w-full tw-rounded-xl tw-bg-teal tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-paper disabled:tw-opacity-60"
+            :disabled="copyBusy"
+            @click="copyWeekMeals"
+          >
+            {{ copyBusy ? 'A copiar…' : 'Copiar para esta semana' }}
+          </button>
+        </div>
+        <p v-if="copyError" class="tw-m-0 tw-mt-2 tw-text-sm tw-text-danger">{{ copyError }}</p>
+      </div>
+    </details>
+
+    <form
+      class="tw-hidden tw-grid tw-gap-3 tw-rounded-2xl tw-bg-white tw-p-4 tw-shadow-card sm:tw-grid-cols-2 md:tw-grid"
+      @submit.prevent="addMeal"
+    >
       <label class="tw-text-sm">
         Dia
         <select v-model.number="form.day_index" class="tw-mt-1 tw-w-full tw-rounded-lg tw-border tw-border-salt tw-px-2 tw-py-2">
@@ -292,7 +534,33 @@ onMounted(async () => {
           <option v-for="s in slots" :key="s" :value="s">{{ MEAL_SLOT_LABELS[s] }}</option>
         </select>
       </label>
-      <input v-model="form.title" type="text" placeholder="Prato / refeição" required class="tw-rounded-lg tw-border tw-border-salt tw-px-3 tw-py-2 tw-text-sm sm:tw-col-span-2" />
+      <input
+        v-model="form.title"
+        type="text"
+        placeholder="Ex.: Frango 130 g, arroz 65 g (cru)"
+        required
+        class="tw-rounded-lg tw-border tw-border-salt tw-px-3 tw-py-2 tw-text-sm sm:tw-col-span-2"
+      />
+      <button
+        type="button"
+        class="tw-rounded-lg tw-border tw-border-teal/40 tw-bg-white tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-teal disabled:tw-opacity-60 sm:tw-col-span-2"
+        :disabled="!form.title.trim()"
+        @click="runEstimate"
+      >
+        Estimar intervalo
+      </button>
+      <p
+        v-if="estimatePreview"
+        class="tw-m-0 tw-rounded-xl tw-border tw-border-salt tw-bg-salt/40 tw-p-3 tw-text-xs tw-text-muted sm:tw-col-span-2"
+      >
+        <span class="tw-font-semibold tw-text-ink">Intervalo estimado:</span>
+        {{ formatMacroRange(estimatePreview.calories, 'kcal') }} ·
+        {{ formatMacroRange(estimatePreview.protein_g, 'g P') }}.
+        Gravação com {{ estimatePreview.calories.mid }} kcal,
+        {{ estimatePreview.protein_g.mid }} g P (meio).
+        <span class="tw-mt-1 tw-block">{{ estimateConfidenceLabel(estimatePreview) }}.</span>
+      </p>
+      <p v-if="estimateError" class="tw-m-0 tw-text-xs tw-text-danger sm:tw-col-span-2">{{ estimateError }}</p>
       <input v-model.number="form.calories" type="number" min="0" placeholder="kcal" class="tw-rounded-lg tw-border tw-border-salt tw-px-3 tw-py-2 tw-text-sm" />
       <input v-model.number="form.protein_g" type="number" min="0" step="0.1" placeholder="Proteína (g)" class="tw-rounded-lg tw-border tw-border-salt tw-px-3 tw-py-2 tw-text-sm" />
       <button type="submit" class="tw-rounded-xl tw-bg-teal tw-py-2 tw-text-sm tw-font-semibold tw-text-paper sm:tw-col-span-2">Adicionar</button>
@@ -300,7 +568,7 @@ onMounted(async () => {
 
     <p v-if="loading" class="tw-text-sm tw-text-muted">A carregar…</p>
 
-    <div class="tw-overflow-x-auto tw-rounded-2xl tw-border tw-border-salt tw-bg-white">
+    <div class="tw-hidden tw-overflow-x-auto tw-rounded-2xl tw-border tw-border-salt tw-bg-white md:tw-block">
       <table class="tw-w-full tw-min-w-[640px] tw-border-collapse tw-text-xs sm:tw-text-sm">
         <thead>
           <tr class="tw-border-b tw-border-salt tw-text-left tw-text-muted">

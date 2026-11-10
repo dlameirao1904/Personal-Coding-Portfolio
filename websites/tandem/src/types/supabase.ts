@@ -48,7 +48,7 @@ export interface HouseholdGoal {
 }
 
 export const HOUSEHOLD_GOAL_KIND_LABELS: Record<HouseholdGoalKind, string> = {
-  poupanca: 'Poupança a dois',
+  poupanca: 'Poupança',
   gastos_conjuntos: 'Gastos partilhados',
   ferias: 'Férias',
   outro: 'Outro',

@@ -1,4 +1,4 @@
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -29,45 +29,43 @@ function isIosInAppBrowser(): boolean {
 
 export type IosInstallGuide = 'safari' | 'chrome' | null
 
-export function usePwaInstall() {
-  const canPromptInstall = ref(false)
-  const iosInstallHint = ref(false)
-  const iosInstallGuide = ref<IosInstallGuide>(null)
-  const copiedLink = ref(false)
-  let deferredPrompt: BeforeInstallPromptEvent | null = null
+const canPromptInstall = ref(false)
+const iosInstallHint = ref(false)
+const iosInstallGuide = ref<IosInstallGuide>(null)
+const copiedLink = ref(false)
+let deferredPrompt: BeforeInstallPromptEvent | null = null
+let listening = false
 
+function onBeforeInstallPrompt(event: Event) {
+  event.preventDefault()
+  deferredPrompt = event as BeforeInstallPromptEvent
+  canPromptInstall.value = true
+}
+
+function onAppInstalled() {
+  canPromptInstall.value = false
+  iosInstallHint.value = false
+  deferredPrompt = null
+}
+
+function startInstallListener() {
+  if (listening || typeof window === 'undefined' || isPwaInstalled()) return
+  listening = true
+  window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+  window.addEventListener('appinstalled', onAppInstalled)
+  if (isIos()) {
+    iosInstallHint.value = true
+    iosInstallGuide.value = isIosInAppBrowser() ? 'chrome' : 'safari'
+  }
+}
+
+export function usePwaInstall() {
   const showInstallBanner = computed(
     () => !isPwaInstalled() && (canPromptInstall.value || iosInstallHint.value),
   )
 
-  function onBeforeInstallPrompt(event: Event) {
-    event.preventDefault()
-    deferredPrompt = event as BeforeInstallPromptEvent
-    canPromptInstall.value = true
-  }
-
-  function onAppInstalled() {
-    canPromptInstall.value = false
-    iosInstallHint.value = false
-    deferredPrompt = null
-  }
-
-  onMounted(() => {
-    if (isPwaInstalled()) return
-
-    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
-    window.addEventListener('appinstalled', onAppInstalled)
-
-    if (isIos()) {
-      iosInstallHint.value = true
-      iosInstallGuide.value = isIosInAppBrowser() ? 'chrome' : 'safari'
-    }
-  })
-
-  onUnmounted(() => {
-    window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt)
-    window.removeEventListener('appinstalled', onAppInstalled)
-  })
+  onMounted(startInstallListener)
+  startInstallListener()
 
   async function installApp() {
     if (!deferredPrompt) return

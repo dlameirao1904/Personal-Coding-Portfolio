@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { nextTick, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import AvatarPicker from '@/components/AvatarPicker.vue'
 import MoneyField from '@/components/MoneyField.vue'
@@ -21,6 +21,7 @@ const {
   updateHousehold,
   addHouseholdGoal,
   deleteHouseholdGoal,
+  leaveHousehold,
   authError,
 } = useAuth()
 
@@ -29,8 +30,12 @@ const inviteCode = ref('')
 const loading = ref(false)
 const localError = ref<string | null>(null)
 const houseMessage = ref<string | null>(null)
+const leaveOpen = ref(false)
+const leaveError = ref<string | null>(null)
+const cancelLeaveButton = ref<HTMLButtonElement | null>(null)
 
 const editName = ref(household.value?.name ?? '')
+const goalTab = ref<'lista' | 'criar'>('lista')
 const goalForm = ref({
   kind: 'poupanca' as HouseholdGoalKind,
   title: '',
@@ -112,8 +117,31 @@ async function addGoal() {
     goalForm.value.target_amount = 0
     goalForm.value.target_date = ''
     goalForm.value.notes = ''
+    goalTab.value = 'lista'
   } catch (e) {
     localError.value = e instanceof Error ? e.message : 'Erro ao adicionar objetivo.'
+  } finally {
+    loading.value = false
+  }
+}
+
+function dismissLeave() {
+  if (!loading.value) leaveOpen.value = false
+}
+
+function onLeaveKey(event: KeyboardEvent) {
+  if (event.key === 'Escape') dismissLeave()
+}
+
+async function confirmLeave() {
+  if (!household.value || loading.value) return
+  loading.value = true
+  leaveError.value = null
+  try {
+    await leaveHousehold()
+    leaveOpen.value = false
+  } catch (e) {
+    leaveError.value = e instanceof Error ? e.message : 'Não foi possível sair da casa.'
   } finally {
     loading.value = false
   }
@@ -137,6 +165,22 @@ watch(
   },
   { immediate: true },
 )
+
+watch(leaveOpen, (open) => {
+  document.body.style.overflow = open ? 'hidden' : ''
+  if (open) {
+    leaveError.value = null
+    window.addEventListener('keydown', onLeaveKey)
+    void nextTick(() => cancelLeaveButton.value?.focus())
+  } else {
+    window.removeEventListener('keydown', onLeaveKey)
+  }
+})
+
+onUnmounted(() => {
+  document.body.style.overflow = ''
+  window.removeEventListener('keydown', onLeaveKey)
+})
 </script>
 
 <template>
@@ -173,14 +217,33 @@ watch(
           :disabled="loading"
           @click="saveHouseName"
         >
-          Guardar nome
+          Guardar
         </button>
         <p v-if="houseMessage" class="tw-m-0 tw-text-sm tw-text-teal">{{ houseMessage }}</p>
       </section>
 
-      <section class="tw-space-y-4 tw-rounded-2xl tw-bg-white tw-p-5 tw-shadow-card">
+      <div class="tw-flex tw-gap-1 tw-rounded-xl tw-bg-salt/80 tw-p-1">
+        <button
+          type="button"
+          class="tw-flex-1 tw-rounded-lg tw-px-3 tw-py-2 tw-text-sm tw-font-medium"
+          :class="goalTab === 'lista' ? 'tw-bg-white tw-shadow-sm' : 'tw-text-muted'"
+          @click="goalTab = 'lista'"
+        >
+          Objetivos
+        </button>
+        <button
+          type="button"
+          class="tw-flex-1 tw-rounded-lg tw-px-3 tw-py-2 tw-text-sm tw-font-medium"
+          :class="goalTab === 'criar' ? 'tw-bg-white tw-shadow-sm' : 'tw-text-muted'"
+          @click="goalTab = 'criar'"
+        >
+          Criar objetivo
+        </button>
+      </div>
+
+      <section v-if="goalTab === 'lista'" class="tw-space-y-4 tw-rounded-2xl tw-bg-white tw-p-5 tw-shadow-card">
         <h2 class="tw-m-0 tw-text-base tw-font-semibold">Objetivos da casa</h2>
-        <p class="tw-m-0 tw-text-xs tw-text-muted">Poupanças, férias e outros alvos financeiros a dois.</p>
+        <p class="tw-m-0 tw-text-xs tw-text-muted">Poupanças, férias e outros alvos da casa.</p>
 
         <ul v-if="householdGoals.length" class="tw-m-0 tw-list-none tw-space-y-2 tw-p-0">
           <li
@@ -197,41 +260,63 @@ watch(
               </p>
               <p v-if="goal.notes" class="tw-m-0 tw-mt-1 tw-text-xs">{{ goal.notes }}</p>
             </div>
-            <button type="button" class="tw-text-xs tw-text-danger" :disabled="loading" @click="removeGoal(goal.id)">
+            <button type="button" class="tw-shrink-0 tw-text-xs tw-text-danger" :disabled="loading" @click="removeGoal(goal.id)">
               Remover
             </button>
           </li>
         </ul>
+        <p v-else class="tw-m-0 tw-text-sm tw-text-muted">Ainda sem objetivos.</p>
+      </section>
 
-        <form class="tw-space-y-3 tw-border-t tw-border-salt tw-pt-4" @submit.prevent="addGoal">
-          <label class="tw-block tw-text-sm">
-            Tipo
-            <select v-model="goalForm.kind" class="tw-mt-1 tw-w-full tw-rounded-xl tw-border tw-border-salt tw-px-3 tw-py-2">
-              <option v-for="(label, key) in HOUSEHOLD_GOAL_KIND_LABELS" :key="key" :value="key">{{ label }}</option>
-            </select>
-          </label>
+      <form v-else class="tw-space-y-3 tw-rounded-2xl tw-bg-white tw-p-5 tw-shadow-card" @submit.prevent="addGoal">
+        <h2 class="tw-m-0 tw-text-base tw-font-semibold">Criar objetivo</h2>
+        <label class="tw-block tw-text-sm">
+          Tipo
+          <select v-model="goalForm.kind" class="tw-mt-1 tw-w-full tw-rounded-xl tw-border tw-border-salt tw-px-3 tw-py-2">
+            <option v-for="(label, key) in HOUSEHOLD_GOAL_KIND_LABELS" :key="key" :value="key">{{ label }}</option>
+          </select>
+        </label>
+        <label class="tw-block tw-text-sm">
+          Nome
           <input
             v-model="goalForm.title"
             type="text"
             required
             placeholder="Ex.: Fundo para férias no Gerês"
-            class="tw-w-full tw-rounded-xl tw-border tw-border-salt tw-px-3 tw-py-2 tw-text-sm"
+            class="tw-mt-1 tw-w-full tw-rounded-xl tw-border tw-border-salt tw-px-3 tw-py-2"
           />
-          <MoneyField v-model="goalForm.target_amount" label="Valor alvo (opcional)" />
-          <label class="tw-block tw-text-sm">
-            Data alvo (opcional)
-            <input v-model="goalForm.target_date" type="date" class="tw-mt-1 tw-w-full tw-rounded-xl tw-border tw-border-salt tw-px-3 tw-py-2" />
-          </label>
+        </label>
+        <MoneyField v-model="goalForm.target_amount" label="Valor alvo (opcional)" />
+        <label class="tw-block tw-text-sm">
+          Data alvo (opcional)
+          <input v-model="goalForm.target_date" type="date" class="tw-mt-1 tw-w-full tw-rounded-xl tw-border tw-border-salt tw-px-3 tw-py-2" />
+        </label>
+        <label class="tw-block tw-text-sm">
+          Notas (opcional)
           <input
             v-model="goalForm.notes"
             type="text"
-            placeholder="Notas"
-            class="tw-w-full tw-rounded-xl tw-border tw-border-salt tw-px-3 tw-py-2 tw-text-sm"
+            class="tw-mt-1 tw-w-full tw-rounded-xl tw-border tw-border-salt tw-px-3 tw-py-2"
           />
-          <button type="submit" class="tw-rounded-xl tw-border tw-border-teal tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-teal" :disabled="loading">
-            Adicionar objetivo
-          </button>
-        </form>
+        </label>
+        <button type="submit" class="tw-rounded-xl tw-border tw-border-teal tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-teal" :disabled="loading">
+          Adicionar objetivo
+        </button>
+      </form>
+
+      <section class="tw-rounded-2xl tw-border tw-border-salt tw-bg-white tw-p-5">
+        <h2 class="tw-m-0 tw-text-base tw-font-semibold">Sair da casa</h2>
+        <p class="tw-m-0 tw-mt-1 tw-text-sm tw-text-muted">
+          Deixas de ver as finanças e os objetivos desta casa. A alimentação e o treino ficam na tua conta.
+        </p>
+        <button
+          type="button"
+          class="tw-mt-4 tw-rounded-xl tw-bg-danger/10 tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-danger disabled:tw-opacity-60"
+          :disabled="loading"
+          @click="leaveOpen = true"
+        >
+          Sair da casa
+        </button>
       </section>
 
       <RouterLink to="/" class="tw-inline-block tw-text-sm tw-font-medium tw-text-teal">Ir para início</RouterLink>
@@ -272,6 +357,47 @@ watch(
         </button>
       </section>
     </template>
+
+    <Teleport to="body">
+      <div
+        v-if="leaveOpen && household"
+        class="tw-fixed tw-inset-0 tw-z-50 tw-flex tw-items-end tw-justify-center tw-bg-ink/40 tw-p-4 sm:tw-items-center"
+        @click.self="dismissLeave"
+      >
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="leave-house-title"
+          class="tw-w-full tw-max-w-md tw-rounded-2xl tw-bg-paper tw-p-5 tw-shadow-card"
+        >
+          <h2 id="leave-house-title" class="tw-m-0 tw-text-lg tw-font-semibold">Sair de {{ household.name }}?</h2>
+          <p class="tw-m-0 tw-mt-2 tw-text-sm tw-text-muted">
+            Deixas de ver as finanças e os objetivos desta casa. A alimentação e o treino ficam na tua conta.
+            Os movimentos que registaste continuam na casa, para quem ficar.
+          </p>
+          <p v-if="leaveError" class="tw-m-0 tw-mt-3 tw-text-sm tw-text-danger">{{ leaveError }}</p>
+          <div class="tw-mt-5 tw-flex tw-justify-end tw-gap-2">
+            <button
+              ref="cancelLeaveButton"
+              type="button"
+              class="tw-rounded-xl tw-border tw-border-salt tw-bg-white tw-px-4 tw-py-2 tw-text-sm tw-font-semibold"
+              :disabled="loading"
+              @click="dismissLeave"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="tw-rounded-xl tw-bg-danger tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-paper disabled:tw-opacity-60"
+              :disabled="loading"
+              @click="confirmLeave"
+            >
+              {{ loading ? 'A sair…' : 'Sair da casa' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <p v-if="localError || authError" class="tw-m-0 tw-text-sm tw-text-danger">{{ localError ?? authError }}</p>
   </div>

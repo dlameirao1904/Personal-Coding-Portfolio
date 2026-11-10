@@ -84,20 +84,23 @@ export function useAuth() {
       }
     }
 
-    sb.auth.onAuthStateChange(async (_event, nextSession) => {
+    sb.auth.onAuthStateChange((event, nextSession) => {
       session.value = nextSession
-      if (nextSession?.user) {
-        try {
-          await loadContext(nextSession.user.id)
-        } catch {
-          authError.value = 'Não foi possível carregar o perfil.'
-        }
-      } else {
+      if (!nextSession?.user) {
         profile.value = null
         household.value = null
         householdGoals.value = []
         partnerProfiles.value = []
+        return
       }
+      if (event === 'TOKEN_REFRESHED') return
+      if (event === 'INITIAL_SESSION' && profile.value?.id === nextSession.user.id) return
+      const userId = nextSession.user.id
+      window.setTimeout(() => {
+        void loadContext(userId).catch(() => {
+          authError.value = 'Não foi possível carregar o perfil.'
+        })
+      }, 0)
     })
 
     ready.value = true
@@ -123,7 +126,7 @@ export function useAuth() {
 
   async function signOut() {
     const sb = requireSupabase()
-    await sb.auth.signOut()
+    await sb.auth.signOut({ scope: 'local' })
     session.value = null
     profile.value = null
     household.value = null
@@ -193,6 +196,18 @@ export function useAuth() {
     await refreshContext()
   }
 
+  async function leaveHousehold() {
+    if (!user.value) return
+    const { data, error } = await requireSupabase()
+      .from('profiles')
+      .update({ household_id: null })
+      .eq('id', user.value.id)
+      .select('id')
+    if (error) throw error
+    if (!data?.length) throw new Error('Não foi possível sair da casa.')
+    await refreshContext()
+  }
+
   return {
     session,
     user,
@@ -212,6 +227,7 @@ export function useAuth() {
     signOut,
     createHousehold,
     joinHousehold,
+    leaveHousehold,
     refreshContext,
     updateProfile,
     updateHousehold,
