@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+section[id] {
+  scroll-margin-top: 5.5rem;
+}
+
+body {
+  margin: 0;
+  background: #f4efe6;
+  color: #1a1410;
+}
+
+::selection {
+  background: #c4622d;
+  color: #f4efe6;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid #c4622d;
+  outline-offset: 3px;
+}
+
+.tilt-perspective {
+  perspective: 1200px;
+}
+
+.tilt-preserve {
+  transform-style: preserve-3d;
+}
+
+.marquee-track {
+  animation: marquee 38s linear infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .marquee-track {
+    animation: none;
+  }
+}
