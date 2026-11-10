@@ -13,7 +13,7 @@ function isPwaInstalled(): boolean {
   return Boolean(nav.standalone)
 }
 
-function isIosSafari(): boolean {
+function isIos(): boolean {
   const ua = navigator.userAgent
   const isAppleMobile = /iPad|iPhone|iPod/.test(ua)
   const isIpadOs =
@@ -21,9 +21,19 @@ function isIosSafari(): boolean {
   return isAppleMobile || isIpadOs
 }
 
+/** iOS browsers other than Safari (Chrome, Firefox, Edge…) */
+function isIosInAppBrowser(): boolean {
+  if (!isIos()) return false
+  return /CriOS|FxiOS|EdgiOS|OPiOS|DuckDuckGo/i.test(navigator.userAgent)
+}
+
+export type IosInstallGuide = 'safari' | 'chrome' | null
+
 export function usePwaInstall() {
   const canPromptInstall = ref(false)
   const iosInstallHint = ref(false)
+  const iosInstallGuide = ref<IosInstallGuide>(null)
+  const copiedLink = ref(false)
   let deferredPrompt: BeforeInstallPromptEvent | null = null
 
   const showInstallBanner = computed(
@@ -48,8 +58,9 @@ export function usePwaInstall() {
     window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
     window.addEventListener('appinstalled', onAppInstalled)
 
-    if (isIosSafari()) {
+    if (isIos()) {
       iosInstallHint.value = true
+      iosInstallGuide.value = isIosInAppBrowser() ? 'chrome' : 'safari'
     }
   })
 
@@ -68,10 +79,26 @@ export function usePwaInstall() {
     deferredPrompt = null
   }
 
+  async function copyPageLink() {
+    const url = window.location.href
+    try {
+      await navigator.clipboard.writeText(url)
+      copiedLink.value = true
+      window.setTimeout(() => {
+        copiedLink.value = false
+      }, 2500)
+    } catch {
+      copiedLink.value = false
+    }
+  }
+
   return {
     canPromptInstall,
     iosInstallHint,
+    iosInstallGuide,
+    copiedLink,
     showInstallBanner,
     installApp,
+    copyPageLink,
   }
 }

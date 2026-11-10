@@ -7,7 +7,15 @@ import { usePwaInstall } from '@/composables/usePwaInstall'
 const route = useRoute()
 const router = useRouter()
 const { signInWithPassword, signUp, isSupabaseConfigured, authError } = useAuth()
-const { canPromptInstall, iosInstallHint, showInstallBanner, installApp } = usePwaInstall()
+const {
+  canPromptInstall,
+  iosInstallHint,
+  iosInstallGuide,
+  copiedLink,
+  showInstallBanner,
+  installApp,
+  copyPageLink,
+} = usePwaInstall()
 
 const mode = ref<'login' | 'register'>('login')
 const email = ref('')
@@ -64,26 +72,62 @@ async function submit() {
 
         <section
           v-if="showInstallBanner"
-          class="tw-mt-4 tw-flex tw-flex-col tw-gap-3 tw-rounded-2xl tw-border tw-border-teal/25 tw-bg-teal/10 tw-p-4 tw-text-sm sm:tw-flex-row sm:tw-items-center sm:tw-justify-between"
+          class="tw-mt-4 tw-rounded-2xl tw-border tw-border-teal/25 tw-bg-teal/10 tw-p-4 tw-text-sm"
           aria-label="Instalar aplicação"
         >
-          <div>
-            <p class="tw-m-0 tw-font-semibold tw-text-ink">Instala o Tandem</p>
-            <p class="tw-m-0 tw-mt-0.5 tw-text-muted">
-              <template v-if="canPromptInstall">Abre como app — mais rápido no telemóvel.</template>
-              <template v-else-if="iosInstallHint">
-                No Safari: Partilhar → «Adicionar ao ecrã inicial».
+          <div class="tw-flex tw-flex-col tw-gap-3 sm:tw-flex-row sm:tw-items-start sm:tw-justify-between">
+            <div class="tw-min-w-0">
+              <p class="tw-m-0 tw-font-semibold tw-text-ink">Instala o Tandem</p>
+              <p v-if="canPromptInstall" class="tw-m-0 tw-mt-0.5 tw-text-muted">
+                Abre como app — mais rápido no telemóvel.
+              </p>
+              <template v-else-if="iosInstallHint && iosInstallGuide === 'chrome'">
+                <p class="tw-m-0 tw-mt-1 tw-text-muted">
+                  No <strong class="tw-font-medium tw-text-ink">Chrome</strong> o menu Partilhar
+                  <em>não</em> mostra «Adicionar ao Ecrã Principal». Usa uma destas:
+                </p>
+                <ol class="tw-m-0 tw-mt-2 tw-list-decimal tw-space-y-1 tw-pl-4 tw-text-muted">
+                  <li>
+                    Ícone <strong class="tw-font-medium tw-text-ink">⋯</strong> (canto inferior) →
+                    <strong class="tw-font-medium tw-text-ink">Adicionar ao Ecrã Principal</strong>.
+                  </li>
+                  <li>
+                    Ou copia o link, abre o <strong class="tw-font-medium tw-text-ink">Safari</strong>,
+                    cola o URL, Partilhar
+                    <span class="tw-whitespace-nowrap">(□↑)</span> → desliza →
+                    <strong class="tw-font-medium tw-text-ink">Adicionar ao Ecrã Principal</strong>.
+                  </li>
+                </ol>
               </template>
-            </p>
+              <template v-else-if="iosInstallHint">
+                <p class="tw-m-0 tw-mt-1 tw-text-muted">
+                  No <strong class="tw-font-medium tw-text-ink">Safari</strong>: toca Partilhar
+                  <span class="tw-whitespace-nowrap">(□↑)</span>, desliza a lista e escolhe
+                  <strong class="tw-font-medium tw-text-ink">Adicionar ao Ecrã Principal</strong>.
+                  Se não aparecer: <strong class="tw-font-medium tw-text-ink">Editar ações</strong> e
+                  ativa essa opção.
+                </p>
+              </template>
+            </div>
+            <div class="tw-flex tw-shrink-0 tw-flex-col tw-gap-2">
+              <button
+                v-if="canPromptInstall"
+                type="button"
+                class="tw-rounded-xl tw-bg-teal tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-paper"
+                @click="installApp"
+              >
+                Instalar
+              </button>
+              <button
+                v-else-if="iosInstallHint && iosInstallGuide === 'chrome'"
+                type="button"
+                class="tw-rounded-xl tw-border tw-border-teal/40 tw-bg-white tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-teal"
+                @click="copyPageLink"
+              >
+                {{ copiedLink ? 'Link copiado' : 'Copiar link' }}
+              </button>
+            </div>
           </div>
-          <button
-            v-if="canPromptInstall"
-            type="button"
-            class="tw-shrink-0 tw-rounded-xl tw-bg-teal tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-paper"
-            @click="installApp"
-          >
-            Instalar
-          </button>
         </section>
 
         <article
