@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import ProductMark from '@/components/ProductMark.vue'
 import type { CatalogProduct } from '@/data/catalog'
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 
 type Shelf = { id: string; title: string; lede: string; items: CatalogProduct[] }
 
