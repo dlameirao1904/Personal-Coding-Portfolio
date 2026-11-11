@@ -48,6 +48,378 @@ button:focus-visible {
   }
 }
 
+.montra-page {
+  padding-bottom: 3rem;
+}
+
+.montra-screen {
+  padding-bottom: 2.5rem;
+}
+
+.montra-room {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 0 0 1.5rem 1.5rem;
+}
+
+.montra-room__ambience {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.montra-room__tiles {
+  position: absolute;
+  inset: 0;
+  background-color: #2a4538;
+  background-image:
+    linear-gradient(rgb(0 0 0 / 12%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(0 0 0 / 12%) 1px, transparent 1px),
+    radial-gradient(120% 80% at 50% 0%, rgb(255 235 200 / 18%), transparent 55%);
+  background-size: 22px 22px, 22px 22px, auto;
+}
+
+.montra-room__photo {
+  position: absolute;
+  inset: 0;
+  background-image: url('/photos/balcao-interior.png');
+  background-position: center;
+  background-size: cover;
+  opacity: 0.2;
+  mix-blend-mode: soft-light;
+}
+
+.montra-room__warmth {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(65% 50% at 50% 12%, rgb(255 194 109 / 28%), transparent 70%);
+}
+
+.montra-lamp {
+  position: absolute;
+  top: 4.5rem;
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(255 210 140 / 55%) 0%, rgb(255 194 109 / 12%) 45%, transparent 72%);
+  filter: blur(2px);
+}
+
+.montra-lamp--left {
+  left: 14%;
+}
+
+.montra-lamp--right {
+  right: 14%;
+}
+
+.montra-room__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.montra-page__dock {
+  display: flex;
+  justify-content: center;
+  padding-inline: 1.25rem;
+}
+
+.montra-case {
+  position: relative;
+  border-radius: 2rem;
+  padding: 0.75rem;
+  background: linear-gradient(180deg, #2a211b 0%, #1a1410 10%, #5c4332 11%, #8a6748 12%, #c4a574 13%, #e7dccb 14%, #f4efe6 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 28px 70px rgba(26, 20, 16, 0.16);
+}
+
+.montra-case__lip {
+  height: 0.4rem;
+  margin: 0 1.5rem 0.35rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3e2f25, #6d4f38, #3e2f25);
+}
+
+.montra-glass {
+  border-radius: 1.35rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.04) 18%, transparent 40%),
+    radial-gradient(120% 80% at 50% 0%, rgba(255, 245, 230, 0.35), transparent 55%),
+    #ebe1d2;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+.montra-glass::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.22) 48%, transparent 62%);
+}
+
+.montra-track {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: none;
+  touch-action: pan-x pinch-zoom;
+  padding: 1.75rem 12vw 3.25rem;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 12vw;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.montra-track::-webkit-scrollbar {
+  display: none;
+}
+
+.montra-slide {
+  flex: 0 0 min(76vw, 22rem);
+  scroll-snap-align: center;
+  transition:
+    transform 420ms ease,
+    opacity 420ms ease;
+  transform: scale(0.92);
+  opacity: 0.55;
+}
+
+.montra-slide.is-active {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.montra-slide__plate {
+  overflow: hidden;
+  border-radius: 1.25rem;
+  background: #f4efe6;
+  box-shadow:
+    0 18px 40px rgba(26, 20, 16, 0.16),
+    0 0 0 1px rgba(26, 20, 16, 0.06);
+}
+
+.montra-slide__visual {
+  width: 100%;
+}
+
+.montra-slide__visual--tall {
+  aspect-ratio: 4 / 3;
+  min-height: 9rem;
+  max-height: 10.5rem;
+}
+
+.montra-slide__visual--tall > * {
+  height: 100%;
+}
+
+.montra-slide__visual--tall .tw-aspect-\[4\/3\] {
+  aspect-ratio: auto;
+  height: 100%;
+}
+
+.montra-case--immersive {
+  display: flex;
+  flex-direction: column;
+  margin-inline: 0.75rem;
+  padding-bottom: 0.25rem;
+}
+
+.montra-case--immersive .montra-glass {
+  display: flex;
+  flex-direction: column;
+}
+
+.montra-track--immersive {
+  align-items: center;
+  padding-block: 1rem 3.25rem;
+  padding-inline: 8vw;
+  scroll-padding-inline: 8vw;
+}
+
+.montra-slide--immersive {
+  flex-basis: min(72vw, 24rem);
+}
+
+.montra-slide--immersive.is-active {
+  transform: scale(1.03);
+}
+
+.montra-shelf-rail {
+  pointer-events: none;
+  position: absolute;
+  inset-inline: 1.25rem;
+  bottom: 3.25rem;
+  z-index: 5;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgb(196 98 45 / 55%), transparent);
+  box-shadow: 0 0 12px rgb(255 194 109 / 35%);
+}
+
+.montra-plinth--immersive {
+  margin-top: 0.75rem;
+  border-top: 1px solid rgb(255 255 255 / 8%);
+  background:
+    repeating-linear-gradient(90deg, #4a3628 0, #4a3628 10px, #5c4332 10px, #5c4332 20px),
+    linear-gradient(180deg, #3e2f25, #2a211b);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 12%);
+}
+
+@media (min-width: 768px) {
+  .montra-track {
+    gap: 2rem;
+    padding-inline: 18vw;
+    scroll-padding-inline: 18vw;
+  }
+
+  .montra-slide {
+    flex-basis: min(34vw, 26rem);
+  }
+
+  .montra-case--immersive {
+    margin-inline: 2.5rem;
+  }
+
+  .montra-track--immersive {
+    padding-inline: 14vw;
+    scroll-padding-inline: 14vw;
+  }
+
+  .montra-slide--immersive {
+    flex-basis: min(36vw, 26rem);
+  }
+
+  .montra-slide__visual--tall {
+    min-height: 10rem;
+    max-height: 11.5rem;
+  }
+}
+
+.product-rail {
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.product-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.product-rail__card {
+  flex: 0 0 min(74vw, 16.5rem);
+  scroll-snap-align: center;
+  border-radius: 1.25rem;
+  border: 1px solid rgb(26 20 16 / 10%);
+  background: #f4efe6;
+  padding: 0.85rem;
+  text-align: left;
+  transition:
+    transform 240ms ease,
+    border-color 240ms ease,
+    box-shadow 240ms ease;
+}
+
+.product-rail__card.is-active {
+  border-color: rgb(196 98 45 / 55%);
+  box-shadow: 0 16px 40px rgb(26 20 16 / 10%);
+  transform: translateY(-4px);
+}
+
+.product-rail__visual {
+  overflow: hidden;
+  border-radius: 0.85rem;
+}
+
+.product-focus__visual {
+  overflow: hidden;
+  border-radius: 1.5rem;
+  border: 1px solid rgb(26 20 16 / 8%);
+  background: #ebe1d2;
+  aspect-ratio: 5 / 4;
+}
+
+.product-focus__visual > * {
+  height: 100%;
+}
+
+.product-focus__visual .tw-aspect-\[4\/3\] {
+  aspect-ratio: auto;
+  height: 100%;
+}
+
+.product-row {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 2.75rem 1fr auto;
+  align-items: baseline;
+  gap: 1rem;
+  border-bottom: 1px solid rgb(26 20 16 / 10%);
+  padding-block: 1rem;
+  text-align: left;
+  transition:
+    padding-left 220ms ease,
+    color 220ms ease,
+    background-color 220ms ease;
+}
+
+.product-row:hover,
+.product-row.is-active {
+  padding-left: 0.35rem;
+  background-color: rgb(231 220 203 / 55%);
+}
+
+.product-row.is-active {
+  border-bottom-color: rgb(196 98 45 / 45%);
+}
+
+.product-row__index {
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  color: rgb(26 20 16 / 40%);
+}
+
+.product-row__name {
+  font-family: Fraunces, ui-serif, Georgia, serif;
+  font-size: clamp(1.35rem, 2vw, 1.85rem);
+  line-height: 1.1;
+}
+
+.product-row__price {
+  font-size: 0.85rem;
+  color: #7c3b1d;
+}
+
+.product-focus-enter-active,
+.product-focus-leave-active {
+  transition:
+    opacity 260ms ease,
+    transform 260ms ease;
+}
+
+.product-focus-enter-from,
+.product-focus-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.product-catalog:focus-within .product-catalog__hint:not(.tw-sr-only) {
+  position: static;
+  width: auto;
+  height: auto;
+  margin-top: 0.75rem;
+  clip: auto;
+  font-size: 0.75rem;
+  color: rgb(26 20 16 / 55%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -55,5 +427,13 @@ button:focus-visible {
 
   .marquee-track {
     animation: none;
+  }
+
+  .montra-slide,
+  .product-rail__card,
+  .product-row,
+  .product-focus-enter-active,
+  .product-focus-leave-active {
+    transition: none;
   }
 }

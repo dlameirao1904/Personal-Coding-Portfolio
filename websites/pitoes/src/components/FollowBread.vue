@@ -10,6 +10,9 @@ const progress = ref(0)
 const pointerX = ref(0)
 const pointerY = ref(0)
 let reduce = false
+const sceneEngaged = ref(false)
+let sceneExited = false
+let lastScrollY = 0
 
 const forced = computed(() => {
   const raw = route.query.forno
@@ -26,12 +29,46 @@ function clamp(value: number) {
   return Math.min(1, Math.max(0, value))
 }
 
+function exitToNextSection() {
+  const el = track.value
+  if (!el || sceneExited) return
+  sceneExited = true
+  sceneEngaged.value = false
+  const top = window.scrollY + el.getBoundingClientRect().bottom + 4
+  window.scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' })
+}
+
 function onScroll() {
   const el = track.value
   if (!el) return
   const total = el.offsetHeight - window.innerHeight
   const passed = Math.min(Math.max(-el.getBoundingClientRect().top, 0), Math.max(total, 0))
-  progress.value = total > 0 ? clamp(passed / total) : 0
+  const ratio = total > 0 ? clamp(passed / total) : 0
+  const rect = el.getBoundingClientRect()
+  const inPinnedScene = rect.top <= 0 && ratio < 0.995
+
+  if (rect.top > 0 && ratio < 0.001) {
+    sceneEngaged.value = false
+    sceneExited = false
+  }
+
+  const scrollMoved = Math.abs(window.scrollY - lastScrollY) > 2
+  lastScrollY = window.scrollY
+
+  progress.value = ratio
+  if (inPinnedScene && ratio > 0.006) sceneEngaged.value = true
+
+  if (inPinnedScene && ratio >= 0.994 && sceneEngaged.value) exitToNextSection()
+  else if (scrollMoved && ratio < 0.994) sceneExited = false
+}
+
+function onAutoplay(ratio: number) {
+  if (reduce || forced.value !== null || !sceneEngaged.value) return
+  progress.value = clamp(ratio)
+}
+
+function onAutoplayFinished() {
+  exitToNextSection()
 }
 
 function onPointer(event: PointerEvent) {
@@ -49,6 +86,8 @@ function onLeave() {
 function goTo(index: number) {
   const el = track.value
   if (!el) return
+  sceneEngaged.value = true
+  sceneExited = false
   const total = el.offsetHeight - window.innerHeight
   const top = window.scrollY + el.getBoundingClientRect().top + ((index + 0.08) / ovenSteps.length) * total
   window.scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' })
@@ -56,7 +95,11 @@ function goTo(index: number) {
 
 onMounted(() => {
   reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (forced.value !== null) track.value?.scrollIntoView()
+  lastScrollY = window.scrollY
+  if (forced.value !== null) {
+    sceneEngaged.value = true
+    track.value?.scrollIntoView()
+  }
   onScroll()
   window.addEventListener('scroll', onScroll, { passive: true })
   window.addEventListener('resize', onScroll)
@@ -69,9 +112,16 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section id="forno" ref="track" class="tw-relative tw-h-[420vh] tw-bg-flour" @pointermove="onPointer" @pointerleave="onLeave">
+  <section id="forno" ref="track" class="tw-relative tw-h-[500vh] tw-bg-flour" @pointermove="onPointer" @pointerleave="onLeave">
     <div class="tw-sticky tw-top-0 tw-h-screen">
-      <BakeryStage :progress="displayed" :pointer-x="pointerX" :pointer-y="pointerY" />
+      <BakeryStage
+        :progress="displayed"
+        :reduce-motion="reduce"
+        :allow-autoplay="sceneEngaged && forced === null"
+        :pointer-x="pointerX"
+        :pointer-y="pointerY"
+        @autoplay="onAutoplay"
+        @finished="onAutoplayFinished" />
       <div class="tw-pointer-events-none tw-absolute tw-inset-x-0 tw-bottom-0 tw-bg-gradient-to-t tw-from-flour tw-via-flour/80 tw-to-transparent tw-px-5 tw-pb-8 tw-pt-24 md:tw-px-10">
         <p class="tw-text-[11px] tw-uppercase tw-tracking-[0.22em] tw-text-crust">0{{ stepIndex + 1 }} / 0{{ ovenSteps.length }} · {{ step.kicker }}</p>
         <h2 class="tw-mt-2 tw-max-w-xl tw-font-serif tw-text-4xl tw-leading-none tw-text-ink md:tw-text-6xl">{{ step.title }}</h2>

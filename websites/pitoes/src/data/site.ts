@@ -89,26 +89,31 @@ export const shelves = [
 
 export const ovenSteps = [
   {
-    kicker: 'A masseira',
-    title: 'Sair da masseira',
-    text: 'A massa deixa a masseira e segue para a direita, ainda mole, até à mesa.',
+    kicker: 'A Amassadeira',
+    title: 'O Ponto da Massa',
+    text: 'A amassadeira industrial gira, envolvendo a massa até ao ponto perfeito. O Augusto retira uma porção rústica e leva-a para a mesa de preparação.',
   },
   {
-    kicker: 'A mesa',
-    title: 'Ganhar forma',
-    text: 'Na mesa a broa ganha forma e o corte. A cor fica a da massa.',
+    kicker: 'A Balança',
+    title: 'O Peso e o Passe',
+    text: 'Com a precisão de anos de ofício, o Augusto ajusta a porção na balança de dois pratos. Confirmado o peso, atira a massa num movimento ágil para a Gracinda.',
   },
   {
-    kicker: 'O carrinho',
-    title: 'Meter na tela',
-    text: 'A broa segue para a direita e assenta na tela, em cima do carrinho.',
+    kicker: 'A Mesa',
+    title: 'A Arte de Moldar',
+    text: 'A Gracinda ampara a massa achatada e, com mãos experientes, boleia-a até formar uma esfera perfeita, rematando com a reza centenária.',
   },
   {
-    kicker: 'O forno',
-    title: 'Levar ao forno',
-    text: 'O carrinho vai para a frente e encosta à direita. Os dois padeiros pegam na tela, um em cada ponta, e metem-na no forno.',
+    kicker: 'O Carrinho',
+    title: 'O Descanso na Tela',
+    text: 'A broa recém-moldada desliza suavemente para a direita, assentando sobre a tela de cozedura no carrinho de prateleiras, pronta para o calor.',
   },
-]
+  {
+    kicker: 'O Forno',
+    title: 'A Caminho do Fogo',
+    text: 'O carrinho avança em direção ao brilho quente do forno. Em perfeita sintonia, os dois pegam nas pontas da tela e deslizam o pão para a cozedura. De forma a simbolizar os antigos, desta vez o Augusto põe o pão no forno, um por um.',
+  },
+];
 
 export const ribbon = [
   'Broa de centeio',
@@ -117,6 +122,11 @@ export const ribbon = [
   'Forno a lenha',
   'Pitões das Júnias',
   'Família Marinho',
+  'Pitões das Júnias',
+  'Barroso',
+  'Gerês',
+  'Sabor',
+  'Tradicional',
 ]
 
 export const weekdays = [

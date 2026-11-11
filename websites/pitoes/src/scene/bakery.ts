@@ -9,6 +9,7 @@ export type BakeryHandle = {
 }
 
 const DOUGH = new THREE.Color('#e7c98a')
+const DOUGH_MAT = () => new THREE.MeshStandardMaterial({ color: DOUGH.clone(), roughness: 0.72 })
 
 export function mountBakery(canvas: HTMLCanvasElement): BakeryHandle {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false })
@@ -37,20 +38,31 @@ export function mountBakery(canvas: HTMLCanvasElement): BakeryHandle {
   scene.add(key)
 
   const camera = new THREE.PerspectiveCamera(36, 1, 0.08, 80)
-  const mixerPoint = new THREE.Vector3(-4.4, 0.92, 0.4)
-  const tablePoint = new THREE.Vector3(0, 1.36, 0)
   const cartHome = new THREE.Vector3(4.35, 0, 0)
   const cartDock = new THREE.Vector3(2.55, 0, -5.05)
   const ovenFront = new THREE.Vector3(-0.1, 1.38, -4.75)
   const ovenDeck = new THREE.Vector3(-0.1, 1.28, -5.4)
 
-  buildRoom(scene)
+  const { beater, bowlDough } = buildRoom(scene)
+  const scale = buildScale(scene)
   const loaf = buildLoaf()
+  const portions = buildPortions()
   const cart = buildCart()
   const tela = buildTela()
-  const bakerA = buildBaker(0xf4efe6, 0x2c3338, 0xd9a578)
-  const bakerB = buildBaker(0xf7f3ec, 0x3e5344, 0xc98460)
-  scene.add(loaf.group, cart.group, tela.group, bakerA.group, bakerB.group)
+  const bakerA = buildBaker('male', 0xf4efe6, 0x2c3338, 0xd9a578)
+  const bakerB = buildBaker('female', 0xf7f3ec, 0x3e5344, 0xc98460)
+  scene.add(loaf.group, portions.group, cart.group, tela.group, bakerA.group, bakerB.group)
+
+  const bowlWorld = new THREE.Vector3(-4.4, 0.86, 0.42)
+  const scalePan = new THREE.Vector3(0.58, 1.06, 0.2)
+  const tossLand = new THREE.Vector3(-0.05, 1.04, 0.18)
+  const tableBackZ = -0.74
+  const augustMixer = new THREE.Vector3(-3.12, 0, 0.32)
+  const augustScale = new THREE.Vector3(0.4, 0, tableBackZ)
+  const gracindaHome = new THREE.Vector3(0.62, 0, tableBackZ - 0.02)
+  const gracindaForm = new THREE.Vector3(0.14, 0, tableBackZ + 0.04)
+  const augustCart = new THREE.Vector3(3.35, 0, tableBackZ)
+  const audience = new THREE.Vector3(0, 1.15, 2.2)
 
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const fine = window.matchMedia('(pointer: fine)').matches
@@ -61,6 +73,7 @@ export function mountBakery(canvas: HTMLCanvasElement): BakeryHandle {
   const cartPos = new THREE.Vector3()
   const telaPos = new THREE.Vector3()
   const lookTarget = new THREE.Vector3()
+  const carryPoint = new THREE.Vector3()
   let progress = 0
   let progressTarget = 0
   let time = 0
@@ -80,57 +93,127 @@ export function mountBakery(canvas: HTMLCanvasElement): BakeryHandle {
     camera.updateProjectionMatrix()
   }
 
+  function doughShape(ballMix: number) {
+    const flatX = 1.55
+    const flatY = 0.18
+    const flatZ = 1.22
+    const roundX = 1.05
+    const roundY = 0.52
+    const roundZ = 1.05
+    return new THREE.Vector3(
+      THREE.MathUtils.lerp(flatX, roundX, ballMix),
+      THREE.MathUtils.lerp(flatY, roundY, ballMix),
+      THREE.MathUtils.lerp(flatZ, roundZ, ballMix),
+    )
+  }
+
   function pose() {
     const t = THREE.MathUtils.clamp(progress, 0, 1)
-    const toTable = range(t, 0.02, 0.24)
-    const form = range(t, 0.22, 0.48)
-    const toCart = range(t, 0.48, 0.66)
-    const ride = range(t, 0.68, 0.8)
-    const grab = range(t, 0.78, 0.86)
-    const toFront = range(t, 0.86, 0.94)
-    const slide = range(t, 0.93, 1)
-    const scaleY = THREE.MathUtils.lerp(0.68, 0.38, form)
-    tablePoint.y = 1.01 + 0.22 * scaleY
+    const mixerRun = range(t, 0, 0.22)
+    const fetch = range(t, 0.06, 0.2)
+    const carry = range(t, 0.17, 0.3)
+    const onScale = range(t, 0.28, 0.42)
+    const weigh = range(t, 0.36, 0.48)
+    const toss = range(t, 0.46, 0.56)
+    const form = range(t, 0.54, 0.66)
+    const roundReady = range(t, 0.62, 0.7)
+    const toCart = range(t, 0.66, 0.78)
+    const placeTela = range(t, 0.74, 0.82)
+    const ride = range(t, 0.78, 0.88)
+    const grab = range(t, 0.86, 0.93)
+    const toFront = range(t, 0.91, 0.97)
+    const slide = range(t, 0.96, 1)
+
+    const ballMix = Math.max(form, roundReady)
+    const shape = doughShape(ballMix)
+    const tableLift = 1.01 + 0.22 * shape.y
+
+    const mixing = t < 0.24
+    beater.rotation.y = time * (mixing ? 11 : 0)
+    const taken = Math.max(fetch, carry * 0.5)
+    bowlDough.scale.setScalar(THREE.MathUtils.lerp(1, 0.12, taken))
+    bowlDough.visible = taken < 0.92
 
     cartPos.lerpVectors(cartHome, cartDock, ride)
     cart.group.position.copy(cartPos)
     cart.group.rotation.y = ride * 0.35
-    cart.group.visible = true
 
-    const bed = new THREE.Vector3(cartPos.x, 1.3 + 0.04 * scaleY, cartPos.z)
-    loafPos.copy(mixerPoint).lerp(tablePoint, toTable).lerp(bed, toCart)
+    carryPoint.lerpVectors(bowlWorld, scalePan, carry)
+    const tossArc = toss * (1 - toss) * 4
+    const airLift = tossArc * 0.32
+    loafPos
+      .copy(bowlWorld)
+      .lerp(carryPoint, Math.max(fetch * 0.65, carry))
+      .lerp(scalePan, onScale)
+      .lerp(tossLand, toss)
+    if (toss > 0.02 && toss < 0.98) {
+      loafPos.y += airLift
+      loafPos.x = THREE.MathUtils.lerp(scalePan.x, tossLand.x, toss) + Math.sin(toss * Math.PI) * 0.12
+    }
+
+    const bedY = 1.3 + 0.04 * shape.y
+    const bed = new THREE.Vector3(cartPos.x, bedY, cartPos.z)
+    const formSpot = new THREE.Vector3(-0.05, tableLift, 0.12)
+    loafPos.lerp(formSpot, form * 0.85)
+    loafPos.lerp(bed, toCart)
     telaPos.set(cartPos.x, 1.22, cartPos.z).lerp(ovenFront, toFront).lerp(ovenDeck, slide)
-    loafPos.lerp(new THREE.Vector3(telaPos.x, telaPos.y + 0.08, telaPos.z), Math.max(toFront, slide))
+    loafPos.lerp(new THREE.Vector3(telaPos.x, telaPos.y + 0.08, telaPos.z), Math.max(placeTela, toFront, slide))
+    loaf.group.visible = taken > 0.06
     loaf.group.position.copy(loafPos)
-    loaf.blob.scale.set(THREE.MathUtils.lerp(0.78, 1.16, form), scaleY, THREE.MathUtils.lerp(0.78, 1.05, form))
+
+    const handHold = Math.max(fetch, carry * 0.55, onScale * 0.35, toss * 0.2)
+    loaf.blob.scale.set(shape.x * (1 - handHold * 0.15), shape.y * (1 - handHold * 0.1), shape.z * (1 - handHold * 0.15))
     loaf.material.color.copy(DOUGH)
-    loaf.scores.visible = form > 0.35
+    loaf.scores.visible = form > 0.5
     loaf.scores.scale.setScalar(Math.max(form, 0.001))
-    loaf.scores.position.y = 0.1 * scaleY
+    loaf.scores.position.y = 0.1 * shape.y
+
+    const portionFade = onScale * (1 - toss)
+    portions.group.visible = portionFade > 0.1
+    portions.group.position.copy(scalePan).add(new THREE.Vector3(0, 0.02, 0))
+    portions.pieces.forEach((piece, index) => {
+      piece.position.set((index - 1) * 0.08, 0.03, index * 0.03)
+      piece.scale.set(0.9, 0.4, 0.85)
+      piece.scale.multiplyScalar(0.22 * portionFade)
+    })
+
+    scale.beam.rotation.z = THREE.MathUtils.lerp(0, Math.sin(time * 2.2) * 0.12 + 0.08, Math.max(weigh, onScale * 0.8))
+    scale.group.visible = t > 0.24 && t < 0.62
 
     tela.group.position.copy(telaPos)
     tela.group.rotation.y = 0
-    tela.group.visible = true
 
-    const push = new THREE.Vector3(cartPos.x, 0, cartPos.z + 1.05)
-    bakerA.group.position.set(-1.75, 0, 1.05)
-    bakerB.group.position.set(1.75, 0, 1.05)
-    bakerA.group.position.lerp(new THREE.Vector3(push.x - 0.55, 0, push.z), ride)
-    bakerB.group.position.lerp(new THREE.Vector3(push.x + 0.55, 0, push.z), ride)
+    const atBench = Math.max(carry, onScale, weigh, toss, form, toCart * 0.35)
+    bakerA.group.position.copy(augustMixer)
+    bakerA.group.position.lerp(augustScale, Math.max(carry * 0.85, onScale, weigh * 0.7))
+    bakerA.group.position.lerp(augustCart, toCart * 0.85 + placeTela * 0.4)
+    bakerB.group.position.copy(gracindaHome)
+    bakerB.group.position.lerp(gracindaForm, Math.max(toss * 0.85, form))
+
+    const push = new THREE.Vector3(cartPos.x, 0, cartPos.z + 0.35)
+    bakerA.group.position.lerp(new THREE.Vector3(push.x - 0.62, 0, tableBackZ), ride * 0.7)
+    bakerB.group.position.lerp(new THREE.Vector3(push.x + 0.62, 0, tableBackZ), ride)
     const hold = Math.max(grab, toFront)
     const endX = slide > 0.05 ? -0.1 : telaPos.x
-    const endZ = slide > 0.05 ? -4.55 : telaPos.z + 0.42
-    bakerA.group.position.lerp(new THREE.Vector3(endX - 0.7, 0, endZ), hold)
-    bakerB.group.position.lerp(new THREE.Vector3(endX + 0.7, 0, endZ), hold)
-    const focus = hold > 0.15 ? ovenDeck : loafPos
-    faceUpright(bakerA.group, focus)
-    faceUpright(bakerB.group, focus)
-    const knead = Math.sin(time * 5) * (1 - form) * (1 - ride) * 0.28
-    const reach = 1.2 + hold * 0.15
-    bakerA.armL.rotation.x = reach + knead
-    bakerA.armR.rotation.x = reach - knead
-    bakerB.armL.rotation.x = reach - knead
-    bakerB.armR.rotation.x = reach + knead
+    const endZ = slide > 0.05 ? -4.55 : telaPos.z + 0.48
+    bakerA.group.position.lerp(new THREE.Vector3(endX - 0.75, 0, endZ), hold)
+    bakerB.group.position.lerp(new THREE.Vector3(endX + 0.75, 0, endZ), hold)
+
+    const benchFocus = new THREE.Vector3(loafPos.x, 1.08, loafPos.z + 0.65)
+    const focusA = hold > 0.12 ? ovenDeck : atBench > 0.08 ? benchFocus : audience
+    const focusB = hold > 0.12 ? ovenDeck : form > 0.15 ? benchFocus : atBench > 0.08 ? audience : loafPos
+    faceUpright(bakerA.group, focusA)
+    faceUpright(bakerB.group, focusB)
+
+    const scoop = Math.max(fetch, mixerRun * 0.4) * 1.65
+    const fold = Math.sin(time * 4.5) * form * (1 - ride) * 0.32
+    const reach = 1.15 + hold * 0.14
+    const throwArm = toss * 1.35
+    const catchArm = toss * 0.95
+    bakerA.armL.rotation.x = THREE.MathUtils.lerp(reach, scoop + 0.15, Math.max(fetch, carry * 0.5))
+    bakerA.armR.rotation.x = THREE.MathUtils.lerp(scoop - 0.35, throwArm + 0.5, Math.max(carry * 0.4, onScale, toss))
+    bakerB.armL.rotation.x = reach - fold + catchArm * 0.4
+    bakerB.armR.rotation.x = reach + fold + catchArm
 
     const swayX = reduce ? 0 : Math.sin(time * 0.35) * (fine ? 0.03 : 0.1)
     const swayY = reduce ? 0 : Math.cos(time * 0.28) * 0.02
@@ -138,12 +221,13 @@ export function mountBakery(canvas: HTMLCanvasElement): BakeryHandle {
     const aimY = reduce ? 0 : pointer.y * 0.2 + swayY
     const along = Math.max(ride, grab, toFront)
     const back = camera.aspect < 0.9 ? 6.2 : 4.8
+    const workshop = Math.max(weigh, form, toss, onScale)
     camera.fov = camera.aspect < 0.9 ? 52 : THREE.MathUtils.lerp(42, 48, along)
     camera.updateProjectionMatrix()
-    lookTarget.copy(loafPos).lerp(new THREE.Vector3(0.9, 1.35, -5.1), along)
+    lookTarget.copy(loafPos).lerp(new THREE.Vector3(0.2, tableLift, 0.15), workshop * 0.55).lerp(new THREE.Vector3(0.9, 1.35, -5.1), along)
     camera.position.set(
-      THREE.MathUtils.lerp(loafPos.x - 0.15, -0.2, along) + aimX,
-      THREE.MathUtils.lerp(2.15, 2.7, along) - aimY * 0.25,
+      THREE.MathUtils.lerp(loafPos.x - 0.65, -0.2, along) + aimX,
+      THREE.MathUtils.lerp(2.05, 2.7, along) - aimY * 0.25,
       THREE.MathUtils.lerp(loafPos.z + back, -1.2, along),
     )
     camera.lookAt(lookTarget)
@@ -231,13 +315,14 @@ function buildRoom(scene: THREE.Scene) {
   floor.receiveShadow = true
   scene.add(floor)
 
-  buildMixer(scene)
+  const mixer = buildMixer(scene)
   buildTable(scene)
   buildOven(scene)
 
   const fill = new THREE.PointLight(0xfff6ea, 12, 18)
   fill.position.set(0, 4.5, -1)
   scene.add(fill)
+  return mixer
 }
 
 function floorFade() {
@@ -288,15 +373,27 @@ function buildMixer(scene: THREE.Scene) {
   arm.position.set(0, 1.6, 0.1)
   const bowl = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.45, 0.7, 20), steel))
   bowl.position.set(0, 0.7, 0.4)
-  const beater = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.55, 8), steel))
-  beater.position.set(0.12, 1.05, 0.4)
-  beater.rotation.z = 0.35
+  const beaterPivot = new THREE.Group()
+  beaterPivot.position.set(0, 1.05, 0.4)
+  const hook = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.42, 8), steel))
+  hook.position.y = -0.24
+  const beater = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.22, 8), steel))
+  beater.position.set(0.11, -0.08, 0)
+  beater.rotation.z = Math.PI / 2
+  beaterPivot.add(hook, beater)
   const guard = shade(new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.02, 6, 18, Math.PI), steel))
   guard.rotation.x = Math.PI / 2
   guard.position.set(0, 1.12, 0.4)
   const panel = shade(new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.42, 0.32), steel))
   panel.position.set(0.4, 1.0, -0.3)
-  group.add(base, pillar, arm, bowl, beater, guard, panel)
+  const bowlDough = new THREE.Group()
+  const doughBody = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.36, 0.2, 18), DOUGH_MAT()))
+  doughBody.position.set(0, 0.84, 0.4)
+  const doughTop = shade(new THREE.Mesh(new THREE.SphereGeometry(0.36, 16, 12), DOUGH_MAT()))
+  doughTop.scale.set(1, 0.35, 1)
+  doughTop.position.set(0, 0.97, 0.4)
+  bowlDough.add(doughBody, doughTop)
+  group.add(base, pillar, arm, bowl, beaterPivot, guard, panel, bowlDough)
   const colors = [0xd24a3a, 0xe0b03a, 0x3f8f55]
   colors.forEach((color, index) => {
     const button = shade(
@@ -311,6 +408,36 @@ function buildMixer(scene: THREE.Scene) {
   })
   group.position.set(-4.4, 0, 0)
   scene.add(group)
+  return { beater: beaterPivot, bowlDough }
+}
+
+function buildScale(scene: THREE.Scene) {
+  const group = new THREE.Group()
+  group.position.set(0.84, 1.0, 0.22)
+  const brass = new THREE.MeshStandardMaterial({ color: 0xb8945a, metalness: 0.55, roughness: 0.42 })
+  const dark = new THREE.MeshStandardMaterial({ color: 0x4a4038, roughness: 0.75 })
+  const post = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.32, 10), dark))
+  post.position.y = 0.16
+  const base = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.04, 14), brass))
+  base.position.y = 0.02
+  const beam = new THREE.Group()
+  beam.position.y = 0.34
+  const rod = shade(new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.03, 0.03), brass))
+  const pivot = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.05, 10), brass))
+  pivot.rotation.x = Math.PI / 2
+  for (const side of [-1, 1]) {
+    const chain = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.14, 6), brass))
+    chain.position.set(side * 0.26, -0.08, 0)
+    const pan = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.03, 12), brass))
+    pan.position.set(side * 0.26, -0.16, 0)
+    const panDish = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.02, 12), dark))
+    panDish.position.set(side * 0.26, -0.18, 0)
+    beam.add(chain, pan, panDish)
+  }
+  beam.add(rod, pivot)
+  group.add(base, post, beam)
+  scene.add(group)
+  return { group, beam }
 }
 
 function buildTable(scene: THREE.Scene) {
@@ -381,7 +508,7 @@ function buildOven(scene: THREE.Scene) {
 
 function buildLoaf() {
   const group = new THREE.Group()
-  const material = new THREE.MeshStandardMaterial({ color: DOUGH.clone(), roughness: 0.7 })
+  const material = DOUGH_MAT()
   const blob = new THREE.Mesh(new THREE.SphereGeometry(0.22, 28, 20), material)
   blob.castShadow = true
   const scores = new THREE.Group()
@@ -389,7 +516,21 @@ function buildLoaf() {
   scores.add(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.02, 0.035), cut))
   scores.add(new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.02, 0.22), cut))
   group.add(blob, scores)
+  group.visible = false
   return { group, blob, material, scores }
+}
+
+function buildPortions() {
+  const group = new THREE.Group()
+  const pieces: THREE.Mesh[] = []
+  for (let i = 0; i < 3; i++) {
+    const piece = shade(new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 10), DOUGH_MAT()))
+    piece.scale.set(1.1, 0.45, 1)
+    group.add(piece)
+    pieces.push(piece)
+  }
+  group.visible = false
+  return { group, pieces }
 }
 
 function buildCart() {
@@ -460,38 +601,71 @@ function buildTela() {
   return { group }
 }
 
-function buildBaker(coatColor: number, trouserColor: number, skinColor: number) {
+function buildBaker(gender: 'male' | 'female', coatColor: number, trouserColor: number, skinColor: number) {
   const group = new THREE.Group()
   const coat = new THREE.MeshStandardMaterial({ color: coatColor, roughness: 0.65 })
   const trousers = new THREE.MeshStandardMaterial({ color: trouserColor, roughness: 0.8 })
   const skin = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.55 })
   const shoe = new THREE.MeshStandardMaterial({ color: 0x2a241f, roughness: 0.7 })
+  const hairTone = gender === 'female' ? 0x4a3728 : 0x3a2e24
+  const hair = new THREE.MeshStandardMaterial({ color: hairTone, roughness: 0.75 })
+  const legR = gender === 'female' ? 0.05 : 0.055
+  const hipW = gender === 'female' ? 0.34 : 0.38
+  const torsoW = gender === 'female' ? 0.36 : 0.42
+  const height = gender === 'female' ? 0.97 : 1
+  group.scale.set(1, height, 1)
   for (const side of [-1, 1]) {
     const foot = shade(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.06, 0.22), shoe))
     foot.position.set(side * 0.1, 0.03, -0.02)
-    const leg = shade(new THREE.Mesh(new THREE.CapsuleGeometry(0.055, 0.42, 3, 8), trousers))
+    const leg = shade(new THREE.Mesh(new THREE.CapsuleGeometry(legR, 0.42, 3, 8), trousers))
     leg.position.set(side * 0.1, 0.32, 0)
     group.add(foot, leg)
   }
-  const hips = shade(new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.16, 0.2), trousers))
+  const hips = shade(new THREE.Mesh(new THREE.BoxGeometry(hipW, 0.16, 0.2), trousers))
   hips.position.y = 0.58
-  const torso = shade(new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.42, 0.22), coat))
+  const torso = shade(new THREE.Mesh(new THREE.BoxGeometry(torsoW, 0.42, 0.22), coat))
   torso.position.set(0, 0.88, 0)
-  const apron = shade(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.36, 0.04), coat))
+  const apron = shade(new THREE.Mesh(new THREE.BoxGeometry(torsoW * 0.76, 0.36, 0.04), coat))
   apron.position.set(0, 0.78, -0.12)
   const neck = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.08, 8), skin))
   neck.position.y = 1.12
   const head = shade(new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), skin))
   head.position.y = 1.28
-  const cap = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.14, 0.08, 12), coat))
-  cap.position.y = 1.4
-  const brim = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.02, 12), coat))
-  brim.position.y = 1.36
-  group.add(hips, torso, apron, neck, head, cap, brim)
+  group.add(hips, torso, apron, neck, head)
   const eye = new THREE.MeshStandardMaterial({ color: 0x2a211c, roughness: 0.4 })
+  const cheekMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.58 })
+  if (gender === 'male') {
+    const cap = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.14, 0.08, 12), coat))
+    cap.position.y = 1.4
+    const brim = shade(new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.02, 12), coat))
+    brim.position.y = 1.36
+    const mustache = shade(new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.014, 0.028), hair))
+    mustache.position.set(0, 1.235, -0.125)
+    const beard = shade(new THREE.Mesh(new THREE.SphereGeometry(0.058, 10, 8), hair))
+    beard.scale.set(1.15, 0.85, 0.75)
+    beard.position.set(0, 1.175, -0.115)
+    const sideburnL = shade(new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.06, 0.03), hair))
+    sideburnL.position.set(-0.1, 1.21, -0.1)
+    const sideburnR = sideburnL.clone()
+    sideburnR.position.x = 0.1
+    group.add(cap, brim, mustache, beard, sideburnL, sideburnR)
+  } else {
+    const hairCap = shade(new THREE.Mesh(new THREE.SphereGeometry(0.138, 14, 12, 0, Math.PI * 2, 0, Math.PI * 0.62), hair))
+    hairCap.position.set(0, 1.305, -0.01)
+    const bun = shade(new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 10), hair))
+    bun.position.set(0, 1.295, 0.08)
+    const bangs = shade(new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.035, 0.05), hair))
+    bangs.position.set(0, 1.33, -0.11)
+    group.add(hairCap, bun, bangs)
+    const blushL = shade(new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), cheekMat))
+    blushL.position.set(-0.055, 1.255, -0.115)
+    const blushR = blushL.clone()
+    blushR.position.x = 0.055
+    group.add(blushL, blushR)
+  }
   for (const side of [-1, 1]) {
     const dot = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 8), eye)
-    dot.position.set(side * 0.045, 1.29, -0.11)
+    dot.position.set(side * 0.042, 1.292, -0.118)
     group.add(dot)
   }
   const armL = new THREE.Group()
